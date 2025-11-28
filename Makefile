@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g -std=c17 
-LDFLAGS = -lgdi32 -luser32 -municode
+CFLAGS = -Wall -Wextra -g -std=c17 -DINITGUID
+LDFLAGS = -lgdi32 -luser32 -ld2d1 -ldwrite -lole32 -luuid -municode
 SRC_DIR = src
 BUILD_DIR = build
 BIN_DIR = bin
@@ -24,4 +24,3 @@ clean:
 	rm -rf $(BUILD_DIR) $(BIN_DIR)
 
 .PHONY: all clean
-

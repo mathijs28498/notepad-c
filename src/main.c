@@ -1,262 +1,267 @@
-#ifndef UNICODE
 #define UNICODE
-#endif
-
-#define UNUSED(x) (void)(x)
+#define _UNICODE
+#define COBJMACROS
 
 #include <windows.h>
-#include <stdio.h>
-#include <wchar.h>
-#include <dwrite.h>
 #include <d2d1.h>
+#include <dwrite.h>
+#include <stdio.h>
 
-// IDWriteFactory *dWriteFactory;
-// IDWriteTextFormat *textFormat;
-
-// const wchar_t wszText;
-// UINT32 textLen;
-
-// ID2D1Factory *d2dFactory;
-// ID2D1HwndRenderTarget *rt;
-// ID2D1SolidColorBrush *blackBrush;
+// Global variables
+ID2D1Factory *pD2DFactory = NULL;
+ID2D1HwndRenderTarget *pRenderTarget = NULL;
+ID2D1SolidColorBrush *pBrush = NULL;
+IDWriteFactory *pDWriteFactory = NULL;
+IDWriteTextFormat *pTextFormat = NULL;
 
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
+HRESULT CreateDeviceIndependentResources(void);
+
+HRESULT CreateDeviceResources(HWND hwnd);
+void DiscardDeviceResources(void);
+
+void OnPaint(HWND hwnd);
+void OnResize(HWND hwnd);
+
+// TODO: Add error handling popup (look perplexity on how)
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
-    UNUSED(hPrevInstance);
-    UNUSED(lpCmdLine);
-
-    const wchar_t CLASS_NAME[] = L"Sample Window Class";
-
+    (void)hPrevInstance;
+    (void)pCmdLine;
+    
+    // Initialize COM
+    CoInitialize(NULL);
+    
+    HRESULT hr = CreateDeviceIndependentResources();
+    if (FAILED(hr)) {
+        CoUninitialize();
+        return 1;
+    }
+    
+    const wchar_t CLASS_NAME[] = L"DirectWriteWindowClass";
+    
     WNDCLASS wc = {0};
-
     wc.lpfnWndProc = WindowProc;
     wc.hInstance = hInstance;
     wc.lpszClassName = CLASS_NAME;
-
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    
     RegisterClass(&wc);
-
-    HWND hwnd = CreateWindowEx(
-        0,                   // Optional window styles.
-        CLASS_NAME,          // Window class
-        L"Text editor yes!", // Window text
-        WS_OVERLAPPEDWINDOW, // Window style
-
-        // Size and position
+    
+    HWND hwnd = CreateWindow(
+        CLASS_NAME,
+        L"DirectWrite Example",
+        WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-
-        NULL,      // Parent window
-        NULL,      // Menu
-        hInstance, // Instance handle
-        NULL       // Additional application data
+        NULL,
+        NULL,
+        hInstance,
+        NULL
     );
-
-    if (hwnd == NULL)
-    {
-        return 0;
+    
+    if (hwnd == NULL) {
+        CoUninitialize();
+        return 1;
     }
-
+    
     ShowWindow(hwnd, nCmdShow);
-
+    
     MSG msg = {0};
-
-    while (GetMessage(&msg, NULL, 0, 0))
-    {
+    while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-
+    
+    CoUninitialize();
     return 0;
 }
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    static size_t current_line_number = 0;
-    static size_t current_char_number = 0;
-    static WCHAR lines[][255] = {
-        L"This is line 0",
-        L"And then another",
-        L"And then antoher",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
-        L"How's the weather?",
+    switch (uMsg) {
+        case WM_PAINT:
+            OnPaint(hwnd);
+            return 0;
+            
+        case WM_SIZE:
+            OnResize(hwnd);
+            return 0;
+            
+        case WM_DESTROY:
+            DiscardDeviceResources();
+            if (pTextFormat) IDWriteTextFormat_Release(pTextFormat);
+            if (pDWriteFactory) IDWriteFactory_Release(pDWriteFactory);
+            if (pD2DFactory) ID2D1Factory_Release(pD2DFactory);
+            PostQuitMessage(0);
+            return 0;
+    }
+    
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+HRESULT CreateDeviceIndependentResources(void)
+{
+    HRESULT hr = S_OK;
+    
+    // Create D2D1 factory
+    hr = D2D1CreateFactory(
+        D2D1_FACTORY_TYPE_SINGLE_THREADED,
+        &IID_ID2D1Factory,
+        NULL,
+        (void**)&pD2DFactory
+    );
+    
+    if (FAILED(hr)) return hr;
+    
+    // Create DirectWrite factory
+    hr = DWriteCreateFactory(
+        DWRITE_FACTORY_TYPE_SHARED,
+        &IID_IDWriteFactory,
+        (IUnknown**)&pDWriteFactory
+    );
+    
+    if (FAILED(hr)) return hr;
+    
+    // Create text format
+    hr = IDWriteFactory_CreateTextFormat(
+        pDWriteFactory,
+        L"Arial",
+        NULL,
+        DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL,
+        10.0f,
+        L"en-us",
+        &pTextFormat
+    );
+    
+    if (SUCCEEDED(hr)) {
+        IDWriteTextFormat_SetTextAlignment(pTextFormat, DWRITE_TEXT_ALIGNMENT_CENTER);
+        IDWriteTextFormat_SetParagraphAlignment(pTextFormat, DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+    }
+    
+    return hr;
+}
+
+HRESULT CreateDeviceResources(HWND hwnd)
+{
+    if (pRenderTarget != NULL) {
+        return S_OK;
+    }
+    
+    RECT rc;
+    GetClientRect(hwnd, &rc);
+    
+    D2D1_SIZE_U size = {
+        rc.right - rc.left,
+        rc.bottom - rc.top
     };
-
-    switch (uMsg)
-    {
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-
-    case WM_KEYDOWN:
-        wchar_t pressed_char = (wchar_t)wParam;
-        printf("key down: 0x%llX\n", wParam);
-        if (wParam == VK_DOWN)
-        {
-            if (current_line_number < ARRAYSIZE(lines) - 1)
-                current_line_number++;
-            // TODO: Only invalidate the area of the screen affected
-            InvalidateRect(hwnd, NULL, TRUE);
-        }
-        if (wParam == VK_UP)
-        {
-            if (current_line_number > 0)
-                current_line_number--;
-            // TODO: Only invalidate the area of the screen affected
-            InvalidateRect(hwnd, NULL, TRUE);
-        }
-        if (wParam == VK_LEFT)
-        {
-            if (current_char_number > 0)
-                current_char_number--;
-            // TODO: Only invalidate the area of the screen affected
-            InvalidateRect(hwnd, NULL, TRUE);
-        }
-        if (wParam == VK_RIGHT)
-        {
-            if (current_char_number < wcslen(lines[current_line_number]))
-                current_char_number++;
-            // TODO: Only invalidate the area of the screen affected
-            InvalidateRect(hwnd, NULL, TRUE);
-        }
-
-        if (current_char_number > wcslen(lines[current_line_number]))
-        {
-            current_char_number = wcslen(lines[current_line_number]);
-        }
-
-        if (wParam == VK_BACK && current_char_number > 0)
-        {
-            // TODO: Memory bound checks
-            wmemmove(&lines[current_line_number][current_char_number] - 1,
-                     &lines[current_line_number][current_char_number],
-                     wcslen(lines[current_line_number]) - current_char_number + 1);
-
-            current_char_number--;
-
-            // TODO: Only invalidate the area of the screen affected
-            InvalidateRect(hwnd, NULL, TRUE);
-        }
-
-        if (wParam == VK_DELETE && current_char_number < wcslen(lines[current_line_number]))
-        {
-            // TODO: Memory bound checks
-            wmemmove(&lines[current_line_number][current_char_number],
-                     &lines[current_line_number][current_char_number] + 1,
-                     wcslen(lines[current_line_number]) - current_char_number + 1);
-
-            // TODO: Only invalidate the area of the screen affected
-            InvalidateRect(hwnd, NULL, TRUE);
-        }
-
-        if (!iswalnum(pressed_char) && pressed_char != L' ')
-        {
-            break;
-        }
-
-        if (!(GetKeyState(VK_SHIFT) & 0x8000))
-        {
-            pressed_char = towlower(pressed_char);
-        }
-
-        // TODO: Memory bound checks
-        wmemmove(&lines[current_line_number][current_char_number] + 1,
-                 &lines[current_line_number][current_char_number],
-                 wcslen(lines[current_line_number]) - current_char_number + 1);
-
-        lines[current_line_number][current_char_number] = pressed_char;
-        current_char_number++;
-
-        // TODO: Only invalidate the area of the screen affected
-        InvalidateRect(hwnd, NULL, TRUE);
-        break;
-
-    case WM_PAINT:
-    {
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(hwnd, &ps);
-
-        // Do painting
-        static int iter = 0;
-        printf("Doing some painting %d\n", iter++);
-
-        HFONT hFont, hOldFont;
-
-        int pointSize, fontHeight;
-
-        // Calculate font height from point size
-        pointSize = 11; // Your desired font size in points
-        fontHeight = -MulDiv(pointSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-
-        // Create the font
-        hFont = CreateFont(
-            fontHeight,                  // Height (negative for character height)
-            0,                           // Width (0 = closest match)
-            0,                           // Escapement (rotation)
-            0,                           // Orientation
-            FW_NORMAL,                   // Weight (FW_BOLD, FW_NORMAL, etc.)
-            FALSE,                       // Italic
-            FALSE,                       // Underline
-            FALSE,                       // Strikeout
-            DEFAULT_CHARSET,             // Character set
-            OUT_DEFAULT_PRECIS,          // Output precision
-            CLIP_DEFAULT_PRECIS,         // Clipping precision
-            ANTIALIASED_QUALITY,         // Quality
-            DEFAULT_PITCH | FF_DONTCARE, // Pitch and family
-            TEXT("Arial")                // Font face name
+    
+    D2D1_RENDER_TARGET_PROPERTIES props = {
+        D2D1_RENDER_TARGET_TYPE_DEFAULT,
+        {DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN},
+        0, 0,
+        D2D1_RENDER_TARGET_USAGE_NONE,
+        D2D1_FEATURE_LEVEL_DEFAULT
+    };
+    
+    D2D1_HWND_RENDER_TARGET_PROPERTIES hwndProps = {
+        hwnd,
+        size,
+        D2D1_PRESENT_OPTIONS_NONE
+    };
+    
+    HRESULT hr = ID2D1Factory_CreateHwndRenderTarget(
+        pD2DFactory,
+        &props,
+        &hwndProps,
+        &pRenderTarget
+    );
+    
+    if (SUCCEEDED(hr)) {
+        D2D1_COLOR_F color = {0.0f, 0.0f, 0.3f, 1.0f};
+        hr = ID2D1HwndRenderTarget_CreateSolidColorBrush(
+            pRenderTarget,
+            &color,
+            NULL,
+            &pBrush
         );
+    }
+    
+    return hr;
+}
 
-        // hFont = (HFONT)GetStockObject(ANSI_VAR_FONT);
+void DiscardDeviceResources(void)
+{
+    if (pBrush) {
+        ID2D1SolidColorBrush_Release(pBrush);
+        pBrush = NULL;
+    }
+    if (pRenderTarget) {
+        ID2D1HwndRenderTarget_Release(pRenderTarget);
+        pRenderTarget = NULL;
+    }
+}
 
-        if ((hOldFont = (HFONT)SelectObject(hdc, hFont)))
-        {
-            for (int i = 0; i < ARRAYSIZE(lines); i++)
-            {
-
-                WCHAR line_number_str[3];
-                swprintf_s(line_number_str, ARRAYSIZE(line_number_str), L"%d", i);
-
-                SetTextColor(hdc, 0x00666666);
-                TextOut(hdc, 5, 10 + i * 20, line_number_str, wcslen(line_number_str));
-
-                SetTextColor(hdc, 0x00000000);
-                const WCHAR *text = lines[i];
-                TextOut(hdc, 35, 10 + i * 20, text, wcslen(text));
-            }
-
-            SelectObject(hdc, hOldFont);
-
-            SIZE current_line_number_str_size;
-            GetTextExtentPoint32(hdc, lines[current_line_number], current_char_number, &current_line_number_str_size);
-
-            RECT line_location_rect;
-            SetRect(&line_location_rect, 35 + current_line_number_str_size.cx, 10 + current_line_number * 20, 35 + current_line_number_str_size.cx + 1, 10 + (current_line_number + 1) * 20);
-            // SetRect(&line_location_rect, 10, 10, 100, 100);
-            FillRect(hdc, &line_location_rect, (HBRUSH)(COLOR_WINDOW + 2));
-            // current_line_number_str_size->cx;
+void OnPaint(HWND hwnd)
+{
+    HRESULT hr = CreateDeviceResources(hwnd);
+    
+    if (SUCCEEDED(hr)) {
+        PAINTSTRUCT ps;
+        BeginPaint(hwnd, &ps);
+        
+        ID2D1HwndRenderTarget_BeginDraw(pRenderTarget);
+        
+        D2D1_COLOR_F clearColor = {.3f, .0f, .0f, 1.0f};
+        ID2D1HwndRenderTarget_Clear(pRenderTarget, &clearColor);
+        
+        RECT rc;
+        GetClientRect(hwnd, &rc);
+        D2D1_RECT_F layoutRect = {
+            0.0f,
+            0.0f,
+            (FLOAT)(rc.right - rc.left),
+            (FLOAT)(rc.bottom - rc.top)
+        };
+        
+        const WCHAR *text = L"Hello Oyku!";
+        UINT32 textLength = (UINT32)wcslen(text);
+        
+        ID2D1HwndRenderTarget_DrawText(
+            pRenderTarget,
+            text,
+            textLength,
+            pTextFormat,
+            &layoutRect,
+            (ID2D1Brush*)pBrush,
+            D2D1_DRAW_TEXT_OPTIONS_NONE,
+            DWRITE_MEASURING_MODE_NATURAL
+        );
+        
+        hr = ID2D1HwndRenderTarget_EndDraw(pRenderTarget, NULL, NULL);
+        
+        if (hr == D2DERR_RECREATE_TARGET) {
+            DiscardDeviceResources();
         }
-
+        
         EndPaint(hwnd, &ps);
     }
-        return 0;
-    }
+}
 
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+
+void OnResize(HWND hwnd)
+{
+    if (pRenderTarget) {
+        RECT rc;
+        GetClientRect(hwnd, &rc);
+        D2D1_SIZE_U size = {
+            rc.right - rc.left,
+            rc.bottom - rc.top
+        };
+        ID2D1HwndRenderTarget_Resize(pRenderTarget, &size);
+        InvalidateRect(hwnd, NULL, FALSE);
+    }
 }
