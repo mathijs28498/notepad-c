@@ -7,6 +7,8 @@
 #include <dwrite.h>
 #include <stdio.h>
 
+#include "controller/controller.h"
+
 typedef struct
 {
     ID2D1Factory *d2dFactory;
@@ -46,6 +48,8 @@ void OnResize(HWND hwnd, ApplicationState *applicationState);
 // TODO: Add error handling popup (look perplexity on how)
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
+    controller_test();
+
     (void)hPrevInstance;
     (void)pCmdLine;
 
