@@ -1,4 +1,5 @@
 guides/
+build/
 
 # Prerequisites
 *.d
