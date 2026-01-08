@@ -1,3 +1,6 @@
+
+find_package(Vulkan REQUIRED)
+
 add_executable(MyProgram main.c)
 
 target_compile_features(MyProgram PUBLIC c_std_99)
@@ -8,10 +11,8 @@ set_target_properties(MyProgram
 
 target_link_libraries(MyProgram
     PRIVATE
-        TestLib
-)
-
-target_link_libraries(MyProgram
-    PRIVATE
+        Vulkan::Vulkan
         TestLibI
-)
+        TestLib
+        CGLM
+    )
