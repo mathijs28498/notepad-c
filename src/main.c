@@ -5,16 +5,10 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer.h>
+#include <project_common.h>
 
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x)  STRINGIZE2(x)
-
-#if defined(_MSC_VER)
-#define TODO(msg) __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) "): TODO: " msg))
-#else
-#define TODO(msg) _Pragma("message(\"TODO: " msg "\")")
-// or simply: #define TODO(msg) _Pragma("GCC warning \"TODO: " msg "\"")
-#endif
 
 bool app_running = true;
 
@@ -27,7 +21,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     (void)hPrevInstance;
     (void)pCmdLine;
 
-#ifdef _DEBUG   
+#ifdef IS_DEBUG   
     if (AllocConsole())
     {
         FILE *fDummy;
@@ -37,7 +31,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         freopen_s(&fDummy, "CONOUT$", "w", stderr);
         freopen_s(&fDummy, "CONIN$", "r", stdin);
     }
-#endif // ifdef _DEBUG
+#endif // #if IS_DEBUG
 
     printf("Initializing\n");
 

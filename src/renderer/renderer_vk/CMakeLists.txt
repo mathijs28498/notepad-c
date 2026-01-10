@@ -13,4 +13,5 @@ find_package(Vulkan)
 target_link_libraries(RendererVk
     PRIVATE
         Vulkan::Vulkan
+        ProjectCommon
 )
