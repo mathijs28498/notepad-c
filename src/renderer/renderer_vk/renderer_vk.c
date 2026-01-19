@@ -5,33 +5,38 @@
 #include <string.h>
 
 #include <project_common.h>
+#include <system_api.h>
+
+#include "renderer_vk_utils.h"
 
 #include "renderer_vk.h"
 
-#define MVK_MAX_LAYER_PROPERTIES_COUNT 32
-
-// TODO: Create a container for these
-VkInstance g_instance = NULL;
 
 #if IS_DEBUG
 const char *const VALIDATION_LAYERS[] = {
     "VK_LAYER_KHRONOS_validation"};
-#endif // #if IS_DEBUG
-
-VkResult create_instance(VkInstance *instance);
-
-#if IS_DEBUG
 bool check_validation_layer_support(void);
+TODO("Add message callback")
 #endif // #if IS_DEBUG
 
-int32_t vk_init(void)
+typedef struct {
+    VkInstance instance;
+} RendererVkContext;
+
+SystemApi *g_system_api = {0};
+
+#define MVK_MAX_LAYER_PROPERTIES_COUNT 32
+
+VkResult create_instance(RendererVkContext *context);
+VkResult pick_physical_device();
+
+int32_t vk_init(SystemApi *system_api)
 {
     VkResult res;
+    g_system_api = system_api;
+    RendererVkContext context = {0}; 
 
-    uint32_t extension_count = 0;
-    vkEnumerateInstanceExtensionProperties(NULL, &extension_count, NULL);
-    printf("%s() - extension count: %d\n", __func__, extension_count);
-    res = create_instance(&g_instance);
+    res = create_instance(&context);
 
     if (res)
     {
@@ -39,20 +44,22 @@ int32_t vk_init(void)
         return -1;
     }
 
-    check_validation_layer_support();
+    // res = 
+
+    // if 
 
     printf("%s() - Successful vk_init\n", __func__);
     return 0;
 }
 
-int32_t vk_cleanup(void)
+int32_t vk_cleanup(RendererVkContext *context)
 {
-    vkDestroyInstance(g_instance, NULL);
+    vkDestroyInstance(context->instance, NULL);
 
     return 0;
 }
 
-VkResult create_instance(VkInstance *instance)
+VkResult create_instance(RendererVkContext *context)
 {
     VkResult res = VK_SUCCESS;
 
@@ -85,11 +92,12 @@ VkResult create_instance(VkInstance *instance)
     create_info.enabledLayerCount = 0;
 #endif // #if IS_DEBUG
 
-    res = vkCreateInstance(&create_info, NULL, instance);
-    if (res)
-    {
-        return res;
-    }
+    // res = ;
+    VK_CHECK(vkCreateInstance(&create_info, NULL, &context->instance), g_system_api->log, "Unable to create vk instance");
+    // if (res)
+    // {
+    //     return res;
+    // }
 
     return res;
 }
@@ -131,3 +139,10 @@ bool check_validation_layer_support(void)
     return true;
 }
 #endif // #if IS_DEBUG
+
+VkResult pick_physical_device()
+{
+    // VkPhysicalDevice physical_device = VK_NULL_HANDLE;
+    // uint32_t device_count = 0;
+    // vkEnumeratePhysicalDeviceGroups(instance, &device_count, NULL);
+}

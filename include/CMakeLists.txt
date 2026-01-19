@@ -1,6 +1,6 @@
-add_library(ProjectCommon INTERFACE)
+add_library(PluginCommon INTERFACE)
 
-target_sources(ProjectCommon
+target_sources(PluginCommon
     INTERFACE
         FILE_SET HEADERS
 )

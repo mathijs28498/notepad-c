@@ -2,6 +2,9 @@
 #ifndef PROJECT_COMMON_H
 #define PROJECT_COMMON_H
 
+#define STRINGIZE2(x) #x
+#define STRINGIZE(x)  STRINGIZE2(x)
+
 #if defined(_MSC_VER)
 #define TODO(msg) __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) "): TODO: " msg))
 #else // #if defined(_MSC_VER)

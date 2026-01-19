@@ -1,122 +1,38 @@
-
-#include <windows.h>
 #include <stdio.h>
-#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include <vulkan/vulkan.h>
-#include <renderer.h>
-#include <project_common.h>
+// #include <test_plugin.h>
+#include <Windows.h>
 
-#define STRINGIZE2(x) #x
-#define STRINGIZE(x)  STRINGIZE2(x)
+#include <plugin_loader.h>
+#include <plugin_api.h>
 
-bool app_running = true;
-
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-
-// TODO: Add error handling popup (look perplexity on how)
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
+int main(int argc, char* argv[])
 {
-    (void)hPrevInstance;
-    (void)pCmdLine;
+    (void) argc;    
+    (void) argv;    
 
-#ifdef IS_DEBUG   
-    if (AllocConsole())
-    {
-        FILE *fDummy;
+    PluginApi *plugin_api = get_plugin_api();
 
-        // Redirect standard streams to the new console "CONOUT$" and "CONIN$"
-        freopen_s(&fDummy, "CONOUT$", "w", stdout);
-        freopen_s(&fDummy, "CONOUT$", "w", stderr);
-        freopen_s(&fDummy, "CONIN$", "r", stdin);
-    }
-#endif // #if IS_DEBUG
+    plugin_api->add_search_path("./");
 
-    printf("Initializing\n");
+    plugin_api->get("test", NULL);
 
-    HRESULT hr;
+    // HMODULE test_plugin = LoadLibrary("TestPlugin.dll");
+    // if (!test_plugin)
+    // {
+    //     printf("Failed to load plugin\n");
+    //     return -1;
+    // }
 
-    // Initialize COM
-    hr = CoInitialize(NULL);
+    // FARPROC proc = GetProcAddress(test_plugin, "test_func");
+    // if (!proc)
+    // {
+    //     printf("Failed to get proc\n");
+    //     return -1;
+    // }
+    // proc(1300);
 
-    const wchar_t CLASS_NAME[] = L"MainWindowClass";
-
-    WNDCLASS wc = {0};
-    wc.lpfnWndProc = WindowProc;
-    wc.hInstance = hInstance;
-    wc.lpszClassName = CLASS_NAME;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-
-    RegisterClass(&wc);
-
-    HWND hwnd = CreateWindow(
-        CLASS_NAME,
-        L"This works?",
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        NULL,
-        NULL,
-        hInstance,
-        NULL);
-
-    if (hwnd == NULL)
-    {
-        CoUninitialize();
-        return 1;
-    }
-
-    renderer_init();
-
-    ShowWindow(hwnd, nCmdShow);
-
-    MSG msg = {0};
-    TODO("while (app.running)")
-    // TODO: while (app.running)
-    while (app_running)
-    {
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            if (msg.message == WM_QUIT)
-            {
-                TODO("app.running = false;")
-                // TODO: app.running = false;
-                app_running = false;
-            }
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-
-        TODO("if (app.running)")
-        // TODO: if (app.running)
-        if (app_running)
-        {
-            TODO("Do rendering stuff")
-            // TODO: Do rendering stuff
-        }
-    }
-
-    CoUninitialize();
-    return 0;
-}
-
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uMsg)
-    {
-    case WM_PAINT:
-        ValidateRect(hwnd, NULL);
-        return 0;
-
-    case WM_SIZE:
-        TODO("Recreate shit!")
-        // TODO: Recreate shit!
-        return 0;
-
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-    }
-
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+    // test_func(1300);
 }
