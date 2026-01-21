@@ -1,0 +1,13 @@
+{
+    "availble_apis": {
+        "test_api": {
+            "plugin": "test_plugin"
+        }
+    },
+    "plugins": {
+        "test_plugin": {
+            "path": "./TestPlugin.dll",
+            "implements": ["test_api"]
+        }
+    }
+}

@@ -21,6 +21,7 @@ target_link_libraries(Program
         # TestPlugin
         PluginCommon
         PluginLoader
+        Jsmn
 )
 
 # add_subdirectory(renderer)
