@@ -26,11 +26,9 @@ int main(int argc, char *argv[])
     int32_t ret;
 
     PluginApi *plugin_api = get_plugin_api();
-    ret = plugin_api->init();
-    printf("Why no working!!!\n");
-
     ret = plugin_api->add("test_api", NULL);
-    printf("AFter yes!!!\n");
+    ret = plugin_api->init();
+
 
     // ret = plugin_loader_init();
 

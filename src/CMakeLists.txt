@@ -24,6 +24,3 @@ target_link_libraries(program
         test_lib
         test_yes
 )
-
-# add_subdirectory(renderer)
-add_subdirectory(plugin_loader)

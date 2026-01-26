@@ -9,7 +9,7 @@
 typedef struct PluginApi
 {
     int32_t (*init)();
-    int32_t (*add)(const char* plugin_name, const void **out_plugin_interface);
+    int32_t (*add)(const char* api_name, const char *plugin_name);
     int32_t (*get)(const char* plugin_name, const void **out_plugin_interface);
 } PluginApi;
 

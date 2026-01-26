@@ -1,0 +1,14 @@
+{
+    "plugins": [
+        {
+            "name": "test_plugin",
+            "path": "./TestPlugin.dll",
+            "implements": "test_api"
+        },
+        {
+            "name": "test_plugin_2",
+            "path": "./TestPlugin2.dll",
+            "implements": "test_api2"
+        }
+    ]
+}

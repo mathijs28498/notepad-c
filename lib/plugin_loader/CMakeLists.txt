@@ -5,6 +5,7 @@ add_library(plugin_loader)
 target_sources(plugin_loader
     PRIVATE
         plugin_loader.c
+        plugin_loader_json_parser.c
 
     PUBLIC
         FILE_SET HEADERS

@@ -4,8 +4,6 @@
 
 #include <stdint.h>
 
-// int32_t load_plugin(const char * const plugin_name);
-
 typedef struct PluginApi PluginApi;
 PluginApi *get_plugin_api();
 

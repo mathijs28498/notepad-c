@@ -1,3 +1,4 @@
+# TODO: Add error handling to all cmake stuff
 cmake_minimum_required(VERSION 3.23)
 
 project(NotepadC C)
@@ -24,8 +25,8 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 configure_file(
-    "${CMAKE_SOURCE_DIR}/system.json"
-    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/system.json" 
+    "${CMAKE_SOURCE_DIR}/plugin_config.json"
+    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugin_config.json" 
     COPYONLY
 )
 
