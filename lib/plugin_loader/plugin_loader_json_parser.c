@@ -98,3 +98,4 @@ int plugin_loader_parse_config(const char *json_str, PluginConfig *config_out)
     cJSON_Delete(root);
     return 0;
 }
+

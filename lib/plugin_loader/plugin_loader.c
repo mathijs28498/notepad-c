@@ -9,7 +9,9 @@
 #include <Windows.h>
 
 #include <plugin_api.h>
+
 #include "plugin_loader_json_parser.h"
+#include "plugin_loader_config_reader.h"
 
 #define PLUGIN_LOADER_MAX_PLUGIN_COUNT 64
 
@@ -22,27 +24,8 @@ typedef struct
 size_t g_plugins_to_add_count = 0;
 PluginToAddInfo g_plugins_to_add[PLUGIN_LOADER_MAX_PLUGIN_COUNT];
 
-int32_t plugin_loader_read_config(char **buffer_out)
-{
-    FILE *system_json_file;
-    int ret;
-    ret = fopen_s(&system_json_file, "../plugin_config.json", "rb");
-
-    // TODO: Do this without malloc (get a define with the size of the file)
-    fseek(system_json_file, 0, SEEK_END);
-    size_t length = ftell(system_json_file);
-    fseek(system_json_file, 0, SEEK_SET);
-    // Reserve 1 byte for the null terminator
-    *buffer_out = malloc(length + 1);
-    if (*buffer_out)
-    {
-        fread(*buffer_out, 1, length, system_json_file);
-        (*buffer_out)[length] = '\0';
-    }
-    fclose(system_json_file);
-
-    return 0;
-}
+size_t g_plugin_info_indices_count = 0;
+uint32_t g_plugin_info_indices[PLUGIN_LOADER_MAX_PLUGIN_COUNT];
 
 int32_t plugin_api_init(void)
 {
@@ -84,21 +67,18 @@ int32_t plugin_api_init(void)
         {
             PluginInfo *plugin_info = &plugin_config.plugins[j];
 
-            if (use_default)
+            char *plugin_info_name = use_default
+                                         ? plugin_info->implements
+                                         : plugin_info->name;
+
+            char *plugin_to_add_name = use_default
+                                           ? plugin_to_add->api_name
+                                           : plugin_to_add->plugin_name;
+
+            if (strcmp(plugin_info_name, plugin_to_add_name) == 0)
             {
-                if (strncmp(plugin_info->implements, plugin_to_add->api_name, PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT) == 0)
-                {
-                    plugin_info_index = (int32_t)j;
-                    break;
-                }
-            }
-            else
-            {
-                if (strncmp(plugin_info->name, plugin_to_add->plugin_name, PLUGIN_CONFIG_MAX_PLUGIN_NAME_COUNT) == 0)
-                {
-                    plugin_info_index = (int32_t)j;
-                    break;
-                }
+                plugin_info_index = (int32_t)j;
+                break;
             }
         }
 
@@ -107,57 +87,88 @@ int32_t plugin_api_init(void)
             printf("Error: couldn't add plugin api \"%s\"\n", plugin_to_add->api_name);
             return -1;
         }
-
-        printf("Adding plugin api: \"%s\" with implementation \"%s\" and path \"%s\"\n", 
-            plugin_config.plugins[plugin_info_index].implements,
-            plugin_config.plugins[plugin_info_index].name,
-            plugin_config.plugins[plugin_info_index].path
-        );
-
-        // for (int )
+        g_plugin_info_indices[g_plugin_info_indices_count] = (uint32_t)plugin_info_index;
+        g_plugin_info_indices_count++;
+        // TODO: Add max index check here
     }
 
-    printf("\n=== Plugins ===\n");
-    for (uint32_t i = 0; i < plugin_config.plugins_count; i++)
+    for (size_t i = 0; i < g_plugin_info_indices_count; i++)
     {
-        printf("\n  [%d] Name: %s\n", i, plugin_config.plugins[i].name);
-        printf("      Path: %s\n", plugin_config.plugins[i].path);
-        printf("      Implements: %s\n", plugin_config.plugins[i].implements);
-        HMODULE loaded_dll = LoadLibrary(plugin_config.plugins[i].path);
+        PluginInfo *plugin_info = &plugin_config.plugins[i];
+
+        HMODULE loaded_dll = LoadLibrary(plugin_info->path);
         if (!loaded_dll)
         {
-            printf("Error: Failed to load plugin \"%s\" at \"%s\"\n", plugin_config.plugins[i].name, plugin_config.plugins[i].path);
-            // return -1;
+            printf("Error: Failed to load plugin \"%s\" at \"%s\"\n", plugin_info->name, plugin_info->path);
             continue;
         }
 
-        FARPROC proc = GetProcAddress(loaded_dll, "test_api_get_dependencies");
-        // FARPROC proc = GetProcAddress(loaded_dll, "test_func");
-        // FARPROC proc = GetProcAddress(loaded_dll, "test_func_");
+        char get_dependencies_postfix[] = "_get_dependencies";
+        char get_dependencies_function_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT + sizeof(get_dependencies_postfix) / sizeof(get_dependencies_postfix[0])];
+        // TODO: Check if this is correct way of safe strncpy_s
+        strncpy_s(
+            get_dependencies_function_name,
+            sizeof(get_dependencies_function_name) / sizeof(get_dependencies_function_name[0]),
+            plugin_info->implements,
+            PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT);
+
+        strncat_s(
+            get_dependencies_function_name,
+            sizeof(get_dependencies_function_name) / sizeof(get_dependencies_function_name[0]),
+            get_dependencies_postfix,
+            sizeof(get_dependencies_postfix) / sizeof(get_dependencies_postfix[0]));
+        printf("Fn: %s", get_dependencies_function_name);
+        FARPROC proc = GetProcAddress(loaded_dll, get_dependencies_function_name);
         if (!proc)
         {
             printf("Error: Plugin \"%s\" does not have a get_dependencies function defined\n", plugin_config.plugins[i].name);
             continue;
         }
 
-        printf("Calling proc\n");
-        const char *const *dependencies;
-        int32_t count;
-
-        proc(&dependencies, &count);
-        for (int j = 0; j < count; j++)
-        {
-            printf("dep: %s\n", dependencies[j]);
-        }
-
-        FARPROC proc2 = GetProcAddress(loaded_dll, "set_dependency_test_api_2");
-        if (!proc2)
-        {
-            printf("Error: Plugin \"%s\" does not have a set_dependency_test_api_2 function defined\n", plugin_config.plugins[i].name);
-            continue;
-        }
-        proc2(NULL);
+        proc(NULL, NULL);
     }
+
+    // printf("\n=== Plugins ===\n");
+    // for (uint32_t i = 0; i < plugin_config.plugins_count; i++)
+    // {
+    //     printf("\n  [%d] Name: %s\n", i, plugin_config.plugins[i].name);
+    //     printf("      Path: %s\n", plugin_config.plugins[i].path);
+    //     printf("      Implements: %s\n", plugin_config.plugins[i].implements);
+    //     HMODULE loaded_dll = LoadLibrary(plugin_config.plugins[i].path);
+    //     if (!loaded_dll)
+    //     {
+    //         printf("Error: Failed to load plugin \"%s\" at \"%s\"\n", plugin_config.plugins[i].name, plugin_config.plugins[i].path);
+    //         // return -1;
+    //         continue;
+    //     }
+
+    //     FARPROC proc = GetProcAddress(loaded_dll, "test_api_get_dependencies");
+    //     // FARPROC proc = GetProcAddress(loaded_dll, "test_func");
+    //     // FARPROC proc = GetProcAddress(loaded_dll, "test_func_");
+    //     if (!proc)
+    //     {
+    //         printf("Error: Plugin \"%s\" does not have a get_dependencies function defined\n", plugin_config.plugins[i].name);
+    //         continue;
+    //     }
+
+    //     printf("Calling proc\n");
+    //     const char *const *dependencies;
+    //     int32_t count;
+
+    //     proc(&dependencies, &count);
+    //     for (int j = 0; j < count; j++)
+    //     {
+    //         printf("dep: %s\n", dependencies[j]);
+    //     }
+
+    //     FARPROC proc2 = GetProcAddress(loaded_dll, "set_dependency_test_api_2");
+    //     if (!proc2)
+    //     {
+    //         printf("Error: Plugin \"%s\" does not have a set_dependency_test_api_2 function defined\n", plugin_config.plugins[i].name);
+    //         continue;
+    //     }
+    //     proc2(NULL);
+    // }
     return 0;
 }
 

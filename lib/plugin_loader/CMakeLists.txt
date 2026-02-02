@@ -6,6 +6,7 @@ target_sources(plugin_loader
     PRIVATE
         plugin_loader.c
         plugin_loader_json_parser.c
+        plugin_loader_config_reader.c
 
     PUBLIC
         FILE_SET HEADERS
