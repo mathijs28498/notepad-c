@@ -7,7 +7,7 @@
         },
         {
             "name": "test_plugin_2",
-            "path": "./test_plugin2.dll",
+            "path": "./test_plugin_2.dll",
             "implements": "test_api2"
         }
     ]

@@ -1,1 +1,2 @@
 add_subdirectory(test_plugin)
+add_subdirectory(test_plugin_2)

@@ -24,8 +24,18 @@ typedef struct
 size_t g_plugins_to_add_count = 0;
 PluginToAddInfo g_plugins_to_add[PLUGIN_LOADER_MAX_PLUGIN_COUNT];
 
-size_t g_plugin_info_indices_count = 0;
-uint32_t g_plugin_info_indices[PLUGIN_LOADER_MAX_PLUGIN_COUNT];
+typedef struct
+{
+    PluginInfo *plugin_info;
+
+    HMODULE dll;
+    char **dependencies;
+    uint32_t dependencies_len;
+    void *api;
+} PluginData;
+
+size_t g_plugin_data_count = 0;
+PluginData g_plugin_data[PLUGIN_LOADER_MAX_PLUGIN_COUNT];
 
 int32_t plugin_api_init(void)
 {
@@ -87,45 +97,106 @@ int32_t plugin_api_init(void)
             printf("Error: couldn't add plugin api \"%s\"\n", plugin_to_add->api_name);
             return -1;
         }
-        g_plugin_info_indices[g_plugin_info_indices_count] = (uint32_t)plugin_info_index;
-        g_plugin_info_indices_count++;
+        g_plugin_data[g_plugin_data_count].plugin_info = &plugin_config.plugins[plugin_info_index];
+        g_plugin_data_count++;
         // TODO: Add max index check here
     }
 
-    for (size_t i = 0; i < g_plugin_info_indices_count; i++)
+    for (size_t i = 0; i < g_plugin_data_count; i++)
     {
-        PluginInfo *plugin_info = &plugin_config.plugins[i];
+        PluginData *plugin_data = &g_plugin_data[i];
 
-        HMODULE loaded_dll = LoadLibrary(plugin_info->path);
-        if (!loaded_dll)
+        plugin_data->dll = LoadLibrary(plugin_data->plugin_info->path);
+        if (!plugin_data->dll)
         {
-            printf("Error: Failed to load plugin \"%s\" at \"%s\"\n", plugin_info->name, plugin_info->path);
+            printf("Error: Failed to load plugin \"%s\" at \"%s\"\n", plugin_data->plugin_info->name, plugin_data->plugin_info->path);
             continue;
         }
 
-        char get_dependencies_postfix[] = "_get_dependencies";
-        char get_dependencies_function_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT + sizeof(get_dependencies_postfix) / sizeof(get_dependencies_postfix[0])];
-        // TODO: Check if this is correct way of safe strncpy_s
-        strncpy_s(
-            get_dependencies_function_name,
-            sizeof(get_dependencies_function_name) / sizeof(get_dependencies_function_name[0]),
-            plugin_info->implements,
-            PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT);
+        static const char get_dependencies_postfix[] = "_get_dependencies";
+        char get_dependencies_function_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT + sizeof(get_dependencies_postfix)];
 
-        strncat_s(
-            get_dependencies_function_name,
-            sizeof(get_dependencies_function_name) / sizeof(get_dependencies_function_name[0]),
-            get_dependencies_postfix,
-            sizeof(get_dependencies_postfix) / sizeof(get_dependencies_postfix[0]));
-        printf("Fn: %s", get_dependencies_function_name);
-        FARPROC proc = GetProcAddress(loaded_dll, get_dependencies_function_name);
-        if (!proc)
+        snprintf(get_dependencies_function_name, sizeof(get_dependencies_function_name),
+                 "%s%s", plugin_data->plugin_info->implements, get_dependencies_postfix);
+
+        FARPROC get_dependencies_proc = GetProcAddress(plugin_data->dll, get_dependencies_function_name);
+        if (get_dependencies_proc)
         {
-            printf("Error: Plugin \"%s\" does not have a get_dependencies function defined\n", plugin_config.plugins[i].name);
-            continue;
+            // TODO: Make these functions casted to a function signature typedef
+            get_dependencies_proc(&plugin_data->dependencies, &plugin_data->dependencies_len);
         }
 
-        proc(NULL, NULL);
+        static const char get_api_postfix[] = "_get_api";
+        char get_api_function_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT + sizeof(get_api_postfix)];
+
+        snprintf(get_api_function_name, sizeof(get_api_function_name),
+                 "%s%s", plugin_data->plugin_info->implements, get_api_postfix);
+
+        FARPROC get_api_proc = GetProcAddress(plugin_data->dll, get_api_function_name);
+        if (get_api_proc)
+        {
+            // TODO: Make these functions casted to a function signature typedef
+            plugin_data->api = (void *)get_api_proc();
+        }
+        else
+        {
+            printf("Error: no api found for plugin: %s\n", plugin_data->plugin_info->name);
+        }
+    }
+
+    // TODO: Make sure the plugins get initialized in order with their dependencies
+    for (size_t i = 0; i < g_plugin_data_count; i++)
+    {
+        PluginData *plugin_data = &g_plugin_data[i];
+
+        for (uint32_t j = 0; j < plugin_data->dependencies_len; j++)
+        {
+            char *dependency = plugin_data->dependencies[j];
+            for (uint32_t k = 0; k < g_plugin_data_count; k++)
+            {
+                PluginData *dep_plugin_data = &g_plugin_data[k];
+                if (strcmp(dep_plugin_data->plugin_info->implements, dependency) == 0)
+                {
+
+                    static const char set_dependency_midfix[] = "_set_";
+                    // TODO: Fix the sizing here
+                    char set_dependency_function_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT + sizeof(set_dependency_midfix)];
+
+                    snprintf(set_dependency_function_name, sizeof(set_dependency_function_name),
+                             "%s%s%s", plugin_data->plugin_info->implements, set_dependency_midfix, dependency);
+
+                    FARPROC set_dependency_proc = GetProcAddress(plugin_data->dll, set_dependency_function_name);
+                    if (set_dependency_proc)
+                    {
+            // TODO: Make these functions casted to a function signature typedef
+                        set_dependency_proc(dep_plugin_data->api);
+                    }
+                    else
+                    {
+                        printf("Error: %s() not found\n", set_dependency_function_name);
+                    }
+                }
+            }
+        }
+
+        static const char init_postfix[] = "_init";
+        // TODO: Fix the sizing here
+        char init_function_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT + sizeof(init_postfix)];
+        snprintf(init_function_name, sizeof(init_function_name),
+                 "%s%s", plugin_data->plugin_info->implements, init_postfix);
+
+        FARPROC init_proc = GetProcAddress(plugin_data->dll, init_function_name);
+        if (init_proc)
+        {
+            // TODO: Make these functions casted to a function signature typedef
+            int32_t init_ret = (int32_t) init_proc();
+            // TODO: Do something with the return value;
+            (void)init_ret;
+        }
+        else
+        {
+            printf("Error: %s() not found\n", init_function_name);
+        }
     }
 
     // printf("\n=== Plugins ===\n");

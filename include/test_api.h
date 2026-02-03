@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
-void test_func(uint32_t num);
+typedef struct
+{
+    int32_t (*do_something)(void);
+} TestApi;
 
 #endif // #ifndef TEST_API_H

@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
 
     int32_t ret;
 
-    ret = PLUGIN_API_ADD("test_api", NULL);
     ret = PLUGIN_API_ADD("test_api2", NULL);
+    ret = PLUGIN_API_ADD("test_api", NULL);
 
     // TEST_MACRO(nothing);
 
