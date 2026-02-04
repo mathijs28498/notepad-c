@@ -108,14 +108,14 @@ int32_t plugin_api_load(PluginLoaderContext *context)
     }
 
     // TODO: plugin add functionality
-    //          - Load in plugin_definitions to add
-    //          - Call dependency functions on plugin_definitions to add
-    //          - Check if dependencies are or are not included
-    //          - Add dependencies where not already included
-    //          - Repeat this until all dependencies loaded in
-    //          - Create dependency graph
-    //              - Do error checking on these dependencies (eg. cyclic dependencies)
-    //          - Walk dependency graph layer by layer calling the init functions
+    //          [X] - Load in plugin_definitions to add
+    //          [X] - Call dependency functions on plugin_definitions to add
+    //          [ ] - Check if dependencies are or are not included
+    //          [ ] - Add dependencies where not already included
+    //          [ ] - Repeat this until all dependencies loaded in
+    //          [ ] - Create dependency graph
+    //              [ ] - Do error checking on these dependencies (eg. cyclic dependencies)
+    //          [/] - Walk dependency graph layer by layer calling the init functions
 
     // TODO: Check if this algorithm can/should be made better/faster
     // Get the PluginInfo for the dlls of the user added
@@ -124,6 +124,7 @@ int32_t plugin_api_load(PluginLoaderContext *context)
     PluginModule plugin_modules[PLUGIN_LOADER_MAX_PLUGIN_LEN];
     resolve_requested_plugins(context, plugin_modules, &plugin_modules_len, &plugin_config);
 
+    // TODO: Make own method - get dependencies
     for (size_t i = 0; i < plugin_modules_len; i++)
     {
         PluginModule *plugin_module = &plugin_modules[i];
@@ -168,6 +169,7 @@ int32_t plugin_api_load(PluginLoaderContext *context)
         }
     }
 
+    // TODO: Make own method - resolve dependencies
     // TODO: Make sure the plugin_definitions get initialized in order with their dependencies
     for (size_t i = 0; i < plugin_modules_len; i++)
     {
