@@ -44,15 +44,23 @@ int main(int argc, char *argv[])
 
     int32_t ret;
 
-    ret = PLUGIN_API_ADD("test_api2", NULL);
+    // TODO: Make out of order work
     ret = PLUGIN_API_ADD("test_api", NULL);
+    ret = PLUGIN_API_ADD("test_api2", NULL);
+
+    // TODO: Make unknown dependency work
+    // ret = PLUGIN_API_ADD("test_api", NULL);
+
+    // TODO: Make this give an error on second 
+    // ret = PLUGIN_API_ADD("test_api", NULL);
+    // ret = PLUGIN_API_ADD("test_api", NULL);
 
     // TEST_MACRO(nothing);
 
     // static char *my_list[] = { \
     //     "test"};
     // ret = PLUGIN_API_ADD("test_api3", NULL);
-    ret = PLUGIN_API_INIT();
+    ret = PLUGIN_API_LOAD();
     return 0;
 
     // PluginApi *plugin_api = get_plugin_api();

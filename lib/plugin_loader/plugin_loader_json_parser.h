@@ -4,23 +4,23 @@
 #include <stdint.h>
 
 // TODO: Make this into cmake variables
-#define PLUGIN_CONFIG_MAX_PLUGIN_COUNT 64
-#define PLUGIN_CONFIG_MAX_PLUGIN_NAME_COUNT 64
-#define PLUGIN_CONFIG_MAX_PLUGIN_PATH_COUNT 512
-#define PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT 64
+#define PLUGIN_REGISTRY_MAX_PLUGIN_LEN 64
+#define PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN 64
+#define PLUGIN_REGISTRY_MAX_PLUGIN_PATH_LEN 512
+#define PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN 64
 
 
 typedef struct {
-    char name[PLUGIN_CONFIG_MAX_PLUGIN_NAME_COUNT];
-    char path[PLUGIN_CONFIG_MAX_PLUGIN_PATH_COUNT];
-    char implements[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT];
-} PluginInfo;
+    char name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
+    char path[PLUGIN_REGISTRY_MAX_PLUGIN_PATH_LEN];
+    char api[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
+} PluginDefinition;
 
 typedef struct {
-    uint32_t plugins_count;
-    PluginInfo plugins[PLUGIN_CONFIG_MAX_PLUGIN_COUNT];
-} PluginConfig;
+    uint32_t plugin_definitions_len;
+    PluginDefinition plugin_definitions[PLUGIN_REGISTRY_MAX_PLUGIN_LEN];
+} PluginRegistry;
 
-int plugin_loader_parse_config(const char *json_str, PluginConfig *config);
+int plugin_loader_parse_config(const char *json_str, PluginRegistry *plugin_registry);
 
 #endif // #ifndef PLUGIN_LOADER_JSON_PARSER_H

@@ -26,8 +26,8 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 configure_file(
-    "${CMAKE_SOURCE_DIR}/plugin_config.json"
-    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugin_config.json" 
+    "${CMAKE_SOURCE_DIR}/plugin_registry.json"
+    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugin_registry.json" 
     COPYONLY
 )
 

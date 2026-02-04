@@ -13,35 +13,88 @@
 #include "plugin_loader_json_parser.h"
 #include "plugin_loader_config_reader.h"
 
-#define PLUGIN_LOADER_MAX_PLUGIN_COUNT 64
+// TODO: Remove global variables for local ones
+
+#define PLUGIN_LOADER_MAX_PLUGIN_LEN 64
 
 typedef struct
 {
-    char api_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT];
-    char plugin_name[PLUGIN_CONFIG_MAX_PLUGIN_NAME_COUNT];
-} PluginToAddInfo;
+    char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
+    char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
+} RequestedPlugin;
 
-size_t g_plugins_to_add_count = 0;
-PluginToAddInfo g_plugins_to_add[PLUGIN_LOADER_MAX_PLUGIN_COUNT];
+// size_t plugins_to_add_count = 0;
+// RequestedPlugin requested_plugins[PLUGIN_LOADER_MAX_PLUGIN_LEN];
 
 typedef struct
 {
-    PluginInfo *plugin_info;
+    PluginDefinition *plugin_definition;
 
     HMODULE dll;
     char **dependencies;
     uint32_t dependencies_len;
     void *api;
-} PluginData;
+} PluginModule;
 
-size_t g_plugin_data_count = 0;
-PluginData g_plugin_data[PLUGIN_LOADER_MAX_PLUGIN_COUNT];
+struct PluginLoaderContext
+{
+    size_t requested_plugins_len;
+    RequestedPlugin requested_plugins[PLUGIN_LOADER_MAX_PLUGIN_LEN];
 
-int32_t plugin_api_init(void)
+    // TODO: See if this can be only known in the load function, not context
+    // size_t plugin_modules_len;
+    // PluginModule plugin_modules[PLUGIN_LOADER_MAX_PLUGIN_LEN];
+};
+
+// size_t g_plugin_data_count = 0;
+// PluginModule g_plugin_data[PLUGIN_LOADER_MAX_PLUGIN_LEN];
+
+int32_t resolve_requested_plugins(PluginLoaderContext *context, PluginModule *plugin_modules, size_t *plugin_modules_len, PluginRegistry *plugin_registry)
+{
+    for (size_t i = 0; i < context->requested_plugins_len; i++)
+    {
+        RequestedPlugin *requested_plugin = &context->requested_plugins[i];
+
+        bool use_default = strlen(requested_plugin->plugin_name) == 0;
+
+        int32_t plugin_info_index = -1;
+        for (uint32_t j = 0; j < plugin_registry->plugin_definitions_len; j++)
+        {
+            PluginDefinition *plugin_definition = &plugin_registry->plugin_definitions[j];
+
+            char *plugin_info_name = use_default
+                                         ? plugin_definition->api
+                                         : plugin_definition->name;
+
+            char *plugin_to_add_name = use_default
+                                           ? requested_plugin->api_name
+                                           : requested_plugin->plugin_name;
+
+            if (strcmp(plugin_info_name, plugin_to_add_name) == 0)
+            {
+                plugin_info_index = (int32_t)j;
+                break;
+            }
+        }
+
+        if (plugin_info_index < 0)
+        {
+            printf("Error: couldn't add plugin api \"%s\"\n", requested_plugin->api_name);
+            return -1;
+        }
+        plugin_modules[*plugin_modules_len].plugin_definition = &plugin_registry->plugin_definitions[plugin_info_index];
+        (*plugin_modules_len)++;
+        // TODO: Add max index check here
+    }
+    
+    return 0;
+}
+
+int32_t plugin_api_load(PluginLoaderContext *context)
 {
     int ret;
     char *buffer;
-    PluginConfig plugin_config;
+    PluginRegistry plugin_config;
 
     // TODO: Make buffer not use malloc
     ret = plugin_loader_read_config(&buffer);
@@ -55,8 +108,8 @@ int32_t plugin_api_init(void)
     }
 
     // TODO: plugin add functionality
-    //          - Load in plugins to add
-    //          - Call dependency functions on plugins to add
+    //          - Load in plugin_definitions to add
+    //          - Call dependency functions on plugin_definitions to add
     //          - Check if dependencies are or are not included
     //          - Add dependencies where not already included
     //          - Repeat this until all dependencies loaded in
@@ -66,110 +119,82 @@ int32_t plugin_api_init(void)
 
     // TODO: Check if this algorithm can/should be made better/faster
     // Get the PluginInfo for the dlls of the user added
-    for (size_t i = 0; i < g_plugins_to_add_count; i++)
+
+    size_t plugin_modules_len = 0;
+    PluginModule plugin_modules[PLUGIN_LOADER_MAX_PLUGIN_LEN];
+    resolve_requested_plugins(context, plugin_modules, &plugin_modules_len, &plugin_config);
+
+    for (size_t i = 0; i < plugin_modules_len; i++)
     {
-        PluginToAddInfo *plugin_to_add = &g_plugins_to_add[i];
+        PluginModule *plugin_module = &plugin_modules[i];
 
-        bool use_default = strlen(plugin_to_add->plugin_name) == 0;
-
-        int32_t plugin_info_index = -1;
-        for (uint32_t j = 0; j < plugin_config.plugins_count; j++)
+        plugin_module->dll = LoadLibrary(plugin_module->plugin_definition->path);
+        if (!plugin_module->dll)
         {
-            PluginInfo *plugin_info = &plugin_config.plugins[j];
-
-            char *plugin_info_name = use_default
-                                         ? plugin_info->implements
-                                         : plugin_info->name;
-
-            char *plugin_to_add_name = use_default
-                                           ? plugin_to_add->api_name
-                                           : plugin_to_add->plugin_name;
-
-            if (strcmp(plugin_info_name, plugin_to_add_name) == 0)
-            {
-                plugin_info_index = (int32_t)j;
-                break;
-            }
-        }
-
-        if (plugin_info_index < 0)
-        {
-            printf("Error: couldn't add plugin api \"%s\"\n", plugin_to_add->api_name);
-            return -1;
-        }
-        g_plugin_data[g_plugin_data_count].plugin_info = &plugin_config.plugins[plugin_info_index];
-        g_plugin_data_count++;
-        // TODO: Add max index check here
-    }
-
-    for (size_t i = 0; i < g_plugin_data_count; i++)
-    {
-        PluginData *plugin_data = &g_plugin_data[i];
-
-        plugin_data->dll = LoadLibrary(plugin_data->plugin_info->path);
-        if (!plugin_data->dll)
-        {
-            printf("Error: Failed to load plugin \"%s\" at \"%s\"\n", plugin_data->plugin_info->name, plugin_data->plugin_info->path);
+            printf("Error: Failed to load plugin \"%s\" at \"%s\"\n", plugin_module->plugin_definition->name, plugin_module->plugin_definition->path);
             continue;
         }
 
+        // TODO: Check where this belongs, should be 0 if no dependencies call is found or maybe always init to 0 for the whole buffer?
+        plugin_module->dependencies_len = 0;
         static const char get_dependencies_postfix[] = "_get_dependencies";
-        char get_dependencies_function_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT + sizeof(get_dependencies_postfix)];
+        char get_dependencies_function_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN + sizeof(get_dependencies_postfix)];
 
         snprintf(get_dependencies_function_name, sizeof(get_dependencies_function_name),
-                 "%s%s", plugin_data->plugin_info->implements, get_dependencies_postfix);
+                 "%s%s", plugin_module->plugin_definition->api, get_dependencies_postfix);
 
-        FARPROC get_dependencies_proc = GetProcAddress(plugin_data->dll, get_dependencies_function_name);
+        FARPROC get_dependencies_proc = GetProcAddress(plugin_module->dll, get_dependencies_function_name);
         if (get_dependencies_proc)
         {
             // TODO: Make these functions casted to a function signature typedef
-            get_dependencies_proc(&plugin_data->dependencies, &plugin_data->dependencies_len);
+            get_dependencies_proc(&plugin_module->dependencies, &plugin_module->dependencies_len);
         }
 
         static const char get_api_postfix[] = "_get_api";
-        char get_api_function_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT + sizeof(get_api_postfix)];
+        char get_api_function_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN + sizeof(get_api_postfix)];
 
         snprintf(get_api_function_name, sizeof(get_api_function_name),
-                 "%s%s", plugin_data->plugin_info->implements, get_api_postfix);
+                 "%s%s", plugin_module->plugin_definition->api, get_api_postfix);
 
-        FARPROC get_api_proc = GetProcAddress(plugin_data->dll, get_api_function_name);
+        FARPROC get_api_proc = GetProcAddress(plugin_module->dll, get_api_function_name);
         if (get_api_proc)
         {
             // TODO: Make these functions casted to a function signature typedef
-            plugin_data->api = (void *)get_api_proc();
+            plugin_module->api = (void *)get_api_proc();
         }
         else
         {
-            printf("Error: no api found for plugin: %s\n", plugin_data->plugin_info->name);
+            printf("Error: no api found for plugin: %s\n", plugin_module->plugin_definition->name);
         }
     }
 
-    // TODO: Make sure the plugins get initialized in order with their dependencies
-    for (size_t i = 0; i < g_plugin_data_count; i++)
+    // TODO: Make sure the plugin_definitions get initialized in order with their dependencies
+    for (size_t i = 0; i < plugin_modules_len; i++)
     {
-        PluginData *plugin_data = &g_plugin_data[i];
+        PluginModule *plugin_module = &plugin_modules[i];
 
-        for (uint32_t j = 0; j < plugin_data->dependencies_len; j++)
+        for (uint32_t j = 0; j < plugin_module->dependencies_len; j++)
         {
-            char *dependency = plugin_data->dependencies[j];
-            for (uint32_t k = 0; k < g_plugin_data_count; k++)
+            // TODO: Handle when dependency is not found (add it from the registry if it is available)
+            char *dependency = plugin_module->dependencies[j];
+            for (uint32_t k = 0; k < plugin_modules_len; k++)
             {
-                PluginData *dep_plugin_data = &g_plugin_data[k];
-                if (strcmp(dep_plugin_data->plugin_info->implements, dependency) == 0)
+                PluginModule *dep_plugin_module = &plugin_modules[k];
+                if (strcmp(dep_plugin_module->plugin_definition->api, dependency) == 0)
                 {
 
                     static const char set_dependency_midfix[] = "_set_";
                     // TODO: Fix the sizing here
-                    char set_dependency_function_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT + sizeof(set_dependency_midfix)];
+                    char set_dependency_function_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN + sizeof(set_dependency_midfix)];
 
                     snprintf(set_dependency_function_name, sizeof(set_dependency_function_name),
-                             "%s%s%s", plugin_data->plugin_info->implements, set_dependency_midfix, dependency);
+                             "%s%s%s", plugin_module->plugin_definition->api, set_dependency_midfix, dependency);
 
-                    FARPROC set_dependency_proc = GetProcAddress(plugin_data->dll, set_dependency_function_name);
+                    FARPROC set_dependency_proc = GetProcAddress(plugin_module->dll, set_dependency_function_name);
                     if (set_dependency_proc)
                     {
-            // TODO: Make these functions casted to a function signature typedef
-                        set_dependency_proc(dep_plugin_data->api);
+                        // TODO: Make these functions casted to a function signature typedef
+                        set_dependency_proc(dep_plugin_module->api);
                     }
                     else
                     {
@@ -181,15 +206,15 @@ int32_t plugin_api_init(void)
 
         static const char init_postfix[] = "_init";
         // TODO: Fix the sizing here
-        char init_function_name[PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT + sizeof(init_postfix)];
+        char init_function_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN + sizeof(init_postfix)];
         snprintf(init_function_name, sizeof(init_function_name),
-                 "%s%s", plugin_data->plugin_info->implements, init_postfix);
+                 "%s%s", plugin_module->plugin_definition->api, init_postfix);
 
-        FARPROC init_proc = GetProcAddress(plugin_data->dll, init_function_name);
+        FARPROC init_proc = GetProcAddress(plugin_module->dll, init_function_name);
         if (init_proc)
         {
             // TODO: Make these functions casted to a function signature typedef
-            int32_t init_ret = (int32_t) init_proc();
+            int32_t init_ret = (int32_t)init_proc();
             // TODO: Do something with the return value;
             (void)init_ret;
         }
@@ -200,15 +225,15 @@ int32_t plugin_api_init(void)
     }
 
     // printf("\n=== Plugins ===\n");
-    // for (uint32_t i = 0; i < plugin_config.plugins_count; i++)
+    // for (uint32_t i = 0; i < plugin_config.plugin_definitions_len; i++)
     // {
-    //     printf("\n  [%d] Name: %s\n", i, plugin_config.plugins[i].name);
-    //     printf("      Path: %s\n", plugin_config.plugins[i].path);
-    //     printf("      Implements: %s\n", plugin_config.plugins[i].implements);
-    //     HMODULE loaded_dll = LoadLibrary(plugin_config.plugins[i].path);
+    //     printf("\n  [%d] Name: %s\n", i, plugin_config.plugin_definitions[i].name);
+    //     printf("      Path: %s\n", plugin_config.plugin_definitions[i].path);
+    //     printf("      Implements: %s\n", plugin_config.plugin_definitions[i].api);
+    //     HMODULE loaded_dll = LoadLibrary(plugin_config.plugin_definitions[i].path);
     //     if (!loaded_dll)
     //     {
-    //         printf("Error: Failed to load plugin \"%s\" at \"%s\"\n", plugin_config.plugins[i].name, plugin_config.plugins[i].path);
+    //         printf("Error: Failed to load plugin \"%s\" at \"%s\"\n", plugin_config.plugin_definitions[i].name, plugin_config.plugin_definitions[i].path);
     //         // return -1;
     //         continue;
     //     }
@@ -218,7 +243,7 @@ int32_t plugin_api_init(void)
     //     // FARPROC proc = GetProcAddress(loaded_dll, "test_func_");
     //     if (!proc)
     //     {
-    //         printf("Error: Plugin \"%s\" does not have a get_dependencies function defined\n", plugin_config.plugins[i].name);
+    //         printf("Error: Plugin \"%s\" does not have a get_dependencies function defined\n", plugin_config.plugin_definitions[i].name);
     //         continue;
     //     }
 
@@ -235,7 +260,7 @@ int32_t plugin_api_init(void)
     //     FARPROC proc2 = GetProcAddress(loaded_dll, "set_dependency_test_api_2");
     //     if (!proc2)
     //     {
-    //         printf("Error: Plugin \"%s\" does not have a set_dependency_test_api_2 function defined\n", plugin_config.plugins[i].name);
+    //         printf("Error: Plugin \"%s\" does not have a set_dependency_test_api_2 function defined\n", plugin_config.plugin_definitions[i].name);
     //         continue;
     //     }
     //     proc2(NULL);
@@ -243,34 +268,46 @@ int32_t plugin_api_init(void)
     return 0;
 }
 
-int32_t plugin_api_get(const char *api_name, const void **out_api_interface)
+int32_t plugin_api_get(const PluginLoaderContext *context, const char *api_name, const void **out_api_interface)
 {
-    (void *)api_name;
+    (void)context;
+    (void)api_name;
     printf("Doing api get: %s\n", api_name);
     out_api_interface = NULL;
     return 0;
 }
 
-// // TODO: Check why implements is needed!!!
-int32_t plugin_api_add(const char *api_name, const char *plugin_name)
+int32_t plugin_api_add(PluginLoaderContext *context, const char *api_name, const char *plugin_name)
 {
     if (api_name == NULL)
     {
         printf("Error - Api name is NULL\n");
         return -1;
     }
-    strncpy_s(g_plugins_to_add[g_plugins_to_add_count].api_name, PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT, api_name, strlen(api_name));
+    if (context->requested_plugins_len >= PLUGIN_LOADER_MAX_PLUGIN_LEN)
+    {
+        printf("Error - Cannot add plugin as max plugin_definitions is reached. Max plugin count \"%d\"\n", PLUGIN_LOADER_MAX_PLUGIN_LEN);
+        return -1;
+    }
+
+    // TODO:
+    snprintf(context->requested_plugins[context->requested_plugins_len].api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN,
+             "%s", api_name);
+
+    // strncpy_s(context
+    //     requested_plugins[plugins_to_add_count].api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN, api_name, strlen(api_name));
 
     if (plugin_name == NULL)
     {
-        g_plugins_to_add[g_plugins_to_add_count].plugin_name[0] = '\0';
+        context->requested_plugins[context->requested_plugins_len].plugin_name[0] = '\0';
     }
     else
     {
-        strncpy_s(g_plugins_to_add[g_plugins_to_add_count].plugin_name, PLUGIN_CONFIG_MAX_PLUGIN_NAME_COUNT, plugin_name, strlen(plugin_name));
+        snprintf(context->requested_plugins[context->requested_plugins_len].plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN,
+                 "%s", plugin_name);
     }
 
-    g_plugins_to_add_count++;
+    context->requested_plugins_len++;
     return 0;
     //     char *real_plugin_name = NULL;
 
@@ -290,9 +327,9 @@ int32_t plugin_api_add(const char *api_name, const char *plugin_name)
     //     }
 
     //     printf("Found plugin! Name: %s\n", real_plugin_name);
-    //     for (int i = 0; i < g_config.plugins_count; i++)
+    //     for (int i = 0; i < g_config.plugin_definitions_len; i++)
     //     {
-    //         Plugin *plugin = &g_config.plugins[i];
+    //         Plugin *plugin = &g_config.plugin_definitions[i];
     //         if (strcmp(plugin->name, real_plugin_name) == 0)
     //         {
     //             printf("plugin: %s - lib path: %s\n", plugin->name, plugin->path);
@@ -301,8 +338,8 @@ int32_t plugin_api_add(const char *api_name, const char *plugin_name)
     //         }
     //         // for (int j = 0; j < plugin->implements_count; j++)
     //         // {
-    //         // printf("%s == %s: %d\n", plugin->implements[j], real_plugin_name, strcmp(plugin->implements[j], real_plugin_name));
-    //         // if (strcmp(plugin->implements[j], real_plugin_name) == 0)
+    //         // printf("%s == %s: %d\n", plugin->api[j], real_plugin_name, strcmp(plugin->api[j], real_plugin_name));
+    //         // if (strcmp(plugin->api[j], real_plugin_name) == 0)
     //         // {
     //         //     printf("plugin: %s - lib path: %s\n", plugin->name, plugin->path);
     //         // }
@@ -310,13 +347,19 @@ int32_t plugin_api_add(const char *api_name, const char *plugin_name)
     //     }
 };
 
-PluginApi g_plugin_api = {
-    .init = plugin_api_init,
-    .add = plugin_api_add,
-    .get = plugin_api_get,
-};
-
 PluginApi *get_plugin_api()
 {
-    return &g_plugin_api;
+    static PluginLoaderContext context = {
+        .requested_plugins_len = 0,
+    };
+
+    static PluginApi plugin_api = {
+        .context = &context,
+
+        .add = plugin_api_add,
+        .load = plugin_api_load,
+        .get = plugin_api_get,
+    };
+
+    return &plugin_api;
 }

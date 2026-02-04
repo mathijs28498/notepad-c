@@ -33,69 +33,61 @@ void static_free(void *ptr)
     (void)ptr;
 }
 
-void safe_strcpy(char *dest, const char *src, size_t dest_size)
+int plugin_loader_parse_config(const char *json_str, PluginRegistry *plugin_registry)
 {
-    if (src == NULL)
-    {
-        dest[0] = '\0';
-        return;
-    }
-    strncpy_s(dest, dest_size, src, _TRUNCATE);
-}
+    memset(plugin_registry, 0, sizeof(PluginRegistry));
 
-int plugin_loader_parse_config(const char *json_str, PluginConfig *config_out)
-{
-    memset(config_out, 0, sizeof(PluginConfig));
-
-    cJSON *root = cJSON_Parse(json_str);
-    if (root == NULL)
+    cJSON *json_root = cJSON_Parse(json_str);
+    if (json_root == NULL)
     {
         printf("Error parsing JSON: %s\n", cJSON_GetErrorPtr());
         return -1;
     }
 
-    // Parse plugins array
-    cJSON *plugins_array = cJSON_GetObjectItem(root, "plugins");
-    if (!cJSON_IsArray(plugins_array))
+    const cJSON *json_plugin_definitions = cJSON_GetObjectItem(json_root, "plugin_definitions");
+    if (!cJSON_IsArray(json_plugin_definitions))
     {
-        printf("Plugins object is not an array");
+        printf("Plugin definitions object is not an array\n");
         return -1;
     }
 
-    int plugins_count = 0;
-    cJSON *plugin_item = NULL;
-    cJSON_ArrayForEach(plugin_item, plugins_array)
+    int plugin_definitions_len = 0;
+    cJSON *json_plugin_definition = NULL;
+    cJSON_ArrayForEach(json_plugin_definition, json_plugin_definitions)
     {
-        if (plugins_count >= PLUGIN_CONFIG_MAX_PLUGIN_COUNT)
+        if (plugin_definitions_len >= PLUGIN_REGISTRY_MAX_PLUGIN_LEN)
+        {
+            printf("Error - reached limit of plugin definitions: %d", PLUGIN_REGISTRY_MAX_PLUGIN_LEN);
             break;
-
-        cJSON *name = cJSON_GetObjectItem(plugin_item, "name");
-        cJSON *path = cJSON_GetObjectItem(plugin_item, "path");
-        cJSON *implements = cJSON_GetObjectItem(plugin_item, "implements");
-
-        if (cJSON_IsString(name))
-        {
-            safe_strcpy(config_out->plugins[plugins_count].name,
-                        name->valuestring, PLUGIN_CONFIG_MAX_PLUGIN_NAME_COUNT);
         }
 
-        if (cJSON_IsString(path))
+        // TODO: Make helper functions for different types (like string)
+        // TODO: Add error handling
+        const cJSON *json_plugin_name = cJSON_GetObjectItem(json_plugin_definition, "name");
+        if (cJSON_IsString(json_plugin_name))
         {
-            safe_strcpy(config_out->plugins[plugins_count].path,
-                        path->valuestring, PLUGIN_CONFIG_MAX_PLUGIN_PATH_COUNT);
+            snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN,
+                     "%s", json_plugin_name->valuestring);
         }
 
-        if (cJSON_IsString(implements))
+        const cJSON *json_plugin_path = cJSON_GetObjectItem(json_plugin_definition, "path");
+        if (cJSON_IsString(json_plugin_path))
         {
-            safe_strcpy(config_out->plugins[plugins_count].implements,
-                        implements->valuestring, PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT);
+            snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].path, PLUGIN_REGISTRY_MAX_PLUGIN_PATH_LEN,
+                     "%s", json_plugin_path->valuestring);
         }
 
-        plugins_count++;
+        const cJSON *json_plugin_api = cJSON_GetObjectItem(json_plugin_definition, "api");
+        if (cJSON_IsString(json_plugin_api))
+        {
+            snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].api, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN,
+                     "%s", json_plugin_api->valuestring);
+        }
+
+        plugin_definitions_len++;
     }
-    config_out->plugins_count = plugins_count;
+    plugin_registry->plugin_definitions_len = plugin_definitions_len;
 
-    cJSON_Delete(root);
+    cJSON_Delete(json_root);
     return 0;
 }
-

@@ -8,7 +8,7 @@ int32_t plugin_loader_read_config(char **buffer_out)
 {
     FILE *system_json_file;
     int ret;
-    ret = fopen_s(&system_json_file, "../plugin_config.json", "rb");
+    ret = fopen_s(&system_json_file, "../plugin_registry.json", "rb");
 
     // TODO: Do this without malloc (get a define with the size of the file)
     fseek(system_json_file, 0, SEEK_END);

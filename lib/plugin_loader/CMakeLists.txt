@@ -1,5 +1,6 @@
 # TODO: Add platform independent plugin loader
 
+# TODO: Change name to PluginManager
 add_library(plugin_loader)
 
 target_sources(plugin_loader
