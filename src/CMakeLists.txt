@@ -20,7 +20,7 @@ target_link_libraries(program
         # ProjectCommon
         # TestPlugin
         plugin_common
-        plugin_loader
+        plugin_manager
         test_lib
         test_yes
 )

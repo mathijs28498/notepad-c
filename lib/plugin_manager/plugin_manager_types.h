@@ -1,0 +1,87 @@
+#pragma once
+#ifndef PLUGIN_MANAGER_TYPES_H
+#define PLUGIN_MANAGER_TYPES_H
+
+#include <stdint.h>
+
+// TODO: Make this into cmake variables
+#define PLUGIN_REGISTRY_MAX_PLUGIN_LEN 64
+#define PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN 64
+#define PLUGIN_REGISTRY_MAX_PLUGIN_PATH_LEN 512
+#define PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN 64
+#define PLUGIN_MANAGER_MAX_PLUGINS_LEN 64
+
+typedef struct PluginDefinition
+{
+    char name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
+    char path[PLUGIN_REGISTRY_MAX_PLUGIN_PATH_LEN];
+    char api[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
+} PluginDefinition;
+
+typedef struct PluginRegistry
+{
+    uint32_t plugin_definitions_len;
+    PluginDefinition plugin_definitions[PLUGIN_REGISTRY_MAX_PLUGIN_LEN];
+} PluginRegistry;
+
+typedef struct RequestedPlugin
+{
+    char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
+    char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
+} RequestedPlugin;
+
+#ifndef _WINDEF_
+struct HINSTANCE__;
+typedef struct HINSTANCE__ *HMODULE;
+#endif
+
+typedef struct PluginManagerBaseApi
+{
+    void *context;
+} PluginManagerBaseApi;
+
+typedef struct PluginModule
+{
+    const PluginDefinition *plugin_definition;
+    HMODULE handle;
+
+    char **dependencies;
+    uint32_t dependencies_len;
+    PluginManagerBaseApi *api;
+} PluginModule;
+
+typedef struct PluginStatic
+{
+    const char *api_name;
+    const char *plugin_name;
+
+    char **dependencies;
+    uint32_t dependencies_len;
+    PluginManagerBaseApi *api;
+} PluginStatic;
+
+#define PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN 2
+
+// TODO: Add a logger api to this context
+typedef struct PluginManagerSetupContext
+{
+    size_t internal_plugins_len;
+    struct PluginStatic internal_plugins[PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN];
+
+    size_t requested_plugins_len;
+    RequestedPlugin requested_plugins[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+} PluginManagerSetupContext;
+
+typedef struct ApiInstance
+{
+    const char *api_name;
+    void *api;
+} ApiInstance;
+
+typedef struct PluginManagerRuntimeContext
+{
+    size_t api_instances_len;
+    ApiInstance api_instances[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+} PluginManagerRuntimeContext;
+
+#endif // #ifndef PLUGIN_MANAGER_TYPES_H

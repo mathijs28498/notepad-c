@@ -1,5 +1,5 @@
 #pragma once
-#ifndef PLUGIN_LOADER_INCLUDE_H
+#ifndef PLUGIN_MANAGER_INCLUDE_H
 
 
-#endif // #ifndef PLUGIN_LOADER_INCLUDE_H
+#endif // #ifndef PLUGIN_MANAGER_INCLUDE_H

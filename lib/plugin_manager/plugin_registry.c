@@ -1,39 +1,14 @@
-#include "plugin_loader_json_parser.h"
+#include "plugin_registry.h"
 
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <cJSON.h>
 #include <stdio.h>
 
-// 1. Define a static memory arena (e.g., 4KB)
-#define STATIC_BUFFER_SIZE 4096
-static unsigned char static_buffer[STATIC_BUFFER_SIZE];
-static size_t buffer_offset = 0;
+#include "plugin_manager_types.h"
 
-// 2. Custom Malloc: Allocates from the static buffer
-void *static_malloc(size_t size)
-{
-    // Ensure memory alignment (8-byte alignment is standard for most architectures)
-    size_t aligned_size = (size + 7) & ~7;
-
-    if (buffer_offset + aligned_size > STATIC_BUFFER_SIZE)
-    {
-        return NULL; // Out of memory
-    }
-
-    void *ptr = (void *)(static_buffer + buffer_offset);
-    buffer_offset += aligned_size;
-    return ptr;
-}
-
-// 3. Custom Free: No-op (we reset the entire buffer at once later)
-void static_free(void *ptr)
-{
-    // Individual frees are not supported in a simple bump allocator.
-    // Memory is reclaimed by resetting 'buffer_offset' to 0.
-    (void)ptr;
-}
-
-int plugin_loader_parse_config(const char *json_str, PluginRegistry *plugin_registry)
+int32_t plugin_registry_deserialize_json(const char *json_str, PluginRegistry *plugin_registry)
 {
     memset(plugin_registry, 0, sizeof(PluginRegistry));
 

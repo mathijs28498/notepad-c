@@ -1,14 +1,15 @@
-#include "plugin_loader_config_reader.h"
+#include "file_io.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-int32_t plugin_loader_read_config(char **buffer_out)
+// TODO: Replace malloc
+int32_t file_io_read(const char *path, char **buffer_out)
 {
     FILE *system_json_file;
     int ret;
-    ret = fopen_s(&system_json_file, "../plugin_registry.json", "rb");
+    ret = fopen_s(&system_json_file, path, "rb");
 
     // TODO: Do this without malloc (get a define with the size of the file)
     fseek(system_json_file, 0, SEEK_END);
