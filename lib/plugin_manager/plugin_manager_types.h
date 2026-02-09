@@ -11,6 +11,8 @@
 #define PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN 64
 #define PLUGIN_MANAGER_MAX_PLUGINS_LEN 64
 
+#define PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN 2
+
 typedef struct PluginDefinition
 {
     char name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
@@ -52,19 +54,21 @@ typedef struct PluginModule
 
 typedef struct PluginStatic
 {
-    const char *api_name;
-    const char *plugin_name;
+    const char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
+    const char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
 
     char **dependencies;
     uint32_t dependencies_len;
     PluginManagerBaseApi *api;
 } PluginStatic;
 
-#define PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN 2
 
-// TODO: Add a logger api to this context
+struct LoggerApi;
+
 typedef struct PluginManagerSetupContext
 {
+    struct LoggerApi *logger_api;
+
     size_t internal_plugins_len;
     struct PluginStatic internal_plugins[PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN];
 
@@ -74,7 +78,7 @@ typedef struct PluginManagerSetupContext
 
 typedef struct ApiInstance
 {
-    const char *api_name;
+    const char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
     void *api;
 } ApiInstance;
 

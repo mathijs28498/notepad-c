@@ -9,13 +9,17 @@
 #include <Windows.h>
 #include <assert.h>
 
+// TODO: Change the name of this file
 #include <plugin_manager_api.h>
+
 #include <environment_api.h>
+#include <environment_plugin.h>
+#include <logger_api.h>
+#include <logger_plugin.h>
 
 #include "file_io.h"
 #include "plugin_registry.h"
 #include "plugin_manager_types.h"
-#include "environment_plugin.h"
 #include "plugin_manager_loader.h"
 
 PluginManagerRuntimeContext *get_plugin_manager_runtime_context()
@@ -42,15 +46,36 @@ int32_t plugin_manager_init(PluginManagerSetupContext **setup_context, int argc,
 
         PluginStatic environment_plugin = {
             .api_name = "environment_api",
-            .plugin_name = "environment_plugin",
+            .plugin_name = "internal_environment_plugin",
             .dependencies_len = 0,
             .api = (PluginManagerBaseApi *)environment_api,
         };
 
-        new_setup_context->internal_plugins[new_setup_context->internal_plugins_len] = environment_plugin;
+        memcpy(&new_setup_context->internal_plugins[new_setup_context->internal_plugins_len],
+               &environment_plugin,
+               sizeof(new_setup_context->internal_plugins[new_setup_context->internal_plugins_len]));
         new_setup_context->internal_plugins_len++;
     }
 
+    {
+        assert(new_setup_context->internal_plugins_len < sizeof(new_setup_context->internal_plugins) / sizeof(new_setup_context->internal_plugins[0]));
+
+        LoggerApi *logger_api = logger_api_get_api();
+        new_setup_context->logger_api = logger_api;
+        new_setup_context->logger_api->log(new_setup_context->logger_api->context, LOG_LEVEL_INFO, "plugin_manager", "This works yes? %d", 1000);
+
+        PluginStatic logger_plugin = {
+            .api_name = "logger_api",
+            .plugin_name = "internal_logger_plugin",
+            .dependencies_len = 0,
+            .api = (PluginManagerBaseApi *)logger_api,
+        };
+
+        memcpy(&new_setup_context->internal_plugins[new_setup_context->internal_plugins_len],
+               &logger_plugin,
+               sizeof(new_setup_context->internal_plugins[new_setup_context->internal_plugins_len]));
+        new_setup_context->internal_plugins_len++;
+    }
     *setup_context = new_setup_context;
     return 0;
 }
@@ -59,13 +84,13 @@ int32_t plugin_manager_add(PluginManagerSetupContext *setup_context, const char 
 {
     if (api_name == NULL)
     {
-        printf("Error - Api name is NULL\n");
+        setup_context->logger_api->log(setup_context->logger_api->context, LOG_LEVEL_ERROR, "plugin_manager", "Api name is NULL");
         return -1;
     }
 
     if (setup_context->requested_plugins_len >= PLUGIN_MANAGER_MAX_PLUGINS_LEN)
     {
-        printf("Error - Cannot add plugin as max plugin_definitions is reached. Max plugin count \"%d\"\n", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
+        setup_context->logger_api->log(setup_context->logger_api->context, LOG_LEVEL_ERROR, "plugin_manager", "Cannot add plugin as max plugin_definitions is reached. Max plugin count \"%d\"", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
         return -1;
     }
 
@@ -101,7 +126,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     int ret;
     char *buffer;
     PluginRegistry plugin_registry;
-    (void) runtime_context;
+    (void)runtime_context;
 
     // TODO: Make buffer not use malloc
     ret = file_io_read("../plugin_registry.json", &buffer);
@@ -110,7 +135,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
     if (ret < 0)
     {
-        printf("Error - unable to parse plugin config: %d", ret);
+        setup_context->logger_api->log(setup_context->logger_api->context, LOG_LEVEL_ERROR, "plugin_manager", "unable to parse plugin config: %d", ret);
         return ret;
     }
 
@@ -131,12 +156,12 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     ret = initialize_plugins(plugin_modules, plugin_modules_len);
 
     // TODO: Remove this
-    EnvironmentApi *env_api = (EnvironmentApi *) setup_context->internal_plugins[0].api;
+    EnvironmentApi *env_api = (EnvironmentApi *)setup_context->internal_plugins[0].api;
     int argc;
     char **argv;
     env_api->get_args(env_api->context, &argc, &argv);
 
-    printf("DBG - argc: %d, argv[0]: %s\n", argc, argv[0]);
+    setup_context->logger_api->log(setup_context->logger_api->context, LOG_LEVEL_INFO, "plugin_manager", "argc: %d, argv[0]: %s", argc, argv[0]);
 
     free(setup_context);
 
@@ -151,4 +176,3 @@ int32_t plugin_manager_get(const PluginManagerRuntimeContext *runtime_context, c
     api_interface = NULL;
     return 0;
 }
-

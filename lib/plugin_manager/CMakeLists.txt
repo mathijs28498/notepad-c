@@ -5,7 +5,6 @@ add_library(plugin_manager)
 
 target_sources(plugin_manager
     PRIVATE
-        environment_plugin.c
         file_io.c
         plugin_manager_loader.c
         plugin_manager.c
@@ -19,4 +18,7 @@ target_link_libraries(plugin_manager
     PRIVATE
         plugin_common
         cjson
+        internal_plugins
 )
+
+add_subdirectory(internal_plugins)
