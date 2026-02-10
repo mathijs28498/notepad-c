@@ -21,9 +21,6 @@
         static const char *const plugin_dependencies[] = {                                        \
             DEPENDENCY_LIST(PLUGIN_DEPENDENCY_STRING)};                                           \
                                                                                                   \
-        assert(dependencies != NULL);                                                             \
-        assert(count != NULL);                                                                    \
-                                                                                                  \
         *dependencies = plugin_dependencies;                                                      \
         *count = (uint32_t)(sizeof(plugin_dependencies) / sizeof(plugin_dependencies[0]));        \
     }                                                                                             \

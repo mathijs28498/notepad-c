@@ -3,6 +3,7 @@
 #define PLUGIN_MANAGER_TYPES_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // TODO: Make this into cmake variables
 #define PLUGIN_REGISTRY_MAX_PLUGIN_LEN 64
@@ -15,9 +16,9 @@
 
 typedef struct PluginDefinition
 {
-    char name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
+    char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
+    char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
     char path[PLUGIN_REGISTRY_MAX_PLUGIN_PATH_LEN];
-    char api[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
 } PluginDefinition;
 
 typedef struct PluginRegistry
@@ -30,6 +31,7 @@ typedef struct RequestedPlugin
 {
     char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
     char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
+    bool resolved;
 } RequestedPlugin;
 
 #ifndef _WINDEF_
@@ -78,7 +80,7 @@ typedef struct PluginManagerSetupContext
 
 typedef struct ApiInstance
 {
-    const char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
+    char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
     void *api;
 } ApiInstance;
 

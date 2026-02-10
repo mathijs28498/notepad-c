@@ -22,6 +22,8 @@
 #include "plugin_manager_types.h"
 #include "plugin_manager_loader.h"
 
+#define LOGGER_API_TAG "plugin_manager"
+
 PluginManagerRuntimeContext *get_plugin_manager_runtime_context()
 {
     static PluginManagerRuntimeContext context = {0};
@@ -62,7 +64,6 @@ int32_t plugin_manager_init(PluginManagerSetupContext **setup_context, int argc,
 
         LoggerApi *logger_api = logger_api_get_api();
         new_setup_context->logger_api = logger_api;
-        new_setup_context->logger_api->log(new_setup_context->logger_api->context, LOG_LEVEL_INFO, "plugin_manager", "This works yes? %d", 1000);
 
         PluginStatic logger_plugin = {
             .api_name = "logger_api",
@@ -84,13 +85,13 @@ int32_t plugin_manager_add(PluginManagerSetupContext *setup_context, const char 
 {
     if (api_name == NULL)
     {
-        setup_context->logger_api->log(setup_context->logger_api->context, LOG_LEVEL_ERROR, "plugin_manager", "Api name is NULL");
+        LOG_ERR(setup_context->logger_api, "Api name is NULL");
         return -1;
     }
 
     if (setup_context->requested_plugins_len >= PLUGIN_MANAGER_MAX_PLUGINS_LEN)
     {
-        setup_context->logger_api->log(setup_context->logger_api->context, LOG_LEVEL_ERROR, "plugin_manager", "Cannot add plugin as max plugin_definitions is reached. Max plugin count \"%d\"", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
+        LOG_ERR(setup_context->logger_api, "Cannot add plugin as max plugin_definitions is reached. Max plugin count \"%d\"", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
         return -1;
     }
 
@@ -106,6 +107,8 @@ int32_t plugin_manager_add(PluginManagerSetupContext *setup_context, const char 
         snprintf(setup_context->requested_plugins[setup_context->requested_plugins_len].plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN,
                  "%s", plugin_name);
     }
+
+    setup_context->requested_plugins[setup_context->requested_plugins_len].resolved = false;
 
     setup_context->requested_plugins_len++;
     return 0;
@@ -135,33 +138,52 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
     if (ret < 0)
     {
-        setup_context->logger_api->log(setup_context->logger_api->context, LOG_LEVEL_ERROR, "plugin_manager", "unable to parse plugin config: %d", ret);
+        LOG_ERR(setup_context->logger_api, "unable to parse plugin config: %d", ret);
         return ret;
     }
 
     size_t plugin_modules_len = 0;
     PluginModule plugin_modules[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
-    // TODO: Add a way to differentiate between system and module plugins
-    ret = resolve_requested_plugins(setup_context->requested_plugins, setup_context->requested_plugins_len, &plugin_registry, plugin_modules, &plugin_modules_len);
+    ret = resolve_requested_plugins_registry(
+        setup_context->logger_api,
+        setup_context->requested_plugins,
+        setup_context->requested_plugins_len,
+        &plugin_registry,
+        plugin_modules,
+        &plugin_modules_len);
 
-    ret = load_plugin_modules(plugin_modules, plugin_modules_len);
+    ret = load_plugin_modules(
+        setup_context->logger_api,
+        plugin_modules,
+        plugin_modules_len,
+        runtime_context->api_instances,
+        &runtime_context->api_instances_len);
+
+    // size_t plugin_static_list_len = 0;
+    // PluginStatic plugin_static_list[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+    ret = resolve_requested_plugins_internal(
+        setup_context->logger_api,
+        setup_context->requested_plugins,
+        setup_context->requested_plugins_len,
+        setup_context->internal_plugins,
+        setup_context->internal_plugins_len,
+        runtime_context->api_instances,
+        &runtime_context->api_instances_len);
+        // plugin_static_list,
+        // &plugin_static_list_len);
 
     // TODO: Add resolve unresolved dependencies recursively
 
-    ret = resolve_plugin_dependencies(plugin_modules, plugin_modules_len);
+    ret = resolve_plugin_module_dependencies(
+        setup_context->logger_api, 
+        runtime_context->api_instances,
+        runtime_context->api_instances_len,
+        plugin_modules, 
+        plugin_modules_len);
 
-    // TODO: Make own method - resolve dependencies
     // TODO: Make sure the plugin_definitions get initialized in order with their dependencies
 
-    ret = initialize_plugins(plugin_modules, plugin_modules_len);
-
-    // TODO: Remove this
-    EnvironmentApi *env_api = (EnvironmentApi *)setup_context->internal_plugins[0].api;
-    int argc;
-    char **argv;
-    env_api->get_args(env_api->context, &argc, &argv);
-
-    setup_context->logger_api->log(setup_context->logger_api->context, LOG_LEVEL_INFO, "plugin_manager", "argc: %d, argv[0]: %s", argc, argv[0]);
+    ret = initialize_plugins(setup_context->logger_api, plugin_modules, plugin_modules_len);
 
     free(setup_context);
 

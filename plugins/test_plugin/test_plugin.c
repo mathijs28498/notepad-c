@@ -3,17 +3,19 @@
 #include <plugin_impl.h>
 #include <test_api.h>
 #include <test_api_2.h>
+#include <logger_api.h>
 
-#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 
 #define PLUGIN_API_NAME test_api
+#define LOGGER_API_TAG "test api"
 
-#define TEST_API_DEPENDENCIES(X) \
+#define PLUGIN_DEPENDENCIES(X)           \
+    X(LoggerApi, logger_api, logger_api) \
     X(TestApi2, test_api_2, test_api2)
 
-PLUGIN_REGISTER_DEPENDENCIES(TestApiContext, TEST_API_DEPENDENCIES);
+PLUGIN_REGISTER_DEPENDENCIES(TestApiContext, PLUGIN_DEPENDENCIES);
 
 int32_t do_something(TestApiContext *context)
 {
@@ -39,7 +41,7 @@ PLUGIN_REGISTER_API(get_api, TestApi);
 int32_t init(TestApiContext *context)
 {
     TestApi2 *test_api_2 = context->test_api_2;
-    printf("test_plugin init: \"%d\"\n", test_api_2->add(test_api_2->context, 231, 452));
+    LOG_INF(context->logger_api, "test_plugin init: \"%d\"", test_api_2->add(test_api_2->context, 231, 452));
     return 0;
 }
 

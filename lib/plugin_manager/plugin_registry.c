@@ -41,7 +41,7 @@ int32_t plugin_registry_deserialize_json(const char *json_str, PluginRegistry *p
         const cJSON *json_plugin_name = cJSON_GetObjectItem(json_plugin_definition, "name");
         if (cJSON_IsString(json_plugin_name))
         {
-            snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN,
+            snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN,
                      "%s", json_plugin_name->valuestring);
         }
 
@@ -55,7 +55,7 @@ int32_t plugin_registry_deserialize_json(const char *json_str, PluginRegistry *p
         const cJSON *json_plugin_api = cJSON_GetObjectItem(json_plugin_definition, "api");
         if (cJSON_IsString(json_plugin_api))
         {
-            snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].api, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN,
+            snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN,
                      "%s", json_plugin_api->valuestring);
         }
 

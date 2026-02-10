@@ -25,4 +25,10 @@ typedef struct LoggerApi
 
 #pragma pack(pop)
 
+#define LOG(logger_api, log_level, ...) (logger_api->log(logger_api->context, log_level, LOGGER_API_TAG, __VA_ARGS__))
+#define LOG_ERR(logger_api, ...) LOG(logger_api, LOG_LEVEL_ERROR, __VA_ARGS__)
+#define LOG_WRN(logger_api, ...) LOG(logger_api, LOG_LEVEL_WARNING, __VA_ARGS__)
+#define LOG_INF(logger_api, ...) LOG(logger_api, LOG_LEVEL_INFO, __VA_ARGS__)
+#define LOG_DBG(logger_api, ...) LOG(logger_api, LOG_LEVEL_DEBUG, __VA_ARGS__)
+
 #endif // #ifndef LOGGER_API_H
