@@ -4,12 +4,12 @@
 #include <test_api.h>
 #include <test_api_2.h>
 #include <logger_api.h>
+LOGGER_API_REGISTER(test_api, LOG_LEVEL_DEBUG)
 
 #include <stdint.h>
 #include <stdio.h>
 
 #define PLUGIN_API_NAME test_api
-#define LOGGER_API_TAG "test api"
 
 #define PLUGIN_DEPENDENCIES(X)           \
     X(LoggerApi, logger_api, logger_api) \
@@ -41,7 +41,7 @@ PLUGIN_REGISTER_API(get_api, TestApi);
 int32_t init(TestApiContext *context)
 {
     TestApi2 *test_api_2 = context->test_api_2;
-    LOG_INF(context->logger_api, "test_plugin init: \"%d\"", test_api_2->add(test_api_2->context, 231, 452));
+    LOG_INF(context->logger_api, "test_plugin init: '%d'", test_api_2->add(test_api_2->context, 231, 452));
     return 0;
 }
 

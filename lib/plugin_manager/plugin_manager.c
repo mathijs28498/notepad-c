@@ -15,13 +15,13 @@
 #include <environment_plugin.h>
 #include <logger_api.h>
 #include <logger_plugin.h>
+LOGGER_API_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 
 #include "file_io.h"
 #include "plugin_registry.h"
 #include "plugin_manager_types.h"
 #include "plugin_manager_loader.h"
 
-#define LOGGER_API_TAG "plugin_manager"
 
 #define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 255
 
@@ -92,7 +92,7 @@ int32_t plugin_manager_add(PluginManagerSetupContext *setup_context, const char 
 
     if (setup_context->requested_plugins_len >= PLUGIN_MANAGER_MAX_PLUGINS_LEN)
     {
-        LOG_ERR(setup_context->logger_api, "Cannot add plugin as max plugin_definitions is reached. Max plugin count \"%d\"", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
+        LOG_ERR(setup_context->logger_api, "Cannot add plugin as max plugin_definitions is reached. Max plugin count '%d'", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
         return -1;
     }
 
@@ -120,7 +120,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     int ret;
     char *buffer;
     PluginRegistry plugin_registry;
-    (void)runtime_context;
+    runtime_context->logger_api = setup_context->logger_api;
 
     TODO("Make buffer not use malloc")
     ret = file_io_read("../plugin_registry.json", &buffer);
@@ -136,8 +136,13 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     size_t plugin_modules_len = 0;
     PluginModule plugin_modules[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
 
-    int i = 0;
-    while (setup_context->requested_plugins_len > 0 && i < PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH)
+    SAFE_WHILE(
+        setup_context->requested_plugins_len > 0,
+        PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH,
+        {
+            LOG_ERR(setup_context->logger_api, "Plugin manager dependency solver exceeded max interations");
+            return -1;
+        })
     {
         ret = resolve_requested_plugins_registry(
             setup_context->logger_api,
@@ -193,8 +198,6 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
         {
             return ret;
         }
-
-        i++;
     }
 
     uint32_t sorted_plugin_modules_indices[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
@@ -215,11 +218,20 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     return 0;
 }
 
-int32_t plugin_manager_get(const PluginManagerRuntimeContext *runtime_context, const char *api_name, void **api_interface)
+int32_t plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const char *api_name, void **api_interface)
 {
-    (void)runtime_context;
-    (void)api_name;
-    printf("Doing api get: %s\n", api_name);
-    api_interface = NULL;
-    return 0;
+    for (size_t i = 0; i < runtime_context->api_instances_len; i++)
+    {
+        ApiInstance *api_instance = &runtime_context->api_instances[i];
+        if (strcmp(api_name, api_instance->api_name) == 0)
+        {
+            *api_interface = api_instance->api;
+            return 0;
+        }
+    }
+
+    *api_interface = NULL;
+    LOG_ERR(runtime_context->logger_api, "Failed to get api '%s'", api_name);
+
+    return -1;
 }

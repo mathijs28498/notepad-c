@@ -103,6 +103,7 @@ typedef struct ApiInstance
 
 typedef struct PluginManagerRuntimeContext
 {
+    struct LoggerApi *logger_api;
     size_t api_instances_len;
     ApiInstance api_instances[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
 } PluginManagerRuntimeContext;

@@ -6,11 +6,10 @@
 #include <stdio.h>
 
 #include <logger_api.h>
+LOGGER_API_REGISTER(plugin_manager_loader, LOG_LEVEL_DEBUG)
 #include <plugin_manager_common.h>
 
 #include "plugin_manager_types.h"
-
-#define LOGGER_API_TAG "plugin_manager_loader"
 
 TODO("Check if this algorithm can/should be made better/faster")
 int32_t resolve_requested_plugins_registry(
@@ -49,7 +48,7 @@ int32_t resolve_requested_plugins_registry(
 
         if (plugin_definition_index < 0)
         {
-            LOG_DBG(logger_api, "Plugin not found in registry, looking for internal plugin \"%s\"", requested_plugin->api_name);
+            LOG_DBG(logger_api, "Plugin '%s' not found in registry, looking for internal plugin", requested_plugin->api_name);
             continue;
         }
 
@@ -77,7 +76,7 @@ int32_t load_plugin_modules(
         HMODULE handle = LoadLibrary(plugin_module->plugin_definition->path);
         if (!handle)
         {
-            LOG_ERR(logger_api, "Failed to load plugin \"%s\" at \"%s\"", plugin_module->plugin_definition->plugin_name, plugin_module->plugin_definition->path);
+            LOG_ERR(logger_api, "Failed to load plugin '%s' at '%s'", plugin_module->plugin_definition->plugin_name, plugin_module->plugin_definition->path);
             return -1;
         }
 
@@ -190,7 +189,7 @@ int32_t resolve_requested_plugins_internal(
 
         if (internal_plugin_index < 0)
         {
-            LOG_ERR(logger_api, "Plugin not found as internal plugin \"%s\"", requested_plugin->api_name);
+            LOG_ERR(logger_api, "Plugin '%s' not found as internal plugin", requested_plugin->api_name);
             return -1;
         }
 
@@ -263,7 +262,7 @@ int32_t resolve_plugin_module_dependencies(
             requested_plugin->plugin_name[0] = '\0';
             requested_plugin->resolved = false;
             (*requested_plugins_len)++;
-            LOG_DBG(logger_api, "dependency '%s' not found, adding to requested plugins", requested_plugin->api_name);
+            LOG_DBG(logger_api, "Dependency '%s' not found, adding to requested plugins", requested_plugin->api_name);
         }
     }
 
@@ -339,8 +338,13 @@ int32_t calculate_plugin_module_initialization_order(
 
     TODO("Add upper bound to while loop while macro")
     // Iteratively fill sorted indices
-    // SAFE_WHILE
-    while (queue_head != queue_tail)
+    SAFE_WHILE(
+        queue_head != queue_tail,
+        PLUGIN_MANAGER_MAX_PLUGINS_LEN + 1,
+        {
+            LOG_ERR(logger_api, "Plugin initialization topological sort exceeded max iterations");
+            return -1;
+        })
     {
         uint32_t current_idx = sorted_plugin_modules_indices[queue_head];
         queue_head++;

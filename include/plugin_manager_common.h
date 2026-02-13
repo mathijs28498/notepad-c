@@ -28,23 +28,33 @@
 #endif // #if IS_DEBUG
 
 // TODO: Look at naming
-#define CONCAT_IMPL(x, y) x##y
-#define MACRO_CONCAT(x, y) CONCAT_IMPL(x, y)
-#define UNIQUE_VAR(prefix) MACRO_CONCAT(prefix, __LINE__)
+#define SAFE_WHILE_CONCAT_(x, y) x##y
+#define SAFE_WHILE_CONCAT(x, y) SAFE_WHILE_CONCAT_(x, y)
+#define UNIQUE_VAR(prefix) SAFE_WHILE_CONCAT(prefix, __LINE__)
 
-#define SAFE_WHILE(condition, max_iteration, on_fail) \
-    for (uint32_t UNIQUE_VAR(_safety_loop_) = 0;      \
-         (UNIQUE_VAR(_safety_loop_) <= (max_iters));  \
-         UNIQUE_VAR(_safety_loop_)++)                 \
-        if (UNIQUE_VAR(_safety_loop_) == (max_iters)) \
-        {                                             \
-            on_fail;                                  \
-            break;                                    \
-        }                                             \
-        else if (!(condition))                        \
-        {                                             \
-            break;                                    \
-        }                                             \
+#define SAFE_WHILE(condition, max_iterations, on_fail)     \
+    for (uint32_t UNIQUE_VAR(_safety_loop_) = 0;           \
+         (UNIQUE_VAR(_safety_loop_) <= (max_iterations));  \
+         UNIQUE_VAR(_safety_loop_)++)                      \
+        if (UNIQUE_VAR(_safety_loop_) == (max_iterations)) \
+        {                                                  \
+            on_fail;                                       \
+            break;                                         \
+        }                                                  \
+        else if (!(condition))                             \
+        {                                                  \
+            break;                                         \
+        }                                                  \
         else
+
+#ifndef STATIC_ASSERT
+#define STATIC_ASSERT_CONCAT_(a, b) a##b
+#define STATIC_ASSERT_CONCAT(a, b) STATIC_ASSERT_CONCAT_(a, b)
+
+#define STATIC_ASSERT(expr, msg) \
+    typedef char STATIC_ASSERT_CONCAT(assertion_failed_, __LINE__)[(expr) ? 1 : -1]
+#endif
+
+TODO("Make a macro for addressing any function that uses the context when you give the api")
 
 #endif // PLUGIN_MANAGER_COMMON_H

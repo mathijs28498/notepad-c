@@ -17,7 +17,7 @@ struct PluginManagerRuntimeContext *get_plugin_manager_runtime_context();
 int32_t plugin_manager_init(struct PluginManagerSetupContext **setup_context, int argc, char **argv);
 int32_t plugin_manager_add(struct PluginManagerSetupContext *setup_context, const char *api_name, const char *plugin_name);
 int32_t plugin_manager_load(struct PluginManagerSetupContext *setup_context, struct PluginManagerRuntimeContext *runtime_context);
-int32_t plugin_manager_get(const struct PluginManagerRuntimeContext *runtime_context, const char *api_name, void **api_interface);
+int32_t plugin_manager_get(struct PluginManagerRuntimeContext *runtime_context, const char *api_name, void **api_interface);
 
 #endif // #ifndef STATIC_LINKING
 
@@ -28,7 +28,7 @@ TODO("Add wWinMain here when necessary")
     {                                                                 \
         struct PluginManagerSetupContext *__context;                  \
         (void)plugin_manager_init(&__context, argc, argv);            \
-        return plugin_api_main(__context);                                     \
+        return plugin_api_main(__context);                            \
     }                                                                 \
     int plugin_api_main(struct PluginManagerSetupContext *__context)
 
@@ -47,7 +47,7 @@ TODO("Add wWinMain here when necessary")
 #ifdef PLUGIN_MANAGER_STATIC_LINKING
 #define PLUGIN_MANAGER_API_GET(api_name, out_api_interface)
 #else
-#define PLUGIN_MANAGER_API_GET(api_name, out_api_interface) (plugin_manager_get(get_plugin_manager_runtime_context(), api_name, out_api_interface))
+#define PLUGIN_MANAGER_API_GET(api_name, api_interface) (plugin_manager_get(get_plugin_manager_runtime_context(), api_name, (void **)api_interface))
 #endif // #ifdef PLUGIN_MANAGER_STATIC_LINKING
 
 #endif // #ifndef PLUGIN_API_H
