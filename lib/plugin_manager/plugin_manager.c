@@ -31,7 +31,7 @@ PluginManagerRuntimeContext *get_plugin_manager_runtime_context()
     return &context;
 }
 
-int32_t plugin_manager_init(PluginManagerSetupContext **setup_context, int argc, char **argv)
+int32_t plugin_manager_init(PluginManagerSetupContext **setup_context, int argc, char **argv, void *platform_context)
 {
     assert(setup_context != NULL);
 
@@ -45,7 +45,7 @@ int32_t plugin_manager_init(PluginManagerSetupContext **setup_context, int argc,
         assert(new_setup_context->internal_plugins_len < sizeof(new_setup_context->internal_plugins) / sizeof(new_setup_context->internal_plugins[0]));
 
         EnvironmentApi *environment_api = environment_api_get_api();
-        environment_plugin_set_args(environment_api->context, argc, argv);
+        environment_plugin_set_args(environment_api->context, argc, argv, platform_context);
 
         PluginStatic environment_plugin = {
             .api_name = "environment_api",
@@ -124,7 +124,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
     TODO("Make buffer not use malloc")
     ret = file_io_read("../plugin_registry.json", &buffer);
-    ret = plugin_registry_deserialize_json(buffer, &plugin_registry);
+    ret = plugin_registry_deserialize_json(setup_context->logger_api, buffer, &plugin_registry);
     free(buffer);
 
     if (ret < 0)

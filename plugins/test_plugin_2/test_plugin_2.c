@@ -5,7 +5,7 @@
 #include <logger_api.h>
 LOGGER_API_REGISTER(test_api_2, LOG_LEVEL_DEBUG)
 
-#include <plugin_impl.h>
+#include <plugin_manager_impl.h>
 #include <test_api_2.h>
 #include <plugin_manager_common.h>
 

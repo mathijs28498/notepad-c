@@ -40,7 +40,7 @@ typedef struct LoggerApi
     {                                                                                                                  \
         if (log_level <= LOGGER_API_LOG_LEVEL)                                                                         \
         {                                                                                                              \
-            logger_api->log(logger_api->context, log_level, LOGGER_API_URGENT_LOG_LEVEL, LOGGER_API_TAG, __VA_ARGS__); \
+            (logger_api)->log((logger_api)->context, log_level, LOGGER_API_URGENT_LOG_LEVEL, LOGGER_API_TAG, __VA_ARGS__); \
         }                                                                                                              \
     } while (0)
 

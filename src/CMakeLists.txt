@@ -5,10 +5,10 @@ find_package(Vulkan REQUIRED)
 add_executable(program main.c)
 
 if (WIN32)
-    # set_target_properties(Program PROPERTIES
-    #     WIN32_EXECUTABLE ON
-    # )
-    # target_compile_definitions(Program PRIVATE UNICODE _UNICODE COBJMACROS)
+    set_target_properties(program PROPERTIES
+        WIN32_EXECUTABLE ON
+    )
+    target_compile_definitions(program PRIVATE UNICODE _UNICODE COBJMACROS)
 endif()
 # TODO: Add other OS support
 

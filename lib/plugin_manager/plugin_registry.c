@@ -7,10 +7,12 @@
 #include <stdio.h>
 
 #include <plugin_manager_common.h>
+#include <logger_api.h>
+LOGGER_API_REGISTER(plugin_registry, LOG_LEVEL_DEBUG)
 
 #include "plugin_manager_types.h"
 
-int32_t plugin_registry_deserialize_json(const char *json_str, PluginRegistry *plugin_registry)
+int32_t plugin_registry_deserialize_json(LoggerApi *logger_api, const char *json_str, PluginRegistry *plugin_registry)
 {
     memset(plugin_registry, 0, sizeof(PluginRegistry));
 
@@ -43,6 +45,7 @@ int32_t plugin_registry_deserialize_json(const char *json_str, PluginRegistry *p
         const cJSON *json_plugin_name = cJSON_GetObjectItem(json_plugin_definition, "name");
         if (cJSON_IsString(json_plugin_name))
         {
+            LOG_DBG(logger_api, "Found api '%s' in registry", json_plugin_name->valuestring);
             snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN,
                      "%s", json_plugin_name->valuestring);
         }

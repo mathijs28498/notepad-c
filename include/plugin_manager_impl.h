@@ -1,5 +1,5 @@
 #pragma once
-#ifndef PLUGIN_IMPL_H
+#ifndef PLUGIN_MANAGER_IMPL_H
 #define PLUGIN_IMPL_H
 
 #define _CONCAT(a, b) a##b

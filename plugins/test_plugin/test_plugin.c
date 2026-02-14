@@ -1,6 +1,6 @@
 #include "test_plugin.h"
 
-#include <plugin_impl.h>
+#include <plugin_manager_impl.h>
 #include <test_api.h>
 #include <test_api_2.h>
 #include <logger_api.h>

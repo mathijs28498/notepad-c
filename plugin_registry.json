@@ -9,6 +9,11 @@
             "name": "test_plugin_2",
             "api": "test_api2",
             "path": "./test_plugin_2.dll"
+        },
+        {
+            "name": "window_win32_plugin",
+            "api": "window_api",
+            "path": "./window_win32_plugin.dll"
         }
     ]
 }

@@ -31,15 +31,15 @@ int32_t resolve_requested_plugins_registry(
         {
             const PluginDefinition *plugin_definition = &plugin_registry->plugin_definitions[j];
 
-            const char *plugin_info_name = use_default
-                                               ? plugin_definition->api_name
-                                               : plugin_definition->plugin_name;
+            const char *plugin_definition_name = use_default
+                                                     ? plugin_definition->api_name
+                                                     : plugin_definition->plugin_name;
 
             const char *plugin_to_add_name = use_default
                                                  ? requested_plugin->api_name
                                                  : requested_plugin->plugin_name;
 
-            if (strcmp(plugin_info_name, plugin_to_add_name) == 0)
+            if (strcmp(plugin_definition_name, plugin_to_add_name) == 0)
             {
                 plugin_definition_index = (int32_t)j;
                 break;
@@ -132,11 +132,7 @@ int32_t load_plugin_modules(
                  "%s%s", plugin_module->plugin_definition->api_name, init_postfix);
 
         PluginInit_Fn init_proc = (PluginInit_Fn)GetProcAddress(handle, init_function_name);
-
-        if (init_proc)
-        {
-            plugin_module->init = init_proc;
-        }
+        plugin_module->init = init_proc;
 
         // Setting api_instance values
         api_instances[*api_instances_len].api = get_api_proc();

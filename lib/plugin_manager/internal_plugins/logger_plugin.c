@@ -6,9 +6,12 @@
 #include <stdbool.h>
 
 #include <logger_api.h>
+LOGGER_API_REGISTER(logger_plugin, LOG_LEVEL_DEBUG);
 #include <plugin_manager_common.h>
 
 STATIC_ASSERT(LOG_LEVEL_MAX == LOGGER_PLUGIN_LOG_LEVEL_MAX, "log_level max_mismatch!");
+
+TODO("Add color to WINDOW_GUI apps")
 
 #define TIME_STRING_LEN sizeof("[00:00:00.000,000]")
 
@@ -56,23 +59,31 @@ void log(const LoggerApiContext *context, LoggerApiLogLevel log_level, LoggerApi
         return;
     }
 
-    bool is_urgent = log_level <= urgent_log_level;
-
     char time_str[TIME_STRING_LEN];
     get_time_str(time_str);
 
     const char *log_level_str = LOG_LEVEL_STR_LIST[log_level];
-    const char *log_color_str = context->colors[log_level];
 
+#if !WINDOWS_GUI
+    bool is_urgent = log_level <= urgent_log_level;
+    const char *log_color_str = context->colors[log_level];
     printf("%s %s<%s>",
            time_str,
            log_color_str,
            log_level_str);
+#else  // #if !WINDOWS_GUI
+    (void)urgent_log_level;
+    printf("%s <%s>",
+           time_str,
+           log_level_str);
+#endif // #if !WINDOWS_GUI
 
+#if !WINDOWS_GUI
     if (!is_urgent)
     {
         printf("%s", ANSI_COLOR_RESET);
     }
+#endif // #if !WINDOWS_GUI
 
     printf(" %s: ", tag);
 
@@ -81,10 +92,12 @@ void log(const LoggerApiContext *context, LoggerApiLogLevel log_level, LoggerApi
     vprintf(message, args);
     va_end(args);
 
-    if (is_urgent)
+#if !WINDOWS_GUI
+    if (!is_urgent)
     {
         printf("%s", ANSI_COLOR_RESET);
     }
+#endif // #if !WINDOWS_GUI
 
     printf("\n");
 }
@@ -116,6 +129,19 @@ LoggerApi *logger_api_get_api(void)
         .set_level = set_level,
         .set_colors = set_colors,
     };
+
+    TODO("Add this to an init function");
+#if IS_DEBUG && WINDOWS_GUI
+    if (AllocConsole())
+    {
+        FILE *fDummy;
+
+        // Redirect standard streams to the new console "CONOUT$" and "CONIN$"
+        freopen_s(&fDummy, "CONOUT$", "w", stdout);
+        freopen_s(&fDummy, "CONOUT$", "w", stderr);
+        freopen_s(&fDummy, "CONIN$", "r", stdin);
+    }
+#endif // #if IS_DEBUG && WINDOWS_GUI
 
     return &api;
 }
