@@ -52,7 +52,7 @@ int32_t window_win32_plugin_create_window(WindowApiContext *context, WindowApiCr
     return 0;
 }
 
-int32_t window_win32_plugin_poll_events(WindowApiContext *context)
+int32_t window_win32_plugin_poll_os_events(WindowApiContext *context)
 {
     (void)context;
     MSG msg;
@@ -71,9 +71,14 @@ int32_t window_win32_plugin_poll_events(WindowApiContext *context)
     return 0;
 }
 
-int32_t window_win32_plugin_wait_for_events(WindowApiContext *context)
+int32_t window_win32_plugin_wait_for_os_events(WindowApiContext *context)
 {
     return NOT_IMPLEMENTED(int32_t, context);
+}
+
+int32_t window_win32_plugin_pop_window_event(WindowApiContext *context, enum WindowApiEvent *window_event)
+{
+    return NOT_IMPLEMENTED(int32_t, context, window_event);
 }
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -97,8 +102,6 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
 
-    // LOG_INF(context->logger_api, "Inside of event");
-
     switch (uMsg)
     {
     case WM_PAINT:
@@ -106,7 +109,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_SIZE:
-        TODO("Recreate shit!")
+        TODO("Recreate shit!");
         return 0;
 
     case WM_DESTROY:

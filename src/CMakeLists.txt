@@ -7,6 +7,18 @@ if (WIN32)
         WIN32_EXECUTABLE ON
     )
     target_compile_definitions(program PRIVATE UNICODE _UNICODE COBJMACROS)
+
+    # if (MSVC)
+    #     target_link_options(program PRIVATE
+    #         $<$<CONFIG:Debug>:/SUBSYSTEM:CONSOLE>
+    #         $<$<NOT:$<CONFIG:Debug>>:/SUBSYSTEM:WINDOWS>
+    #     )
+    # else()
+    #     target_link_options(program PRIVATE
+    #         $<$<CONFIG:Debug>:-Wl,--subsystem,console>
+    #         $<$<NOT:$<CONFIG:Debug>>:-Wl,--subsystem,windows>
+    #     )
+    # endif()
 endif()
 # TODO: Add other OS support
 

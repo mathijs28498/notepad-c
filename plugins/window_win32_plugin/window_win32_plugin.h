@@ -6,9 +6,11 @@
 
 struct WindowApiContext;
 struct WindowApiCreateWindowOptions;
+enum WindowApiEvent;
 
 int32_t window_win32_plugin_create_window(struct WindowApiContext *context, struct WindowApiCreateWindowOptions *options);
-int32_t window_win32_plugin_poll_events(struct WindowApiContext *context);
-int32_t window_win32_plugin_wait_for_events(struct WindowApiContext *context);
+int32_t window_win32_plugin_poll_os_events(struct WindowApiContext *context);
+int32_t window_win32_plugin_wait_for_os_events(struct WindowApiContext *context);
+int32_t window_win32_plugin_pop_window_event(struct WindowApiContext *context, enum WindowApiEvent *window_event);
 
 #endif // #ifndef WINDOW_WIN32_PLUGIN_H

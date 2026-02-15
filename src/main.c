@@ -29,7 +29,7 @@ PLUGIN_MANAGER_API_MAIN()
     bool app_running = true;
     while (app_running)
     {
-        window_api->poll_events(window_api->context);
+        window_api->poll_os_events(window_api->context);
         TODO("if (app.running)")
         // TODO: if (app.running)
         if (app_running)

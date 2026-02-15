@@ -64,26 +64,17 @@ void log(const LoggerApiContext *context, LoggerApiLogLevel log_level, LoggerApi
 
     const char *log_level_str = LOG_LEVEL_STR_LIST[log_level];
 
-#if !WINDOWS_GUI
     bool is_urgent = log_level <= urgent_log_level;
     const char *log_color_str = context->colors[log_level];
     printf("%s %s<%s>",
            time_str,
            log_color_str,
            log_level_str);
-#else  // #if !WINDOWS_GUI
-    (void)urgent_log_level;
-    printf("%s <%s>",
-           time_str,
-           log_level_str);
-#endif // #if !WINDOWS_GUI
 
-#if !WINDOWS_GUI
     if (!is_urgent)
     {
         printf("%s", ANSI_COLOR_RESET);
     }
-#endif // #if !WINDOWS_GUI
 
     printf(" %s: ", tag);
 
@@ -92,12 +83,10 @@ void log(const LoggerApiContext *context, LoggerApiLogLevel log_level, LoggerApi
     vprintf(message, args);
     va_end(args);
 
-#if !WINDOWS_GUI
     if (!is_urgent)
     {
         printf("%s", ANSI_COLOR_RESET);
     }
-#endif // #if !WINDOWS_GUI
 
     printf("\n");
 }
@@ -140,6 +129,16 @@ LoggerApi *logger_api_get_api(void)
         freopen_s(&fDummy, "CONOUT$", "w", stdout);
         freopen_s(&fDummy, "CONOUT$", "w", stderr);
         freopen_s(&fDummy, "CONIN$", "r", stdin);
+        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (hOut != INVALID_HANDLE_VALUE)
+        {
+            DWORD dwMode = 0;
+            if (GetConsoleMode(hOut, &dwMode))
+            {
+                dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+                SetConsoleMode(hOut, dwMode);
+            }
+        }
     }
 #endif // #if IS_DEBUG && WINDOWS_GUI
 

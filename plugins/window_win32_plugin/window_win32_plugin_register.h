@@ -10,6 +10,8 @@ struct EnvironmentApi;
 typedef struct WindowApiContext {
     struct LoggerApi *logger_api;
     struct EnvironmentApi *environment_api;
+
+    
 } WindowApiContext;
 
 #pragma pack(pop)
