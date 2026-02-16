@@ -10,6 +10,7 @@
 LOGGER_API_REGISTER(window_win32_plugin, LOG_LEVEL_DEBUG);
 
 #include "window_win32_plugin_register.h"
+#include "window_win32_plugin_window_events.h"
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -60,9 +61,10 @@ int32_t window_win32_plugin_poll_os_events(WindowApiContext *context)
     {
         if (msg.message == WM_QUIT)
         {
-            TODO("app.running = false;")
-            // TODO: app.running = false;
-            // app_running = false;
+            WindowEvent window_event = {
+                .type = WINDOW_API_EVENT_QUIT,
+            };
+            window_win32_plugin_window_events_push(context, &window_event);
         }
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -74,11 +76,6 @@ int32_t window_win32_plugin_poll_os_events(WindowApiContext *context)
 int32_t window_win32_plugin_wait_for_os_events(WindowApiContext *context)
 {
     return NOT_IMPLEMENTED(int32_t, context);
-}
-
-int32_t window_win32_plugin_pop_window_event(WindowApiContext *context, enum WindowApiEvent *window_event)
-{
-    return NOT_IMPLEMENTED(int32_t, context, window_event);
 }
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

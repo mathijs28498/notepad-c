@@ -4,6 +4,7 @@ target_sources(window_win32_plugin
     PRIVATE
         window_win32_plugin.c
         window_win32_plugin_register.c
+        window_win32_plugin_window_events.c
 
     PUBLIC
         FILE_SET HEADERS

@@ -10,6 +10,7 @@
 LOGGER_API_REGISTER(window_win32_plugin, LOG_LEVEL_DEBUG)
 
 #include "window_win32_plugin.h"
+#include "window_win32_plugin_window_events.h"
 
 #define PLUGIN_API_NAME window_api
 
@@ -29,7 +30,7 @@ WindowApi *get_api()
         .create_window = window_win32_plugin_create_window,
         .poll_os_events = window_win32_plugin_poll_os_events,
         .wait_for_os_events = window_win32_plugin_wait_for_os_events,
-        .pop_window_event = window_win32_plugin_pop_window_event,
+        .pop_window_event = window_win32_plugin_window_events_pop,
     };
 
     return &api;
