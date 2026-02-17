@@ -57,12 +57,21 @@ int32_t window_win32_plugin_poll_os_events(WindowApiContext *context)
 {
     (void)context;
     MSG msg;
+    TODO("Remove this!!!");
+    WindowEvent we = {
+        .type = WINDOW_EVENT_TYPE_KEY_PRESS,
+        .data.key_press = {
+            .is_pressed = true,
+            .key = WINDOW_EVENT_KEY_A,
+        },
+    };
+    window_win32_plugin_window_events_push(context, &we);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         if (msg.message == WM_QUIT)
         {
             WindowEvent window_event = {
-                .type = WINDOW_API_EVENT_QUIT,
+                .type = WINDOW_EVENT_TYPE_QUIT,
             };
             window_win32_plugin_window_events_push(context, &window_event);
         }

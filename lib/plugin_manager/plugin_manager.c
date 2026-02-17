@@ -22,7 +22,6 @@ LOGGER_API_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 #include "plugin_manager_types.h"
 #include "plugin_manager_loader.h"
 
-
 #define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 255
 
 PluginManagerRuntimeContext *get_plugin_manager_runtime_context()
@@ -123,7 +122,6 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     LoggerApi *logger_api = setup_context->logger_api;
     runtime_context->logger_api = logger_api;
 
-
     TODO("Make buffer not use malloc")
     ret = file_io_read(logger_api, "../plugin_registry.json", &buffer);
     ret = plugin_registry_deserialize_json(logger_api, buffer, &plugin_registry);
@@ -156,6 +154,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
         if (ret < 0)
         {
+            LOG_ERR(logger_api, "Error in resolve_requested_plugins_registry: %d", ret);
             return ret;
         }
 
@@ -168,6 +167,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
         if (ret < 0)
         {
+            LOG_ERR(logger_api, "Error in load_plugin_modules: %d", ret);
             return ret;
         }
 
@@ -182,6 +182,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
         if (ret < 0)
         {
+            LOG_ERR(logger_api, "Error in resolve_requested_plugins_internal: %d", ret);
             return ret;
         }
 
@@ -198,6 +199,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
         if (ret < 0)
         {
+            LOG_ERR(logger_api, "Error in resolve_plugin_module_dependencies: %d", ret);
             return ret;
         }
     }
@@ -206,12 +208,14 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     ret = calculate_plugin_module_initialization_order(logger_api, plugin_modules, plugin_modules_len, sorted_plugin_modules_indices);
     if (ret < 0)
     {
+        LOG_ERR(logger_api, "Error in calculate_plugin_module_initialization_order: %d", ret);
         return ret;
     }
 
     ret = initialize_plugins(logger_api, sorted_plugin_modules_indices, plugin_modules, plugin_modules_len);
     if (ret < 0)
     {
+        LOG_ERR(logger_api, "Error in initialize_plugins: %d", ret);
         return ret;
     }
 

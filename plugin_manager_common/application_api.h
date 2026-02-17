@@ -1,6 +1,6 @@
 #pragma once
-#ifndef APP_API_H
-#define APP_API_H
+#ifndef APPLICATION_API_H
+#define APPLICATION_API_H
 
 #include <stdint.h>
 
@@ -16,4 +16,4 @@ typedef struct AppApi {
 
 #pragma pack(pop)
 
-#endif // #ifndef APP_API_H
+#endif // #ifndef APPLICATION_API_H

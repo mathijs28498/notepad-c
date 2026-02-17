@@ -4,14 +4,17 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "window_api_window_event_enums.h"
+
+#pragma pack(push, 8)
 
 typedef enum WindowEventType
 {
-    WINDOW_API_EVENT_QUIT,
-    WINDOW_API_EVENT_KEY_PRESS,
-    WINDOW_API_EVENT_MOUSE_PRESS,
-    WINDOW_API_EVENT_MOUSE_MOVE,
-    WINDOW_API_EVENT_MOUSE_SCROLL,
+    WINDOW_EVENT_TYPE_QUIT,
+    WINDOW_EVENT_TYPE_KEY_PRESS,
+    WINDOW_EVENT_TYPE_MOUSE_PRESS,
+    WINDOW_EVENT_TYPE_MOUSE_MOVE,
+    WINDOW_EVENT_TYPE_MOUSE_SCROLL,
 } WindowEventType;
 
 typedef struct WindowEvent
@@ -21,10 +24,12 @@ typedef struct WindowEvent
     {
         struct
         {
-            uint32_t key;
+            WindowEventKey key;
             bool is_pressed;
         } key_press;
     } data;
 } WindowEvent;
+
+#pragma pack(pop)
 
 #endif // #ifndef WINDOW_API_WINDOW_EVENT_H

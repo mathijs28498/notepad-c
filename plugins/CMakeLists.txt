@@ -1,4 +1,5 @@
 add_subdirectory(test_plugin)
 add_subdirectory(test_plugin_2)
 add_subdirectory(window_win32_plugin)
-add_subdirectory(app_plugin)
+add_subdirectory(application_plugin)
+add_subdirectory(input_plugin)

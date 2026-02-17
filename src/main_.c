@@ -7,7 +7,7 @@
 #include <renderer.h>
 #include <plugin_manager_common.h>
 
-bool app_running = true;
+bool application_running = true;
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -70,7 +70,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     MSG msg = {0};
     TODO("while (app.running)")
     // TODO: while (app.running)
-    while (app_running)
+    while (application_running)
     {
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
@@ -78,7 +78,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             {
                 TODO("app.running = false;")
                 // TODO: app.running = false;
-                app_running = false;
+                application_running = false;
             }
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -86,7 +86,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
         TODO("if (app.running)")
         // TODO: if (app.running)
-        if (app_running)
+        if (application_running)
         {
             TODO("Do rendering stuff")
             // TODO: Do rendering stuff

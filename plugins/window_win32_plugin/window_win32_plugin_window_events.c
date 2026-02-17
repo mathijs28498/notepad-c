@@ -22,6 +22,6 @@ bool window_win32_plugin_window_events_pop(WindowApiContext *context, WindowEven
 
 void window_win32_plugin_window_events_push(WindowApiContext *context, WindowEvent const *window_event)
 {
-    context->window_events_tail = (context->window_events_tail + 1) % ARRAY_SIZE(context->window_events);
     memcpy(&context->window_events[context->window_events_tail], window_event, sizeof(*window_event));
+    context->window_events_tail = (context->window_events_tail + 1) % ARRAY_SIZE(context->window_events);
 }

@@ -120,7 +120,7 @@ int32_t load_plugin_modules(
         PluginGetApi_Fn get_api_proc = (PluginGetApi_Fn)GetProcAddress(handle, get_api_function_name);
         if (!get_api_proc)
         {
-            LOG_ERR(logger_api, "no api found for plugin: %s", plugin_module->plugin_definition->plugin_name);
+            LOG_ERR(logger_api, "no api method found for plugin: %s", plugin_module->plugin_definition->plugin_name);
             return -1;
         }
         plugin_module->get_api = get_api_proc;

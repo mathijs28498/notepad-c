@@ -83,7 +83,7 @@ void log(const LoggerApiContext *context, LoggerApiLogLevel log_level, LoggerApi
     vprintf(message, args);
     va_end(args);
 
-    if (!is_urgent)
+    if (is_urgent)
     {
         printf("%s", ANSI_COLOR_RESET);
     }
