@@ -11,6 +11,7 @@ LOGGER_API_REGISTER(window_win32_plugin, LOG_LEVEL_DEBUG);
 
 #include "window_win32_plugin_register.h"
 #include "window_win32_plugin_window_events.h"
+#include "window_win32_plugin_key_converter.h"
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -30,10 +31,15 @@ int32_t window_win32_plugin_create_window(WindowApiContext *context, WindowApiCr
 
     RegisterClass(&wc);
 
+    wchar_t wide_window_name[sizeof(options->window_name)];
+    if (MultiByteToWideChar(CP_UTF8, 0, options->window_name, -1, wide_window_name, sizeof(options->window_name)) == 0)
+    {
+        wide_window_name[0] = L'\0';
+    }
+
     HWND hwnd = CreateWindow(
         CLASS_NAME,
-        // options->window_name,
-        L"Test",
+        wide_window_name,
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         NULL,
@@ -47,9 +53,14 @@ int32_t window_win32_plugin_create_window(WindowApiContext *context, WindowApiCr
         return 1;
     }
 
-    // renderer_init();
-
     ShowWindow(hwnd, windows_context->nCmdShow);
+    return 0;
+}
+
+int32_t window_win32_plugin_close_window(struct WindowApiContext *context)
+{
+    (void)context;
+    PostQuitMessage(0);
     return 0;
 }
 
@@ -57,15 +68,6 @@ int32_t window_win32_plugin_poll_os_events(WindowApiContext *context)
 {
     (void)context;
     MSG msg;
-    TODO("Remove this!!!");
-    WindowEvent we = {
-        .type = WINDOW_EVENT_TYPE_KEY_PRESS,
-        .data.key_press = {
-            .is_pressed = true,
-            .key = WINDOW_EVENT_KEY_A,
-        },
-    };
-    window_win32_plugin_window_events_push(context, &we);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         if (msg.message == WM_QUIT)
@@ -117,6 +119,19 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
         TODO("Recreate shit!");
         return 0;
+
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+        WindowEventKey key = win32_key_to_window_event_key(wParam);
+        WindowEvent window_event = {
+            .type = WINDOW_EVENT_TYPE_KEY_PRESS,
+            .data.key_press = {
+                .is_pressed = uMsg == WM_KEYDOWN,
+                .key = key,
+            },
+        };
+        window_win32_plugin_window_events_push(context, &window_event);
+        break;
 
     case WM_DESTROY:
         PostQuitMessage(0);

@@ -15,9 +15,9 @@ InputApi *get_api(void)
         .context = &context,
         .prepare_processing = input_plugin_prepare_processing,
         .process_window_event = input_plugin_process_window_event,
-        .input_plugin_key_just_pressed = input_plugin_key_just_pressed,
-        .input_plugin_key_held = input_plugin_key_held,
-        .input_plugin_key_just_released = input_plugin_key_just_released,
+        .key_pressed = input_plugin_key_pressed,
+        .key_held = input_plugin_key_held,
+        .key_released = input_plugin_key_released,
     };
 
     return &api;

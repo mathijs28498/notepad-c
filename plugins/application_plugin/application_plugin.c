@@ -41,22 +41,36 @@ int32_t application_plugin_run(AppApiContext *context)
         }
         if (application_running)
         {
-            if (input_api->input_plugin_key_just_pressed(input_api->context, WINDOW_EVENT_KEY_A))
+            if (KEY_PRESSED(input_api, WINDOW_EVENT_KEY_A))
             {
                 LOG_ERR(logger_api, "A just pressed");
             }
-            if (input_api->input_plugin_key_held(input_api->context, WINDOW_EVENT_KEY_A))
+            if (KEY_HELD(input_api, WINDOW_EVENT_KEY_A))
             {
                 LOG_WRN(logger_api, "A held");
             }
-            if (input_api->input_plugin_key_just_pressed(input_api->context, WINDOW_EVENT_KEY_B))
+            if (KEY_RELEASED(input_api, WINDOW_EVENT_KEY_A))
             {
-                LOG_ERR(logger_api, "A just pressed");
+                LOG_WRN(logger_api, "A just released");
             }
-            if (input_api->input_plugin_key_held(input_api->context, WINDOW_EVENT_KEY_B))
+            if (KEY_PRESSED(input_api, WINDOW_EVENT_KEY_B))
             {
-                LOG_WRN(logger_api, "A held");
+                LOG_ERR(logger_api, "B just pressed");
             }
+            if (KEY_HELD(input_api, WINDOW_EVENT_KEY_B))
+            {
+                LOG_WRN(logger_api, "B held");
+            }
+            if (KEY_RELEASED(input_api, WINDOW_EVENT_KEY_B))
+            {
+                LOG_WRN(logger_api, "B just released");
+            }
+
+            if (KEY_PRESSED(input_api, WINDOW_EVENT_KEY_ESCAPE))
+            {
+                window_api->close_window(window_api->context);
+            }
+
             TODO("Do rendering stuff")
         }
     }

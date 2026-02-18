@@ -5,6 +5,7 @@ target_sources(window_win32_plugin
         window_win32_plugin.c
         window_win32_plugin_register.c
         window_win32_plugin_window_events.c
+        window_win32_plugin_key_converter.c
 
     PUBLIC
         FILE_SET HEADERS

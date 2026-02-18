@@ -28,6 +28,8 @@ WindowApi *get_api()
         .context = &context,
 
         .create_window = window_win32_plugin_create_window,
+        .close_window = window_win32_plugin_close_window,
+
         .poll_os_events = window_win32_plugin_poll_os_events,
         .wait_for_os_events = window_win32_plugin_wait_for_os_events,
         .pop_window_event = window_win32_plugin_window_events_pop,
