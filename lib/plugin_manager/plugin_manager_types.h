@@ -31,6 +31,7 @@ typedef struct RequestedPlugin
 {
     char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
     char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
+    bool is_explicit;
     bool resolved;
 } RequestedPlugin;
 
@@ -59,12 +60,12 @@ typedef struct PluginDependency
 typedef struct PluginModule
 {
     const PluginDefinition *plugin_definition;
-    // HMODULE handle;
+    TODO("Check if this is_explicit can be removed by creating the api_instance at time of resolving, not of loading")
+    bool is_explicit;
 
     PluginDependency dependencies[PLUGIN_MANAGER_MAX_DEPENDENCIES];
     uint32_t dependencies_len;
 
-    // PluginManagerBaseApi *api;
     PluginGetApi_Fn get_api;
     PluginInit_Fn init;
 } PluginModule;
@@ -97,6 +98,7 @@ typedef struct ApiInstance
 {
     char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
     PluginManagerBaseApi *api;
+    bool is_explicit;
 } ApiInstance;
 
 typedef struct PluginManagerRuntimeContext

@@ -10,6 +10,7 @@ LOGGER_API_REGISTER(plugin_manager_loader, LOG_LEVEL_DEBUG)
 #include <plugin_manager_common.h>
 
 #include "plugin_manager_types.h"
+#include "plugin_manager.h"
 
 TODO("Check if this algorithm can/should be made better/faster")
 int32_t resolve_requested_plugins_registry(
@@ -22,7 +23,7 @@ int32_t resolve_requested_plugins_registry(
 {
     for (size_t i = 0; i < requested_plugins_len; i++)
     {
-        const RequestedPlugin *requested_plugin = &requested_plugins[i];
+        RequestedPlugin *requested_plugin = &requested_plugins[i];
 
         bool use_default = strlen(requested_plugin->plugin_name) == 0;
 
@@ -42,6 +43,14 @@ int32_t resolve_requested_plugins_registry(
             if (strcmp(plugin_definition_name, plugin_to_add_name) == 0)
             {
                 plugin_definition_index = (int32_t)j;
+
+                PluginModule *plugin_module = &plugin_modules[*plugin_modules_len];
+
+                plugin_module->plugin_definition = plugin_definition;
+                plugin_module->dependencies_len = 0;
+                plugin_module->is_explicit = requested_plugin->is_explicit;
+                (*plugin_modules_len)++;
+                TODO("Add max index check here");
                 break;
             }
         }
@@ -52,11 +61,7 @@ int32_t resolve_requested_plugins_registry(
             continue;
         }
 
-        plugin_modules[*plugin_modules_len].plugin_definition = &plugin_registry->plugin_definitions[plugin_definition_index];
-        plugin_modules[*plugin_modules_len].dependencies_len = 0;
-        (*plugin_modules_len)++;
-        requested_plugins[i].resolved = true;
-        TODO("Add max index check here")
+        requested_plugin->resolved = true;
     }
 
     return 0;
@@ -135,9 +140,11 @@ int32_t load_plugin_modules(
         plugin_module->init = init_proc;
 
         // Setting api_instance values
-        api_instances[*api_instances_len].api = get_api_proc();
-        snprintf(api_instances[*api_instances_len].api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN,
+        ApiInstance *api_instance = &api_instances[*api_instances_len];
+        api_instance->api = get_api_proc();
+        snprintf(api_instance->api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN,
                  "%s", plugin_module->plugin_definition->api_name);
+        api_instance->is_explicit = plugin_module->is_explicit;
         (*api_instances_len)++;
     }
 
@@ -179,6 +186,16 @@ int32_t resolve_requested_plugins_internal(
             if (strcmp(internal_plugin_name, plugin_to_add_name) == 0)
             {
                 internal_plugin_index = (int32_t)j;
+
+                ApiInstance *api_instance = &api_instances[*api_instances_len];
+
+                api_instance->api = internal_plugin->api;
+                snprintf(api_instance->api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN,
+                         "%s", internal_plugin->api_name);
+                api_instance->is_explicit = requested_plugin->is_explicit;
+                (*api_instances_len)++;
+                requested_plugins[i].resolved = true;
+
                 break;
             }
         }
@@ -188,12 +205,6 @@ int32_t resolve_requested_plugins_internal(
             LOG_ERR(logger_api, "Plugin '%s' not found as internal plugin", requested_plugin->api_name);
             return -1;
         }
-
-        api_instances[*api_instances_len].api = internal_plugins[internal_plugin_index].api;
-        snprintf(api_instances[*api_instances_len].api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN,
-                 "%s", internal_plugins[internal_plugin_index].api_name);
-        (*api_instances_len)++;
-        requested_plugins[i].resolved = true;
     }
 
     return 0;
@@ -208,6 +219,7 @@ int32_t resolve_plugin_module_dependencies(
     RequestedPlugin *requested_plugins,
     size_t *requested_plugins_len)
 {
+    int32_t ret;
     for (size_t i = 0; i < plugin_modules_len; i++)
     {
         PluginModule *plugin_module = &plugin_modules[i];
@@ -236,7 +248,6 @@ int32_t resolve_plugin_module_dependencies(
             // Adding dependency to requested plugins as it is not found yet
 
             // First check if dependency has already been reqeusted in the meantime
-            TODO("Make this a method that can be reused by the plugin_manager_add")
             bool to_request = true;
             for (size_t k = 0; k < *requested_plugins_len; k++)
             {
@@ -252,13 +263,13 @@ int32_t resolve_plugin_module_dependencies(
                 continue;
             }
 
-            // If dependency has not been requested yet, add it to requested plugins
-            RequestedPlugin *requested_plugin = &requested_plugins[*requested_plugins_len];
-            snprintf(requested_plugin->api_name, sizeof(requested_plugin->api_name), "%s", dependency->api_name);
-            requested_plugin->plugin_name[0] = '\0';
-            requested_plugin->resolved = false;
-            (*requested_plugins_len)++;
-            LOG_DBG(logger_api, "Dependency '%s' not found, adding to requested plugins", requested_plugin->api_name);
+            LOG_DBG(logger_api, "Dependency '%s' not found, adding to requested plugins", dependency->api_name);
+            ret = plugin_manager_add_internal(logger_api, dependency->api_name, NULL, false, requested_plugins, requested_plugins_len);
+            if (ret < 0)
+            {
+                LOG_ERR(logger_api, "Unable to implicitly add dependency api '%s'", dependency->api_name);
+                return ret;
+            }
         }
     }
 

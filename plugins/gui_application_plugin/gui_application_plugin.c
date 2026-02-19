@@ -16,7 +16,8 @@ int32_t gui_application_plugin_run(GuiApplicationApiContext *context)
     WindowApi *window_api = context->window_api;
     LoggerApi *logger_api = context->logger_api;
     InputApi *input_api = context->input_api;
-    DrawApi *draw_api = context->draw_api;
+    // DrawApi *draw_api = context->draw_api;
+
     // LogicApi *logic_api = context->logic_api;
     LOG_INF(logger_api, "Starting main loop");
 
@@ -47,6 +48,11 @@ int32_t gui_application_plugin_run(GuiApplicationApiContext *context)
             break;
         }
 
+        if (KEY_PRESSED(input_api, WINDOW_EVENT_KEY_ESCAPE))
+        {
+            window_api->close_window(window_api->context);
+        }
+
         // logic_api->update(logic_api->context);
         // if (gui_applicaiton_do_fixed_update(context))
         // {
@@ -54,7 +60,7 @@ int32_t gui_application_plugin_run(GuiApplicationApiContext *context)
         // }
 
           
-        draw_api->present(draw_api->context);
+        // draw_api->present(draw_api->context);
 
     }
 

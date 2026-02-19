@@ -24,13 +24,13 @@ LOGGER_API_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 
 #define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 255
 
-PluginManagerRuntimeContext *get_plugin_manager_runtime_context()
+PluginManagerRuntimeContext *__get_plugin_manager_runtime_context()
 {
     static PluginManagerRuntimeContext context = {0};
     return &context;
 }
 
-int32_t plugin_manager_init(PluginManagerSetupContext **setup_context, int argc, char **argv, void *platform_context)
+int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int argc, char **argv, void *platform_context)
 {
     assert(setup_context != NULL);
 
@@ -81,40 +81,58 @@ int32_t plugin_manager_init(PluginManagerSetupContext **setup_context, int argc,
     return 0;
 }
 
-int32_t plugin_manager_add(PluginManagerSetupContext *setup_context, const char *api_name, const char *plugin_name)
+int32_t __plugin_manager_add(PluginManagerSetupContext *setup_context, const char *api_name, const char *plugin_name)
+{
+    return plugin_manager_add_internal(
+        setup_context->logger_api,
+        api_name,
+        plugin_name,
+        true,
+        setup_context->requested_plugins,
+        &setup_context->requested_plugins_len);
+};
+
+int32_t plugin_manager_add_internal(
+    const LoggerApi *logger_api,
+    const char *api_name,
+    const char *plugin_name,
+    bool is_explicit,
+    RequestedPlugin *requested_plugins,
+    size_t *requested_plugins_len)
 {
     if (api_name == NULL)
     {
-        LOG_ERR(setup_context->logger_api, "Api name is NULL");
+        LOG_ERR(logger_api, "Api name is NULL");
         return -1;
     }
 
-    if (setup_context->requested_plugins_len >= PLUGIN_MANAGER_MAX_PLUGINS_LEN)
+    if (*requested_plugins_len >= PLUGIN_MANAGER_MAX_PLUGINS_LEN)
     {
-        LOG_ERR(setup_context->logger_api, "Cannot add plugin as max plugin_definitions is reached. Max plugin count '%d'", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
+        LOG_ERR(logger_api, "Cannot add plugin as max plugin_definitions is reached. Max plugin count '%d'", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
         return -1;
     }
 
-    snprintf(setup_context->requested_plugins[setup_context->requested_plugins_len].api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN,
-             "%s", api_name);
+    struct RequestedPlugin *requested_plugin = &requested_plugins[*requested_plugins_len];
+
+    snprintf(requested_plugin->api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN, "%s", api_name);
 
     if (plugin_name == NULL)
     {
-        setup_context->requested_plugins[setup_context->requested_plugins_len].plugin_name[0] = '\0';
+        requested_plugin->plugin_name[0] = '\0';
     }
     else
     {
-        snprintf(setup_context->requested_plugins[setup_context->requested_plugins_len].plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN,
-                 "%s", plugin_name);
+        snprintf(requested_plugin->plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN, "%s", plugin_name);
     }
 
-    setup_context->requested_plugins[setup_context->requested_plugins_len].resolved = false;
+    requested_plugin->is_explicit = is_explicit;
+    requested_plugin->resolved = false;
 
-    setup_context->requested_plugins_len++;
+    (*requested_plugins_len)++;
     return 0;
-};
+}
 
-int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context)
+int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context)
 {
     int ret;
     char *buffer;
@@ -224,12 +242,12 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     return 0;
 }
 
-int32_t plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const char *api_name, void **api_interface)
+int32_t __plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const char *api_name, void **api_interface)
 {
     for (size_t i = 0; i < runtime_context->api_instances_len; i++)
     {
         ApiInstance *api_instance = &runtime_context->api_instances[i];
-        if (strcmp(api_name, api_instance->api_name) == 0)
+        if (strcmp(api_name, api_instance->api_name) == 0 && api_instance->is_explicit)
         {
             *api_interface = api_instance->api;
             return 0;

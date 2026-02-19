@@ -12,22 +12,50 @@ PLUGIN_MANAGER_API_MAIN()
 {
     int32_t ret;
 
-    // ret = PLUGIN_MANAGER_API_ADD("logic_api", "ecs_logic_api");
     ret = PLUGIN_MANAGER_API_ADD("gui_application_api", NULL);
+
+    ret = PLUGIN_MANAGER_API_ADD("logic_api", NULL);
+    ret = PLUGIN_MANAGER_API_ADD("logic_ecs_api", NULL);
+    // ret = PLUGIN_MANAGER_LINK_APIS("logic_api", "logic_apis",
+    //                                "logic_ecs_api");
+
+    ret = PLUGIN_MANAGER_API_ADD("draw_api", NULL);
+    ret = PLUGIN_MANAGER_API_ADD("draw_2d_api", NULL);
+    // ret = PLUGIN_MANAGER_API_ADD("draw_3d_api", NULL);
+    // ret = PLUGIN_MANAGER_API_ADD("draw_raytracer_api", NULL);
+    // ret = PLUGIN_MANAGER_API_ADD("draw_ui_api", NULL);
+
+    // ret = PLUGIN_MANAGER_LINK_APIS("draw_api", "draw_apis",
+    //                                "draw_2d_api", "draw_3d_api", "draw_ui_api");
+
+    ret = PLUGIN_MANAGER_API_ADD("window_api", NULL);
     ret = PLUGIN_MANAGER_API_LOAD();
     if (ret < 0)
     {
-        return -1;
+        return ret;
     }
 
     WindowApi *window_api;
     GuiApplicationApi *gui_application_api;
-    // LogicApi *logic_api;
-    PLUGIN_MANAGER_API_GET("window_api", &window_api);
-    PLUGIN_MANAGER_API_GET("gui_application_api", &gui_application_api);
-    // PLUGIN_MANAGER_API_GET("logic_api", &logic_api);
+    // Draw2dApi *draw_2d_api;
 
-    // logic_api->ecs_specific_function(logic_api->context);
+    ret = PLUGIN_MANAGER_API_GET("window_api", &window_api);
+    if (ret < 0)
+    {
+        return ret;
+    }
+
+    PLUGIN_MANAGER_API_GET("gui_application_api", &gui_application_api);
+    if (ret < 0)
+    {
+        return ret;
+    }
+
+    // PLUGIN_MANAGER_API_GET("draw_2d_api", &draw_2d_api);
+    // if (ret < 0)
+    // {
+    //     return ret;
+    // }
 
     WindowApiCreateWindowOptions create_window_options = {
         .window_name = "My app",
