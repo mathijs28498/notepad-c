@@ -202,7 +202,7 @@ int32_t resolve_requested_plugins_internal(
 
         if (internal_plugin_index < 0)
         {
-            LOG_ERR(logger_api, "Plugin '%s' not found as internal plugin", requested_plugin->api_name);
+            LOG_ERR(logger_api, "Plugin '%s' not found as registered or internal plugin", requested_plugin->api_name);
             return -1;
         }
     }
