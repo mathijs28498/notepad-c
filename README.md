@@ -15,3 +15,7 @@
 - [ ] Fix all todos
 - [ ] Make gui_application initialize the screen with its own method
 - [ ] Remove test plugins 
+- [ ] Rename plugin_manager_api.h to plugin_manager_bootstrap.h
+- [ ] Clean up internal apis and make them better
+- [ ] Look into multiple threads
+- [ ] Look into singleton vs scoped vs transient

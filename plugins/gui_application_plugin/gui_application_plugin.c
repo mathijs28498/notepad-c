@@ -8,7 +8,6 @@ LOGGER_API_REGISTER(gui_application_plugin, LOG_LEVEL_DEBUG)
 #include <input_api.h>
 #include <plugin_manager_common.h>
 #include <draw_api.h>
-#include <logic_api.h>
 
 #include "gui_application_plugin_register.h"
 

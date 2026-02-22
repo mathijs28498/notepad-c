@@ -23,6 +23,7 @@ typedef struct LoggerApi
     void (*log)(const struct LoggerApiContext *context, LoggerApiLogLevel log_level, LoggerApiLogLevel urgent_log_level, const char *tag, const char *message, ...);
     void (*set_level)(struct LoggerApiContext *context, LoggerApiLogLevel log_level);
     void (*set_colors)(struct LoggerApiContext *context, const char *[LOG_LEVEL_MAX]);
+    void (*on_exit)(struct LoggerApiContext *context);
 
 } LoggerApi;
 

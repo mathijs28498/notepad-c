@@ -63,7 +63,5 @@ PLUGIN_MANAGER_API_MAIN()
 
     ret = gui_application_api->run(gui_application_api->context);
 
-    TODO("Move this to window api end");
-    CoUninitialize();
     return 0;
 }

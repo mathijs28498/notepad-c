@@ -259,3 +259,15 @@ int32_t __plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const
 
     return -1;
 }
+
+int32_t __plugin_manager_shutdown(PluginManagerRuntimeContext *runtime_context)
+{
+    if (runtime_context->logger_api)
+    {
+        runtime_context->logger_api->on_exit(runtime_context->logger_api->context);
+    }
+
+    TODO("Do this in the right spot");
+    CoUninitialize();
+    return 0;
+}

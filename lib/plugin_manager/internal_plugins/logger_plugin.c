@@ -4,14 +4,13 @@
 #include <stdarg.h>
 #include <windows.h>
 #include <stdbool.h>
+#include <conio.h>
 
 #include <logger_api.h>
 LOGGER_API_REGISTER(logger_plugin, LOG_LEVEL_DEBUG);
 #include <plugin_manager_common.h>
 
 STATIC_ASSERT(LOG_LEVEL_MAX == LOGGER_PLUGIN_LOG_LEVEL_MAX, "log_level max_mismatch!");
-
-TODO("Add color to WINDOW_GUI apps")
 
 #define TIME_STRING_LEN sizeof("[00:00:00.000,000]")
 
@@ -105,6 +104,17 @@ void set_colors(LoggerApiContext *context, const char *new_colors[LOG_LEVEL_MAX]
     }
 }
 
+LoggerApi *logger_api_get_api(void);
+
+void logger_api_on_exit(LoggerApiContext *context)
+{
+    (void)context;
+#if IS_DEBUG && WINDOWS_GUI
+    LOG_INF(logger_api_get_api(), "\nPress any key to exit...\n");
+    _getch();
+#endif
+}
+
 LoggerApi *logger_api_get_api(void)
 {
     static LoggerApiContext context = {
@@ -117,6 +127,7 @@ LoggerApi *logger_api_get_api(void)
         .log = log,
         .set_level = set_level,
         .set_colors = set_colors,
+        .on_exit = logger_api_on_exit,
     };
 
     TODO("Add this to an init function");
