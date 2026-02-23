@@ -36,7 +36,7 @@ PLUGIN_FRAMEWORK_MAIN()
     GuiApplicationInterface *gui_application;
 
 
-    PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
+    ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
     if (ret < 0)
     {
         return ret;
