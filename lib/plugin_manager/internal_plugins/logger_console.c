@@ -97,7 +97,6 @@ void set_level(LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_leve
     context->log_level = log_level;
 }
 
-TODO("Check all places that ARRAY_SIZE should be added")
 void set_colors(LoggerInterfaceContext *context, const char *new_colors[LOG_LEVEL_MAX])
 {
     for (int i = 0; i < ARRAY_SIZE(new_colors); i++)

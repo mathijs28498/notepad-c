@@ -11,6 +11,8 @@ LOGGER_INTERFACE_REGISTER(gui_application_default, LOG_LEVEL_DEBUG)
 
 #include "gui_application_default_register.h"
 
+#define GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME 256
+
 int32_t gui_application_default_setup(GuiApplicationInterfaceContext *context, WindowInterfaceCreateWindowOptions *create_window_options)
 {
     context->window->create_window(context->window->context, create_window_options);
@@ -20,10 +22,10 @@ int32_t gui_application_default_setup(GuiApplicationInterfaceContext *context, W
 
 int32_t gui_application_default_run(GuiApplicationInterfaceContext *context)
 {
-    WindowInterface *window= context->window;
-    LoggerInterface *logger= context->logger;
-    InputInterface *input= context->input;
-    DrawInterface *draw= context->draw;
+    WindowInterface *window = context->window;
+    LoggerInterface *logger = context->logger;
+    InputInterface *input = context->input;
+    DrawInterface *draw = context->draw;
 
     LOG_INF(logger, "Starting main loop");
 
@@ -34,7 +36,12 @@ int32_t gui_application_default_run(GuiApplicationInterfaceContext *context)
         WindowEvent window_event;
 
         input->prepare_processing(input->context);
-        while (window->pop_window_event(window->context, &window_event))
+        SAFE_WHILE(
+            window->pop_window_event(window->context, &window_event),
+            GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME,
+            {
+                LOG_WRN(logger, "Too many window events in one frame (%d), skipping events till next frame", GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME);
+            })
         {
             switch (window_event.type)
             {
@@ -66,9 +73,7 @@ int32_t gui_application_default_run(GuiApplicationInterfaceContext *context)
         //     logic->fixed_update(logic->context);
         // }
 
-          
         draw->present(draw->context);
-
     }
 
     return 0;

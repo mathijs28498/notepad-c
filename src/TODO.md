@@ -1,6 +1,3 @@
 - Replace malloc, free, realloc with custom allocators
-- Add a utils header accessible anywhere (including TODO and ARRAY_SIZE)
-- Create logging module
 - Implement threading task solution
-- Implement dependency injection or something
 - Implement hotreloading

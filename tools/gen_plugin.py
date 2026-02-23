@@ -1,15 +1,20 @@
 import argparse
 from pathlib import Path
+import re
 
 
 def check_cmake_subdirectory_already_added(
     path_file: Path, subdirectory_name: str
 ) -> bool:
-    # TODO: Add more robust check with different permutations of the subdirectory_line
-    subdirectory_line = f"add_subdirectory({subdirectory_name})"
+    escaped_subdirectory_name = re.escape(subdirectory_name)
+    re_pattern = re.compile(
+        rf'^\s*add_subdirectory\s*\(\s*(["\']?){escaped_subdirectory_name}\1\s*(?:[^\)]*)\)', 
+        re.IGNORECASE
+    )
+
     with open(path_file, "r") as f:
         for line in f:
-            if line.strip() == subdirectory_line:
+            if re_pattern.search(line):
                 return True
 
     return False
@@ -26,7 +31,7 @@ def create_file(path_file: Path, content: str):
 
 
 def append_file(path_file: Path, content: str):
-    print(f"Appending file: {path_file}")
+    print(f"Appending to file: {path_file}")
     with open(path_file, "a") as f:
         f.write(content)
 

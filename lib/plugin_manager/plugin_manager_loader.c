@@ -343,7 +343,6 @@ int32_t calculate_plugin_module_initialization_order(
         }
     }
 
-    TODO("Add upper bound to while loop while macro")
     // Iteratively fill sorted indices
     SAFE_WHILE(
         queue_head != queue_tail,

@@ -11,6 +11,7 @@
 
 - [ ] Fix all todos
 
+- [ ] Improve plugin_registry json
 - [ ] Add register plugin macro (rather than the define from now)
 - [ ] Remove api/interface prefixes for sdk methods
 - [ ] Add configurations to plugins

@@ -30,7 +30,6 @@ int32_t __plugin_manager_shutdown(struct PluginManagerRuntimeContext *runtime_co
         (void)lpCmdLine;                                                                                \
                                                                                                         \
         HRESULT hr = {0};                                                                               \
-        TODO("Check if this belongs here or somewhere else (also replace CoUninitialize if replacing)") \
         hr = CoInitialize(NULL);                                                                        \
                                                                                                         \
         struct PluginManagerSetupContext *__context;                                                    \

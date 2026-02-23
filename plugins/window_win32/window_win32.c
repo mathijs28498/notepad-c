@@ -13,6 +13,8 @@ LOGGER_INTERFACE_REGISTER(window_win32, LOG_LEVEL_DEBUG);
 #include "window_win32_window_events.h"
 #include "window_win32_key_converter.h"
 
+#define WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME 256
+
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 int32_t window_win32_create_window(WindowInterfaceContext *context, WindowInterfaceCreateWindowOptions *options)
@@ -63,10 +65,14 @@ int32_t window_win32_close_window(struct WindowInterfaceContext *context)
 
 int32_t window_win32_poll_os_events(WindowInterfaceContext *context)
 {
-    (void)context;
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-    {
+    MSG msg;  
+    SAFE_WHILE(
+            PeekMessage(&msg, NULL, 0, 0, PM_REMOVE),
+            WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME,
+            {
+                LOG_WRN(context->logger, "Too many os events in one frame (%d), skipping events till next frame", WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME);
+            })
+        {
         if (msg.message == WM_QUIT)
         {
             WindowEvent window_event = {
