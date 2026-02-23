@@ -16,7 +16,7 @@ target_sources(plugin_manager
 
 target_link_libraries(plugin_manager
     PRIVATE
-        plugin_manager_common
+        plugin_manager_include
         cjson
         internal_plugins
 )

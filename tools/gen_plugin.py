@@ -151,7 +151,7 @@ target_sources({plugin_name}
 
 target_link_libraries({plugin_name}
     PRIVATE
-        plugin_manager_common
+        plugin_manager_include
 )""",
     )
 
@@ -199,7 +199,7 @@ def main():
     # Assuming this file is placed at root/tools
     path_root_dir = Path(__file__).parent.resolve().parent
 
-    path_interface_dir = path_root_dir / "plugin_manager_common"
+    path_interface_dir = path_root_dir / "plugin_manager_include"
     if not path_interface_dir.exists():
         raise FileNotFoundError(
             f"Interface directory not found at: {str(path_interface_dir)}"

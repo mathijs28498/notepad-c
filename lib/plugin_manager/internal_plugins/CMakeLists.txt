@@ -2,8 +2,8 @@ add_library(internal_plugins)
 
 target_sources(internal_plugins
     PRIVATE
-        environment_plugin.c
-        logger_plugin.c
+        environment_default.c
+        logger_console.c
 
     PUBLIC
         FILE_SET HEADERS
@@ -11,5 +11,5 @@ target_sources(internal_plugins
 
 target_link_libraries(internal_plugins
     PRIVATE
-        plugin_manager_common
+        plugin_manager_include
 )

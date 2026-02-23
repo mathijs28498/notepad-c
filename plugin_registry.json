@@ -1,24 +1,24 @@
 {
     "plugin_definitions": [
         {
-            "name": "window_win32_plugin",
+            "name": "win32",
             "interface": "window",
-            "path": "./window_win32_plugin.dll"
+            "path": "./window_win32.dll"
         },
         {
-            "name": "gui_application_plugin",
+            "name": "default",
             "interface": "gui_application",
-            "path": "./gui_application_plugin.dll"
+            "path": "./gui_application_default.dll"
         },
         {
-            "name": "input_plugin",
+            "name": "default",
             "interface": "input",
-            "path": "./input_plugin.dll"
+            "path": "./input_default.dll"
         },
         {
-            "name": "draw_plugin",
+            "name": "default",
             "interface": "draw",
-            "path": "./draw_plugin.dll"
+            "path": "./draw_default.dll"
         }
     ]
 }

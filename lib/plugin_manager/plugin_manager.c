@@ -12,10 +12,10 @@
 #include <plugin_framework.h>
 
 #include <environment_interface.h>
-#include <environment_plugin.h>
+#include <environment_default.h>
 #include <logger_interface.h>
-#include <logger_plugin.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
+#include <logger_console.h>
 
 #include "file_io.h"
 #include "plugin_registry.h"
@@ -43,12 +43,12 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
     {
         assert(new_setup_context->internal_plugins_len < sizeof(new_setup_context->internal_plugins) / sizeof(new_setup_context->internal_plugins[0]));
 
-        EnvironmentInterface *environment = environment_get_interface();
-        environment_plugin_set_args(environment->context, argc, argv, platform_context);
+        EnvironmentInterface *environment = environment_interface_get_interface();
+        environment_default_set_args(environment->context, argc, argv, platform_context);
 
         PluginStatic environment_plugin = {
             .interface_name = "environment",
-            .plugin_name = "internal_environment_plugin",
+            .plugin_name = "default",
             .dependencies_len = 0,
             .iface = (PluginManagerBaseInterface *)environment,
         };
@@ -67,7 +67,7 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
 
         PluginStatic logger_plugin = {
             .interface_name = "logger",
-            .plugin_name = "internal_logger_plugin",
+            .plugin_name = "console",
             .dependencies_len = 0,
             .iface= (PluginManagerBaseInterface *)logger,
         };
@@ -222,6 +222,8 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
         }
     }
 
+    TODO("Make internal plugins just static plugins")
+    TODO("Do this for all plugins including the internal ones")
     uint32_t sorted_plugin_modules_indices[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
     ret = calculate_plugin_module_initialization_order(logger, plugin_modules, plugin_modules_len, sorted_plugin_modules_indices);
     if (ret < 0)
@@ -267,7 +269,5 @@ int32_t __plugin_manager_shutdown(PluginManagerRuntimeContext *runtime_context)
         runtime_context->logger->on_exit(runtime_context->logger->context);
     }
 
-    TODO("Do this in the right spot")
-    CoUninitialize();
     return 0;
 }

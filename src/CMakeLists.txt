@@ -29,7 +29,7 @@ target_link_libraries(program
         # Renderer
         # ProjectCommon
         # TestPlugin
-        plugin_manager_common
+        plugin_manager_include
         plugin_manager
         test_lib
         test_yes
