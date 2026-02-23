@@ -26,6 +26,7 @@ GuiApplicationInterface *get_interface(void)
     static GuiApplicationInterface iface = {
         .context = &context,
 
+        .setup = gui_application_default_setup,
         .run = gui_application_default_run,
     };
 

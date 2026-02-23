@@ -27,22 +27,14 @@ PLUGIN_FRAMEWORK_MAIN()
     // ret = PLUGIN_MANAGER_LINK_INTERFACES("draw", "draw_interfaces",
     //                                "draw_2d", "draw_3d", "draw_ui");
 
-    ret = PLUGIN_FRAMEWORK_ADD("window", NULL);
     ret = PLUGIN_FRAMEWORK_LOAD();
     if (ret < 0)
     {
         return ret;
     }
 
-    WindowInterface *window;
     GuiApplicationInterface *gui_application;
-    // Draw2dInterface *draw_2d;
 
-    ret = PLUGIN_FRAMEWORK_GET("window", &window);
-    if (ret < 0)
-    {
-        return ret;
-    }
 
     PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
     if (ret < 0)
@@ -50,16 +42,11 @@ PLUGIN_FRAMEWORK_MAIN()
         return ret;
     }
 
-    // PLUGIN_FRAMEWORK_GET("draw_2d", &draw_2d);
-    // if (ret < 0)
-    // {
-    //     return ret;
-    // }
 
     WindowInterfaceCreateWindowOptions create_window_options = {
         .window_name = "My app",
     };
-    ret = window->create_window(window->context, &create_window_options);
+    ret = gui_application->setup(gui_application->context, &create_window_options);
 
     ret = gui_application->run(gui_application->context);
 

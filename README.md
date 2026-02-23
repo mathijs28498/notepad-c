@@ -7,16 +7,17 @@
 - [x] Rename plugin_manager_api.h to plugin_framework.h
 - [x] Remove _plugin suffix to plugin names
 - [x] Properly destroy the window at end of execution
+- [x] Make gui_application initialize the screen with its own method
 
 - [ ] Fix all todos
-- [ ] Make gui_application initialize the screen with its own method
-- [ ] Clean up internal apis and make them better
-    - [ ] Make internal apis proper plugins that are just linked statically
+
 - [ ] Add register plugin macro (rather than the define from now)
 - [ ] Remove api/interface prefixes for sdk methods
 - [ ] Add configurations to plugins
 - [ ] Add shutdown methods to plugins
     - [ ] Make the plugins shutdown in opposite order as initialization
+- [ ] Clean up internal apis and make them better
+    - [ ] Make internal apis proper plugins that are just linked statically
 
 - [ ] Add logging to a file
 - [ ] Add static loading

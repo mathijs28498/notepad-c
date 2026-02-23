@@ -111,7 +111,7 @@ LoggerInterface *logger_interface_get_interface(void);
 void logger_interface_on_exit(LoggerInterfaceContext *context)
 {
 // #if IS_DEBUG && WINDOWS_GUI
-    log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Press any key to exit...\n");
+    log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Press any key to exit...");
     _getch();
 // #endif
 }

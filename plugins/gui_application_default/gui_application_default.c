@@ -11,6 +11,13 @@ LOGGER_INTERFACE_REGISTER(gui_application_default, LOG_LEVEL_DEBUG)
 
 #include "gui_application_default_register.h"
 
+int32_t gui_application_default_setup(GuiApplicationInterfaceContext *context, WindowInterfaceCreateWindowOptions *create_window_options)
+{
+    context->window->create_window(context->window->context, create_window_options);
+
+    return 0;
+}
+
 int32_t gui_application_default_run(GuiApplicationInterfaceContext *context)
 {
     WindowInterface *window= context->window;
