@@ -22,7 +22,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 #include "plugin_manager_types.h"
 #include "plugin_manager_loader.h"
 
-#define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 255
+#define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 256
 
 PluginManagerRuntimeContext *__get_plugin_manager_runtime_context()
 {
@@ -69,7 +69,7 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
             .interface_name = "logger",
             .plugin_name = "console",
             .dependencies_len = 0,
-            .iface= (PluginManagerBaseInterface *)logger,
+            .iface = (PluginManagerBaseInterface *)logger,
         };
 
         memcpy(&new_setup_context->internal_plugins[new_setup_context->internal_plugins_len],
@@ -140,7 +140,7 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
     LoggerInterface *logger = setup_context->logger;
     runtime_context->logger = logger;
 
-    TODO("Make buffer not use malloc")
+    TODO("Use arena allocation for this")
     ret = file_io_read(logger, "../plugin_registry.json", &buffer);
     ret = plugin_registry_deserialize_json(logger, buffer, &plugin_registry);
     free(buffer);
@@ -239,7 +239,6 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
         return ret;
     }
 
-    free(setup_context);
 
     return 0;
 }
