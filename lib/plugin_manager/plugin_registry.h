@@ -3,6 +3,6 @@
 #include <stdint.h>
 
 struct LoggerInterface;
-struct PluginRegistry;
+struct PluginModuleRegistry;
 
-int32_t plugin_registry_deserialize_json(struct LoggerInterface *logger, const char *json_str, struct PluginRegistry *plugin_registry);
+int32_t plugin_registry_deserialize_json(struct LoggerInterface *logger, const char *json_str, struct PluginModuleRegistry *plugin_registry);

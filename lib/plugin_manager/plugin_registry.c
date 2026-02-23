@@ -12,9 +12,9 @@ LOGGER_INTERFACE_REGISTER(plugin_registry, LOG_LEVEL_DEBUG)
 
 #include "plugin_manager_types.h"
 
-int32_t plugin_registry_deserialize_json(LoggerInterface *logger, const char *json_str, PluginRegistry *plugin_registry)
+int32_t plugin_registry_deserialize_json(LoggerInterface *logger, const char *json_str, PluginModuleRegistry *plugin_registry)
 {
-    memset(plugin_registry, 0, sizeof(PluginRegistry));
+    memset(plugin_registry, 0, sizeof(PluginModuleRegistry));
 
     cJSON *json_root = cJSON_Parse(json_str);
     if (json_root == NULL)
