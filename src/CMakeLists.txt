@@ -13,6 +13,9 @@ endif()
 set(requested_plugins "")
 set(gen_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
+# TODO: Create json to include the plugins and move this to the plugin_manager 
+#   this will also have the capability to link interfaces together (draw -> draw2d, draw3d, drawUI, etc...)
+
 include(PluginFramework)
 # plugin_framework_add(requested_plugins "gui_application" VARIANT "default")
 plugin_framework_add(requested_plugins "logger" )

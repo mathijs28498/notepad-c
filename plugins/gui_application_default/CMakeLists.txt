@@ -1,4 +1,7 @@
-add_library(gui_application_default SHARED)
+# TODO: Make every plugin work properly like this
+#       Maybe start with window plugin?
+# TODO: Add option for turning static vs dynamic building, add this to CMakePresets.json
+add_library(gui_application_default)
 
 target_sources(gui_application_default
     PRIVATE
@@ -14,5 +17,8 @@ target_link_libraries(gui_application_default
         plugin_manager_include
 )
 
-add_compile_definitions(PLUGIN_BUILD_SHARED)
-add_compile_definitions(PLUGIN_INTERFACE_NAME=gui_application)
+# TODO: Change all add_compile_definitions to target_compile_definitions
+if (PLUGIN_MANAGER_BUILD_SHARED_LIBS)
+    target_compile_definitions(gui_application_default PRIVATE PLUGIN_BUILD_SHARED)
+endif()
+add_compile_definitions(gui_application_default PRIVATE PLUGIN_INTERFACE_NAME=gui_application)

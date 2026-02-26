@@ -1,5 +1,9 @@
 include_guard(GLOBAL)
 
+# TODO: Create new code for statically loading the plugins with dependencies
+#       Insert this code under an #if defined(BUILD_STATIC) or something
+# TODO: Add proper name spaces to the macros and defines with PLUGIN_MANAGER
+
 function(plugin_framework_add REQUESTED_PLUGINS_ARG INTERFACE_NAME)
     set(ONE_VALUE_ARGS VARIANT)
     cmake_parse_arguments(PFP "" "${ONE_VALUE_ARGS}" "" "${ARGN}")
@@ -57,7 +61,7 @@ function(__plugin_manager_load_internal JSON_DIR GEN_DIR)
         string(JSON INTERNAL_PLUGIN_JSON GET ${PLUGIN_REGISTRY_JSON} internal_plugins ${i})
         string(JSON INTERFACE_NAME GET "${INTERNAL_PLUGIN_JSON}" interface_name)
         string(JSON PLUGIN_NAME GET "${INTERNAL_PLUGIN_JSON}" plugin_name)
-        string(JSON PLUGIN_SOURCE GET "${INTERNAL_PLUGIN_JSON}" plugin_source)
+        string(JSON PLUGIN_SOURCE GET "${INTERNAL_PLUGIN_JSON}" plugin_source_path)
 
         string(JSON INTERNAL_PLUGIN_FW_DECLARATION_COUNT ERROR_VARIABLE err LENGTH ${INTERNAL_PLUGIN_JSON}  plugin_forward_declarations)
         math(EXPR MAX_J "${INTERNAL_PLUGIN_FW_DECLARATION_COUNT} - 1")

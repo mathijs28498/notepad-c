@@ -2,6 +2,8 @@ import argparse
 from pathlib import Path
 import re
 
+# TODO: Add new improved CMakeLists.txt here
+
 
 def check_cmake_subdirectory_already_added(
     path_file: Path, subdirectory_name: str
