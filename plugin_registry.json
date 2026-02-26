@@ -1,24 +1,22 @@
 {
-    "plugin_definitions": [
+    "internal_plugins": [
         {
-            "name": "win32",
-            "interface": "window",
-            "path": "./window_win32.dll"
+            "interface_name": "logger",
+            "plugin_name": "console",
+            "plugin_source": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager/internal_plugins/logger_console",
+            "plugin_forward_declarations": [
+                "struct LoggerInterfaceContext;",
+                "void logger_console_on_program_exit(struct LoggerInterfaceContext *context, int exit_code);"
+            ]
         },
         {
-            "name": "default",
-            "interface": "gui_application",
-            "path": "./gui_application_default.dll"
-        },
-        {
-            "name": "default",
-            "interface": "input",
-            "path": "./input_default.dll"
-        },
-        {
-            "name": "default",
-            "interface": "draw",
-            "path": "./draw_default.dll"
+            "interface_name": "environment",
+            "plugin_name": "default",
+            "plugin_source": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager/internal_plugins/environment_default",
+            "plugin_forward_declarations": [
+                "struct EnvironmentInterfaceContext;",
+                "int32_t environment_default_set_args(struct EnvironmentInterfaceContext *context, int argc, char **argv, void *platform_context);"
+            ]
         }
     ]
 }

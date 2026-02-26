@@ -47,3 +47,9 @@ TODO("Add optional dependencies")
     {                                                                                          \
         return init_fn(context);                                                               \
     }
+
+#define PLUGIN_REGISTER_SHUTDOWN(shutdown_fn, context_type)                                            \
+    PLUGIN_FUNCTION_PREFIX int32_t CONCAT(PLUGIN_INTERFACE_NAME, _shutdown)(context_type * context) \
+    {                                                                                          \
+        return shutdown_fn(context);                                                               \
+    }

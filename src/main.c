@@ -35,20 +35,33 @@ PLUGIN_FRAMEWORK_MAIN()
         return ret;
     }
 
-    GuiApplicationInterface *gui_application;
-
-    ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
+    LoggerInterface *logger;
+    ret = PLUGIN_FRAMEWORK_GET("logger", &logger);
     if (ret < 0)
     {
         return ret;
     }
 
-    WindowInterfaceCreateWindowOptions create_window_options = {
-        .window_name = "My app",
-    };
-    ret = gui_application->setup(gui_application->context, &create_window_options);
+    for (int i = 0; i < 5; i++)
+    {
+        LOG_INF(logger, "This works: %d", i);
+        Sleep(1000);
+    }
 
-    ret = gui_application->run(gui_application->context);
+    // GuiApplicationInterface *gui_application;
+
+    // ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
+    // if (ret < 0)
+    // {
+    //     return ret;
+    // }
+
+    // WindowInterfaceCreateWindowOptions create_window_options = {
+    //     .window_name = "My app",
+    // };
+    // ret = gui_application->setup(gui_application->context, &create_window_options);
+
+    // ret = gui_application->run(gui_application->context);
 
     return 0;
 }

@@ -13,7 +13,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager_loader, LOG_LEVEL_DEBUG)
 #include "plugin_manager.h"
 
 TODO("Check if this algorithm can/should be made better/faster")
-int32_t resolve_requested_plugins_registry(
+int32_t resolve_requested_plugins_dynamic(
     const LoggerInterface *logger,
     RequestedPlugin *requested_plugins,
     size_t requested_plugins_len,
@@ -389,7 +389,7 @@ int32_t initialize_plugins(
         interface_instance->iface = plugin_provider->get_interface();
         interface_instance->is_explicit = plugin_provider->is_explicit;
 
-        if (!plugin_provider->init)
+        if (plugin_provider->is_initialized || !plugin_provider->init)
         {
             continue;
         }

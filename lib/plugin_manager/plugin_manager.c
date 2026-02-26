@@ -12,78 +12,56 @@
 #include <plugin_framework.h>
 
 #include <environment_interface.h>
-#include <environment_default.h>
-#include <environment_default_register.h>
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 #include <logger_console.h>
-#include <logger_console_register.h>
 
+#include "__plugin_manager_generated.h"
 #include "file_io.h"
 #include "plugin_registry.h"
 #include "plugin_manager_types.h"
 #include "plugin_manager_loader.h"
+#include "plugin_manager_get_setup_context.h"
 
 #define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 256
 
 int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, PluginManagerSetupContext **setup_context, PluginManagerRuntimeContext **runtime_context)
 {
     assert(setup_context != NULL);
+    assert(runtime_context != NULL);
 
-    static PluginManagerSetupContext new_setup_context = {
-        .internal_plugins_len = 0,
-        .plugin_providers_len = 0,
-        .requested_plugins_len = 0,
-    };
+    PluginManagerSetupContext *new_setup_context = plugin_manager_get_setup_context();
 
     static PluginManagerRuntimeContext new_runtime_context = {0};
 
+    for (size_t i = 0; i < new_setup_context->internal_plugins_len; i++)
     {
-        assert(new_setup_context.internal_plugins_len < ARRAY_SIZE(new_setup_context.internal_plugins));
+        PluginProvider *internal_plugin = &new_setup_context->internal_plugins[i];
+        if (strcmp(internal_plugin->interface_name, "logger") == 0)
+        {
+            if (internal_plugin->init)
+            {
+                internal_plugin->init(internal_plugin->get_interface()->context);
+            }
+            internal_plugin->is_initialized = true;
 
-        EnvironmentInterface *environment = environment_get_interface();
-        environment_default_set_args(environment->context, argc, argv, platform_context);
+            new_setup_context->logger = (LoggerInterface *)internal_plugin->get_interface();
+            new_runtime_context.logger = (LoggerInterface *)internal_plugin->get_interface();
+        }
+        else if (strcmp(internal_plugin->interface_name, "environment") == 0)
+        {
+            if (internal_plugin->init)
+            {
+                internal_plugin->init(internal_plugin->get_interface()->context);
+            }
+            internal_plugin->is_initialized = true;
 
-        PluginProvider environment_plugin = {
-            .interface_name = "environment",
-            .plugin_name = "default",
-            .dependencies_len = 0,
-            .get_interface = (PluginGetInterface_Fn)environment_get_interface,
-            .init = NULL,
-            .shutdown = NULL,
-            .is_initialized = true,
-        };
-
-        memcpy(&new_setup_context.internal_plugins[new_setup_context.internal_plugins_len],
-               &environment_plugin,
-               sizeof(new_setup_context.internal_plugins[new_setup_context.internal_plugins_len]));
-        new_setup_context.internal_plugins_len++;
+            EnvironmentInterface *environment = (EnvironmentInterface *)internal_plugin->get_interface();
+            environment_default_set_args(environment->context, argc, argv, platform_context);
+        }
     }
 
-    {
-        assert(new_setup_context.internal_plugins_len < ARRAY_SIZE(new_setup_context.internal_plugins));
-
-        TODO("Add init function so that the allocConsole gets done properly")
-        PluginProvider logger_plugin = {
-            .interface_name = "logger",
-            .plugin_name = "console",
-            .dependencies_len = 0,
-            .get_interface = (PluginGetInterface_Fn)logger_get_interface,
-            .init = NULL,
-            .shutdown = NULL,
-            .is_initialized = true,
-        };
-
-        new_setup_context.logger = (LoggerInterface *)logger_plugin.get_interface();
-        new_runtime_context.logger = (LoggerInterface *)logger_plugin.get_interface();
-
-        memcpy(&new_setup_context.internal_plugins[new_setup_context.internal_plugins_len],
-               &logger_plugin,
-               sizeof(new_setup_context.internal_plugins[new_setup_context.internal_plugins_len]));
-        new_setup_context.internal_plugins_len++;
-    }
-
-    *setup_context = &new_setup_context;
+    *setup_context = new_setup_context;
     *runtime_context = &new_runtime_context;
     return 0;
 }
@@ -143,13 +121,13 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
 {
     int ret;
     char *buffer;
-    PluginModuleRegistry plugin_registry;
+    // PluginModuleRegistry plugin_registry;
     LoggerInterface *logger = setup_context->logger;
     runtime_context->logger = logger;
 
     TODO("Use arena allocation for this")
     ret = file_io_read(logger, "../plugin_registry.json", &buffer);
-    ret = plugin_registry_deserialize_json(logger, buffer, &plugin_registry);
+    // ret = plugin_registry_deserialize_json(logger, buffer, &plugin_registry);
     free(buffer);
 
     if (ret < 0)
@@ -168,29 +146,29 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
     {
 
         {
-            PluginModule plugin_modules[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
-            size_t plugin_modules_len = 0;
+            // PluginModule plugin_modules[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+            // size_t plugin_modules_len = 0;
 
-            ret = resolve_requested_plugins_registry(
-                logger,
-                setup_context->requested_plugins,
-                setup_context->requested_plugins_len,
-                &plugin_registry,
-                plugin_modules,
-                &plugin_modules_len);
+            // ret = resolve_requested_plugins_dynamic(
+            //     logger,
+            //     setup_context->requested_plugins,
+            //     setup_context->requested_plugins_len,
+            //     &plugin_registry,
+            //     plugin_modules,
+            //     &plugin_modules_len);
 
-            if (ret < 0)
-            {
-                LOG_ERR(logger, "Error in resolve_requested_plugins_registry: %d", ret);
-                return ret;
-            }
+            // if (ret < 0)
+            // {
+            //     LOG_ERR(logger, "Error in resolve_requested_plugins_dynamic: %d", ret);
+            //     return ret;
+            // }
 
-            ret = load_plugin_modules(
-                logger,
-                plugin_modules,
-                plugin_modules_len,
-                setup_context->plugin_providers,
-                &setup_context->plugin_providers_len);
+            // ret = load_plugin_modules(
+            //     logger,
+            //     plugin_modules,
+            //     plugin_modules_len,
+            //     setup_context->plugin_providers,
+            //     &setup_context->plugin_providers_len);
 
             if (ret < 0)
             {
