@@ -16,6 +16,7 @@
 - [x] Improve plugin_registry json
 - [x] Add compile step to create plugin registry from json
 - [x] Json registration of plugins
+- [x] Remove build to get a clean build
 
 - [ ] Fix all todos
 
@@ -23,7 +24,6 @@
 - [ ] Add configurations to plugins
 - [ ] Add sub interfaces for logic and draw
 - [ ] Add conjoined plugin structure to json
-- [ ] Remove build to get a clean build
 
 - [ ] Add logging to a file
 - [ ] Add static loading

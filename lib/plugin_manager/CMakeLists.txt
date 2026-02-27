@@ -18,7 +18,6 @@ target_include_directories(plugin_manager
 
 target_sources(plugin_manager
     PRIVATE
-        file_io.c
         plugin_manager_loader.c
         plugin_manager.c
 

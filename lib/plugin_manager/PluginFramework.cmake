@@ -108,7 +108,7 @@ typedef struct PluginRegistry
 const PluginRegistry *plugin_registry_get(void);
 ")
 
-    set(HEADER_LOCATION "${GEN_DIR}/__plugin_registry.h")
+    set(HEADER_LOCATION "${GEN_DIR}/plugin_registry.h")
     file(CONFIGURE
         OUTPUT "${HEADER_LOCATION}"
         CONTENT "${HEADER_CONTENT}"
@@ -249,7 +249,7 @@ function(plugin_manager_load_plugins JSON_DIR GEN_DIR)
     )
 
 
-    set(HEADER_LOCATION "${GEN_DIR}/__plugin_manager_generated.h")
+    set(HEADER_LOCATION "${GEN_DIR}/plugin_manager_generated.h")
     file(CONFIGURE
         OUTPUT "${HEADER_LOCATION}"
         CONTENT "${PLUGIN_MANAGER_HEADER_CONTENT}"
