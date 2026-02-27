@@ -8,6 +8,7 @@ cmake_path(GET PARENT_DIR PARENT_PATH JSON_DIR)
 set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
 __plugin_manager_load_internal("${JSON_DIR}" "${GEN_DIR}")
+__plugin_manager_load_registry("${JSON_DIR}" "${GEN_DIR}")
 
 target_include_directories(plugin_manager 
     PRIVATE 
@@ -20,7 +21,6 @@ target_sources(plugin_manager
         file_io.c
         plugin_manager_loader.c
         plugin_manager.c
-        plugin_registry.c
 
     # PUBLIC
     #     FILE_SET HEADERS

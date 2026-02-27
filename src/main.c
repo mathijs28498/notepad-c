@@ -1,18 +1,16 @@
+#include <stdio.h>
+#include <stdbool.h>
+
 #include <plugin_framework.h>
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
 #include <environment_interface.h>
 #include <window_interface.h>
 #include <gui_application_interface.h>
+
 #include "plugin_framework_generated.h"
 
-#include <stdio.h>
-#include <stdbool.h>
-
 TODO("Make this work")
-// #define PLUGIN_FRAMEWORK_PLUGINS_LIST(X) \
-//     /*empty*/
-//     // X("gui_application", NULL) X("logger", "database")
 
 PLUGIN_FRAMEWORK_MAIN()
 {
@@ -35,33 +33,19 @@ PLUGIN_FRAMEWORK_MAIN()
         return ret;
     }
 
-    LoggerInterface *logger;
-    ret = PLUGIN_FRAMEWORK_GET("logger", &logger);
+    GuiApplicationInterface *gui_application;
+    ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
     if (ret < 0)
     {
         return ret;
     }
 
-    for (int i = 0; i < 5; i++)
-    {
-        LOG_INF(logger, "This works: %d", i);
-        Sleep(1000);
-    }
+    WindowInterfaceCreateWindowOptions create_window_options = {
+        .window_name = "My app",
+    };
+    ret = gui_application->setup(gui_application->context, &create_window_options);
 
-    // GuiApplicationInterface *gui_application;
-
-    // ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
-    // if (ret < 0)
-    // {
-    //     return ret;
-    // }
-
-    // WindowInterfaceCreateWindowOptions create_window_options = {
-    //     .window_name = "My app",
-    // };
-    // ret = gui_application->setup(gui_application->context, &create_window_options);
-
-    // ret = gui_application->run(gui_application->context);
+    ret = gui_application->run(gui_application->context);
 
     return 0;
 }

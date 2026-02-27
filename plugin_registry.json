@@ -22,8 +22,12 @@
     "interfaces": [
         {
             "interface_name": "window",
-            "TODO": "Make the default specific based on parameters, like build target (win32, wasm, etc...)",
-            "default_plugin": "win32",
+            "default_plugin": [
+                {
+                    "target": "win32",
+                    "plugin_name": "win32"
+                }
+            ],
             "plugins": [
                 {
                     "plugin_name": "win32",
@@ -34,7 +38,6 @@
         },
         {
             "interface_name": "gui_application",
-            "TODO": "Make the default specific based on parameters, like build target (win32, wasm, etc...)",
             "default_plugin": "default",
             "plugins": [
                 {
@@ -46,7 +49,6 @@
         },
         {
             "interface_name": "draw",
-            "TODO": "Make the default specific based on parameters, like build target (win32, wasm, etc...)",
             "default_plugin": "default",
             "plugins": [
                 {
@@ -58,7 +60,6 @@
         },
         {
             "interface_name": "input",
-            "TODO": "Make the default specific based on parameters, like build target (win32, wasm, etc...)",
             "default_plugin": "default",
             "plugins": [
                 {

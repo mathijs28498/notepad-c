@@ -5,7 +5,7 @@
 
 struct LoggerInterface;
 struct RequestedPlugin;
-struct PluginModuleRegistry;
+struct PluginRegistry;
 struct PluginModule;
 
 struct PluginProvider;
@@ -16,7 +16,7 @@ int32_t resolve_requested_plugins_dynamic(
     const struct LoggerInterface *logger,
     struct RequestedPlugin *requested_plugins,
     size_t requested_plugins_len,
-    const struct PluginModuleRegistry *plugin_registry,
+    const struct PluginRegistry *plugin_registry,
     struct PluginModule *plugin_modules,
     size_t *plugin_modules_len);
 

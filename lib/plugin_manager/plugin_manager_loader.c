@@ -11,54 +11,67 @@ LOGGER_INTERFACE_REGISTER(plugin_manager_loader, LOG_LEVEL_DEBUG)
 
 #include "plugin_manager_types.h"
 #include "plugin_manager.h"
+#include "__plugin_registry.h"
 
 TODO("Check if this algorithm can/should be made better/faster")
 int32_t resolve_requested_plugins_dynamic(
     const LoggerInterface *logger,
     RequestedPlugin *requested_plugins,
     size_t requested_plugins_len,
-    const PluginModuleRegistry *plugin_registry,
+    const PluginRegistry *plugin_registry,
     PluginModule *plugin_modules,
     size_t *plugin_modules_len)
 {
     for (size_t i = 0; i < requested_plugins_len; i++)
     {
         RequestedPlugin *requested_plugin = &requested_plugins[i];
-
         bool use_default = strlen(requested_plugin->plugin_name) == 0;
 
-        int32_t plugin_definition_index = -1;
-        for (uint32_t j = 0; j < plugin_registry->plugin_definitions_len; j++)
+        const PluginDefinition *plugin_definition_to_add = NULL;
+        for (size_t j = 0; j < plugin_registry->interface_definitions_len; j++)
         {
-            const PluginModuleDefinition *plugin_definition = &plugin_registry->plugin_definitions[j];
+            const InterfaceDefinition *interface_definition = &plugin_registry->interface_definitions[j];
 
-            const char *plugin_definition_name = use_default
-                                                     ? plugin_definition->interface_name
-                                                     : plugin_definition->plugin_name;
-
-            const char *plugin_to_add_name = use_default
-                                                 ? requested_plugin->interface_name
-                                                 : requested_plugin->plugin_name;
-
-            if (strcmp(plugin_definition_name, plugin_to_add_name) == 0)
+            if (strcmp(requested_plugin->interface_name, interface_definition->interface_name) != 0)
             {
-                plugin_definition_index = (int32_t)j;
+                continue;
+            }
 
-                PluginModule *plugin_module = &plugin_modules[*plugin_modules_len];
+            const char *plugin_name = use_default
+                                          ? interface_definition->default_plugin
+                                          : requested_plugin->plugin_name;
 
-                plugin_module->definition = plugin_definition;
-                plugin_module->is_explicit = requested_plugin->is_explicit;
-                (*plugin_modules_len)++;
-                TODO("Add max index check here")
+            for (size_t k = 0; k < interface_definition->plugin_definitions_len; k++)
+            {
+                const PluginDefinition *plugin_definition = &interface_definition->plugin_definitions[k];
+                if (strcmp(plugin_name, plugin_definition->plugin_name) == 0)
+                {
+                    plugin_definition_to_add = plugin_definition;
+                    break;
+                }
+            }
+
+            if (plugin_definition_to_add != NULL)
+            {
                 break;
             }
         }
 
-        if (plugin_definition_index < 0)
+        if (plugin_definition_to_add == NULL)
         {
             LOG_DBG(logger, "Interface '%s' not found in registry, looking for internal plugin", requested_plugin->interface_name);
             continue;
         }
+
+        PluginModule *plugin_module = &plugin_modules[*plugin_modules_len];
+
+        snprintf(plugin_module->interface_name, sizeof(plugin_module->interface_name),
+                 "%s", requested_plugin->interface_name);
+        plugin_module->plugin_name = plugin_definition_to_add->plugin_name;
+        plugin_module->plugin_path = plugin_definition_to_add->module_path;
+        plugin_module->is_explicit = requested_plugin->is_explicit;
+        (*plugin_modules_len)++;
+        TODO("Add max index check here")
 
         requested_plugin->is_resolved = true;
     }
@@ -91,21 +104,21 @@ int32_t load_plugin_modules(
 
         plugin_provider->dependencies_len = 0;
         snprintf(plugin_provider->interface_name, PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN,
-                 "%s", plugin_module->definition->interface_name);
+                 "%s", plugin_module->interface_name);
         snprintf(plugin_provider->plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN,
-                 "%s", plugin_module->definition->plugin_name);
+                 "%s", plugin_module->plugin_name);
         plugin_provider->is_initialized = 0;
         plugin_provider->is_explicit = plugin_module->is_explicit;
 
-        HMODULE handle = LoadLibrary(plugin_module->definition->path);
+        HMODULE handle = LoadLibrary(plugin_module->plugin_path);
         if (!handle)
         {
-            LOG_ERR(logger, "Failed to load plugin '%s' at '%s'", plugin_module->definition->plugin_name, plugin_module->definition->path);
+            LOG_ERR(logger, "Failed to load plugin '%s' at '%s'", plugin_module->plugin_name, plugin_module->plugin_path);
             return -1;
         }
 
         PluginGetDependencies_Fn get_dependencies_proc;
-        GET_FUNCTION_PROC(handle, PluginGetDependencies_Fn, plugin_module->definition->interface_name, "_get_dependencies", "",
+        GET_FUNCTION_PROC(handle, PluginGetDependencies_Fn, plugin_module->interface_name, "_get_dependencies", "",
                           get_dependencies_proc);
 
         if (get_dependencies_proc)
@@ -118,28 +131,28 @@ int32_t load_plugin_modules(
                          "%s", dependencies[j]);
                 plugin_provider->dependencies[j].is_resolved = false;
 
-                GET_FUNCTION_PROC(handle, PluginSetDependency_Fn, plugin_module->definition->interface_name, "_set_", dependencies[j],
+                GET_FUNCTION_PROC(handle, PluginSetDependency_Fn, plugin_module->interface_name, "_set_", dependencies[j],
                                   plugin_provider->dependencies[j].set);
                 if (!plugin_provider->dependencies[j].set)
                 {
-                    LOG_ERR(logger, "Could not find dependency setter '%s_set_%s'", plugin_module->definition->interface_name, dependencies[j]);
+                    LOG_ERR(logger, "Could not find dependency setter '%s_set_%s'", plugin_module->interface_name, dependencies[j]);
                     return -1;
                 }
             }
         }
 
-        GET_FUNCTION_PROC(handle, PluginGetInterface_Fn, plugin_module->definition->interface_name, "_get_interface", "",
+        GET_FUNCTION_PROC(handle, PluginGetInterface_Fn, plugin_module->interface_name, "_get_interface", "",
                           plugin_provider->get_interface);
         if (!plugin_provider->get_interface)
         {
-            LOG_ERR(logger, "no interface method found for plugin: %s", plugin_module->definition->plugin_name);
+            LOG_ERR(logger, "no interface method found for plugin: %s", plugin_module->plugin_name);
             return -1;
         }
 
-        GET_FUNCTION_PROC(handle, PluginInit_Fn, plugin_module->definition->interface_name, "_init", "",
+        GET_FUNCTION_PROC(handle, PluginInit_Fn, plugin_module->interface_name, "_init", "",
                           plugin_provider->init);
 
-        GET_FUNCTION_PROC(handle, PluginShutdown_Fn, plugin_module->definition->interface_name, "_shutdown", "",
+        GET_FUNCTION_PROC(handle, PluginShutdown_Fn, plugin_module->interface_name, "_shutdown", "",
                           plugin_provider->shutdown);
     }
 
@@ -405,5 +418,4 @@ int32_t initialize_plugins(
     }
 
     return 0;
-    
 }

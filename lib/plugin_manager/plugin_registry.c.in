@@ -1,0 +1,11 @@
+#include "__plugin_registry.h"
+
+const PluginRegistry *plugin_registry_get(void)
+{
+    static PluginRegistry plugin_registry = {
+        .interface_definitions = {@INTERFACE_DEFINITIONS_LIST@},
+        .interface_definitions_len = @INTERFACE_DEFINITIONS_LEN@,
+    };
+
+    return &plugin_registry;
+}

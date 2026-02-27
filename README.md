@@ -8,18 +8,20 @@
 - [x] Remove _plugin suffix to plugin names
 - [x] Properly destroy the window at end of execution
 - [x] Make gui_application initialize the screen with its own method
+- [x] Clean up internal apis and make them better
+    - [x] Make internal apis proper plugins that are just linked statically
+- [x] Add register plugin macro (rather than the define from now) goes in cmake now
+- [x] Add shutdown methods to plugins
+    - [x] Make the plugins shutdown in opposite order as initialization
+- [x] Improve plugin_registry json
+- [x] Add compile step to create plugin registry from json
 
 - [ ] Fix all todos
 
-- [ ] Improve plugin_registry json
-- [ ] Add register plugin macro (rather than the define from now)
-- [ ] Remove api/interface prefixes for sdk methods
+- [ ] json registration of plugins
 - [ ] Add configurations to plugins
-- [ ] Add shutdown methods to plugins
-    - [ ] Make the plugins shutdown in opposite order as initialization
-- [ ] Clean up internal apis and make them better
-    - [ ] Make internal apis proper plugins that are just linked statically
 - [ ] Add sub interfaces for logic and draw
+- [ ] Add conjoined plugin structure to json
 
 - [ ] Add logging to a file
 - [ ] Add static loading

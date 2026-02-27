@@ -14,18 +14,6 @@ TODO("Make this into cmake variables")
 #define PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN 2
 #define PLUGIN_MANAGER_MAX_DEPENDENCIES 64
 
-typedef struct PluginModuleDefinition
-{
-    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
-    char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
-    char path[PLUGIN_REGISTRY_MAX_PLUGIN_PATH_LEN];
-} PluginModuleDefinition;
-
-typedef struct PluginModuleRegistry
-{
-    PluginModuleDefinition plugin_definitions[PLUGIN_REGISTRY_MAX_PLUGIN_LEN];
-    size_t plugin_definitions_len;
-} PluginModuleRegistry;
 
 typedef struct RequestedPlugin
 {
@@ -46,6 +34,7 @@ typedef PluginManagerBaseInterface *(*PluginGetInterface_Fn)(void);
 typedef int32_t (*PluginInit_Fn)(void *context);
 typedef int32_t (*PluginShutdown_Fn)(void *context);
 
+TODO("Check if char arrays can become char pointer with static string")
 typedef struct PluginDependency
 {
     char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
@@ -53,10 +42,12 @@ typedef struct PluginDependency
     PluginSetDependency_Fn set;
 } PluginDependency;
 
-TODO("Check if this is_explicit can be removed by creating the interface_instance at time of resolving, not of loading")
+TODO("Check if needs plugin_name")
 typedef struct PluginModule
 {
-    const PluginModuleDefinition *definition;
+    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
+    const char *plugin_name;
+    const char *plugin_path;
     bool is_explicit;
 } PluginModule;
 

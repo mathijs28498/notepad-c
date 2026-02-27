@@ -17,8 +17,7 @@ set(gen_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
 #   this will also have the capability to link interfaces together (draw -> draw2d, draw3d, drawUI, etc...)
 
 include(PluginFramework)
-# plugin_framework_add(requested_plugins "gui_application" VARIANT "default")
-plugin_framework_add(requested_plugins "logger" )
+plugin_framework_add(requested_plugins "gui_application")
 plugin_framework_load(requested_plugins "${gen_dir}")
 
 target_include_directories(program PRIVATE "${gen_dir}")

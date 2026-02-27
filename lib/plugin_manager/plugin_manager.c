@@ -18,7 +18,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 
 #include "__plugin_manager_generated.h"
 #include "file_io.h"
-#include "plugin_registry.h"
+#include "__plugin_registry.h"
 #include "plugin_manager_types.h"
 #include "plugin_manager_loader.h"
 #include "plugin_manager_get_setup_context.h"
@@ -120,21 +120,10 @@ int32_t plugin_manager_add_internal(
 int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context)
 {
     int ret;
-    char *buffer;
-    // PluginModuleRegistry plugin_registry;
     LoggerInterface *logger = setup_context->logger;
     runtime_context->logger = logger;
 
-    TODO("Use arena allocation for this")
-    ret = file_io_read(logger, "../plugin_registry.json", &buffer);
-    // ret = plugin_registry_deserialize_json(logger, buffer, &plugin_registry);
-    free(buffer);
-
-    if (ret < 0)
-    {
-        LOG_ERR(logger, "unable to parse plugin config: %d", ret);
-        return ret;
-    }
+    const PluginRegistry *plugin_registry = plugin_registry_get();
 
     SAFE_WHILE(
         setup_context->requested_plugins_len > 0,
@@ -146,29 +135,29 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
     {
 
         {
-            // PluginModule plugin_modules[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
-            // size_t plugin_modules_len = 0;
+            PluginModule plugin_modules[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+            size_t plugin_modules_len = 0;
 
-            // ret = resolve_requested_plugins_dynamic(
-            //     logger,
-            //     setup_context->requested_plugins,
-            //     setup_context->requested_plugins_len,
-            //     &plugin_registry,
-            //     plugin_modules,
-            //     &plugin_modules_len);
+            ret = resolve_requested_plugins_dynamic(
+                logger,
+                setup_context->requested_plugins,
+                setup_context->requested_plugins_len,
+                plugin_registry,
+                plugin_modules,
+                &plugin_modules_len);
 
-            // if (ret < 0)
-            // {
-            //     LOG_ERR(logger, "Error in resolve_requested_plugins_dynamic: %d", ret);
-            //     return ret;
-            // }
+            if (ret < 0)
+            {
+                LOG_ERR(logger, "Error in resolve_requested_plugins_dynamic: %d", ret);
+                return ret;
+            }
 
-            // ret = load_plugin_modules(
-            //     logger,
-            //     plugin_modules,
-            //     plugin_modules_len,
-            //     setup_context->plugin_providers,
-            //     &setup_context->plugin_providers_len);
+            ret = load_plugin_modules(
+                logger,
+                plugin_modules,
+                plugin_modules_len,
+                setup_context->plugin_providers,
+                &setup_context->plugin_providers_len);
 
             if (ret < 0)
             {
