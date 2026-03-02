@@ -14,10 +14,9 @@
 #include <environment_interface.h>
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
-#include <logger_console.h>
 
 #include "plugin_manager_generated.h"
-#include "plugin_registry.h"
+#include "plugin_registry_generated.h"
 #include "plugin_manager_types.h"
 #include "plugin_manager_loader.h"
 #include "plugin_manager_get_setup_context.h"
@@ -246,7 +245,7 @@ int32_t __plugin_manager_shutdown(PluginManagerSetupContext *setup_context, Plug
         PluginProvider *plugin_provider = &setup_context->plugin_providers[current_idx];
         if (!plugin_provider->is_initialized)
         {
-            LOG_DBG(setup_context->logger, "down '%s' interface", plugin_provider->interface_name);
+            LOG_DBG(setup_context->logger, "Skipping shutdown '%s' interface as interface is not initialized", plugin_provider->interface_name);
             continue;
         }
 

@@ -25,29 +25,19 @@ PLUGIN_FRAMEWORK_MAIN()
     // ret = PLUGIN_MANAGER_LINK_INTERFACES("draw", "draw_interfaces",
     //                                "draw_2d", "draw_3d", "draw_ui");
 
-    InputInterface *input;
-    ret = PLUGIN_FRAMEWORK_GET("input", &input);
+    GuiApplicationInterface *gui_application;
+    ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
     if (ret < 0)
     {
         return ret;
     }
 
-    int32_t prep_processing = input->prepare_processing(input->context);
-    (void)prep_processing;
+    WindowInterfaceCreateWindowOptions create_window_options = {
+        .window_name = "My app",
+    };
+    ret = gui_application->setup(gui_application->context, &create_window_options);
 
-    // GuiApplicationInterface *gui_application;
-    // ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
-    // if (ret < 0)
-    // {
-    //     return ret;
-    // }
-
-    // WindowInterfaceCreateWindowOptions create_window_options = {
-    //     .window_name = "My app",
-    // };
-    // ret = gui_application->setup(gui_application->context, &create_window_options);
-
-    // ret = gui_application->run(gui_application->context);
+    ret = gui_application->run(gui_application->context);
 
     return 0;
 }

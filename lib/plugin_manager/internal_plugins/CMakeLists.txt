@@ -1,2 +1,0 @@
-add_subdirectory(logger_console)
-add_subdirectory(environment_default)

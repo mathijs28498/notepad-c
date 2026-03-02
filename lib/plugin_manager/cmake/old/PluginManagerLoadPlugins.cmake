@@ -1,8 +1,10 @@
 include_guard(GLOBAL)
 
-function(plugin_manager_load_internal_plugins PLUGIN_REGISTRY_JSON OUT_PLUGIN_MANAGER_HEADER_CONTENT OUT_INTERNAL_PLUGINS_TEXT OUT_INTERNAL_PLUGINS_LEN)
+function(plugin_manager_load_internal_plugins PLUGIN_REGISTRY_JSON OUT_PLUGIN_MANAGER_HEADER_CONTENT OUT_INTERNAL_PLUGINS_TEXT OUT_INTERNAL_PLUGINS_LEN OUT_INTERNAL_PLUGIN_TARGET_LIST)
     set(INTERNAL_PLUGINS_TEXT "")
     set(PLUGIN_MANAGER_HEADER_CONTENT "${${OUT_PLUGIN_MANAGER_HEADER_CONTENT}}")
+    set(INTERNAL_PLUGIN_TARGET_LIST "")
+
     string(JSON INTERNAL_PLUGINS_LEN ERROR_VARIABLE JSON_ERR LENGTH "${PLUGIN_REGISTRY_JSON}" "internal_plugins")
     if(JSON_ERR)
         message(FATAL_ERROR "Failed to parse internal plugins in registry: ${JSON_ERR}")
@@ -17,6 +19,17 @@ function(plugin_manager_load_internal_plugins PLUGIN_REGISTRY_JSON OUT_PLUGIN_MA
         string(JSON INTERFACE_NAME GET "${INTERNAL_PLUGIN_JSON}" interface_name)
         string(JSON PLUGIN_NAME GET "${INTERNAL_PLUGIN_JSON}" plugin_name)
         string(JSON PLUGIN_SOURCE GET "${INTERNAL_PLUGIN_JSON}" plugin_source_path)
+        string(JSON PLUGIN_TARGET_NAME GET "${INTERNAL_PLUGIN_JSON}" cmake_target_name)
+
+        if (NOT TARGET ${PLUGIN_TARGET_NAME})
+            add_subdirectory(
+                "${PLUGIN_SOURCE}" 
+                "${CMAKE_CURRENT_BINARY_DIR}/internal_plugins/${PLUGIN_TARGET_NAME}"
+            )
+        endif()
+
+        list(APPEND INTERNAL_PLUGIN_TARGET_LIST "${PLUGIN_TARGET_NAME}")
+
 
         string(JSON INTERNAL_PLUGIN_FW_DECLARATION_COUNT ERROR_VARIABLE JSON_ERR LENGTH ${INTERNAL_PLUGIN_JSON}  plugin_forward_declarations)
         if(NOT (JSON_ERR OR INTERNAL_PLUGIN_FW_DECLARATION_COUNT EQUAL 0))
@@ -68,7 +81,7 @@ function(plugin_manager_load_internal_plugins PLUGIN_REGISTRY_JSON OUT_PLUGIN_MA
 
         string(APPEND PLUGIN_MANAGER_HEADER_CONTENT "\n")
 
-        message("TODO: Handle dependencies")
+        # TODO: Handle dependencies
         string(APPEND INTERNAL_PLUGINS_TEXT "
             {
                 .interface_name = \"${INTERFACE_NAME}\",
@@ -88,6 +101,7 @@ function(plugin_manager_load_internal_plugins PLUGIN_REGISTRY_JSON OUT_PLUGIN_MA
     set(${OUT_PLUGIN_MANAGER_HEADER_CONTENT} "${PLUGIN_MANAGER_HEADER_CONTENT}" PARENT_SCOPE)
     set(${OUT_INTERNAL_PLUGINS_TEXT} "${INTERNAL_PLUGINS_TEXT}" PARENT_SCOPE)
     set(${OUT_INTERNAL_PLUGINS_LEN} "${INTERNAL_PLUGINS_LEN}" PARENT_SCOPE)
+    set(${OUT_INTERNAL_PLUGIN_TARGET_LIST} "${INTERNAL_PLUGIN_TARGET_LIST}" PARENT_SCOPE)
 endfunction()
 
 function(plugin_manager_load_requested_plugins_dynamic REQUESTED_PLUGINS_JSON OUT_REQUESTED_PLUGINS_TEXT OUT_REQUESTED_PLUGINS_LEN OUT_PLUGIN_PROVIDERS_TEXT OUT_PLUGIN_PROVIDERS_LEN)
@@ -131,8 +145,8 @@ function(plugin_manager_load_requested_plugins_dynamic REQUESTED_PLUGINS_JSON OU
 endfunction()
 
 function(plugin_manager_load_requested_plugins_static REQUESTED_PLUGINS_JSON OUT_REQUESTED_PLUGINS_TEXT OUT_REQUESTED_PLUGINS_LEN OUT_PLUGIN_PROVIDERS_TEXT OUT_PLUGIN_PROVIDERS_LEN)
-    message(TODO: Implement this)
-    message("TODO: Add recursive dependency resolver for static loading")
+    # TODO: Implement this
+    # TODO: Add recursive dependency resolver for static loading
     set(${OUT_REQUESTED_PLUGINS_TEXT} "0" PARENT_SCOPE)
     set(${OUT_REQUESTED_PLUGINS_LEN} "0" PARENT_SCOPE)
     set(${OUT_PLUGIN_PROVIDERS_TEXT} "0" PARENT_SCOPE)
@@ -185,9 +199,9 @@ function(plugin_manager_load_plugins TARGET_NAME JSON_DIR GEN_DIR)
     set(REQUESTED_PLUGINS_LEN)
     set(PLUGIN_PROVIDERS_TEXT)
     set(PLUGIN_PROVIDERS_LEN)
+    set(INTERNAL_PLUGIN_TARGET_LIST)
 
-    plugin_manager_load_internal_plugins("${PLUGIN_REGISTRY_JSON}" PLUGIN_MANAGER_HEADER_CONTENT INTERNAL_PLUGINS_TEXT INTERNAL_PLUGINS_LEN)
-
+    plugin_manager_load_internal_plugins("${PLUGIN_REGISTRY_JSON}" PLUGIN_MANAGER_HEADER_CONTENT INTERNAL_PLUGINS_TEXT INTERNAL_PLUGINS_LEN INTERNAL_PLUGIN_TARGET_LIST)
     plugin_manager_load_requested_plugins("${REQUESTED_PLUGINS_JSON}" REQUESTED_PLUGINS_TEXT REQUESTED_PLUGINS_LEN PLUGIN_PROVIDERS_TEXT PLUGIN_PROVIDERS_LEN)
 
     set(GENERATED_GET_SETUP_CONTEXT_FILE "${CMAKE_CURRENT_BINARY_DIR}/plugin_manager_get_setup_context.c")
@@ -202,6 +216,16 @@ function(plugin_manager_load_plugins TARGET_NAME JSON_DIR GEN_DIR)
         PRIVATE
             "${GENERATED_GET_SETUP_CONTEXT_FILE}"
     )
+
+    if(NOT "${INTERNAL_PLUGIN_TARGET_LIST}" STREQUAL "")
+        message("Linking: ${INTERNAL_PLUGIN_TARGET_LIST}")
+        target_link_libraries(${TARGET_NAME}
+            PRIVATE
+                ${INTERNAL_PLUGIN_TARGET_LIST}
+        ) 
+
+    endif()
+    
 
 
     set(HEADER_LOCATION "${GEN_DIR}/plugin_manager_generated.h")

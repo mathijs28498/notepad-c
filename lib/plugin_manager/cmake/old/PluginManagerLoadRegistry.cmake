@@ -1,6 +1,5 @@
 include_guard(GLOBAL)
 
-message("TODO: Create new code for statically loading the plugins with dependencies - insert this code under an #if defined(BUILD_STATIC) or something")
 
 function(plugin_manager_load_registry TARGET_NAME JSON_DIR GEN_DIR)
     set(PLUGIN_REGISTRY_JSON_PATH "${JSON_DIR}/plugin_registry.json")
@@ -143,7 +142,7 @@ typedef struct PluginRegistry
 const PluginRegistry *plugin_registry_get(void);
 ")
 
-    set(HEADER_LOCATION "${GEN_DIR}/plugin_registry.h")
+    set(HEADER_LOCATION "${GEN_DIR}/include/plugin_registry.h")
     file(CONFIGURE
         OUTPUT "${HEADER_LOCATION}"
         CONTENT "${HEADER_CONTENT}"

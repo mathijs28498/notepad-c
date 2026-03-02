@@ -11,7 +11,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager_loader, LOG_LEVEL_DEBUG)
 
 #include "plugin_manager_types.h"
 #include "plugin_manager.h"
-#include "plugin_registry.h"
+#include "plugin_registry_generated.h"
 
 TODO("Check if this algorithm can/should be made better/faster")
 int32_t resolve_requested_plugins_dynamic(
@@ -107,7 +107,7 @@ int32_t load_plugin_modules(
                  "%s", plugin_module->interface_name);
         snprintf(plugin_provider->plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN,
                  "%s", plugin_module->plugin_name);
-        plugin_provider->is_initialized = 0;
+        plugin_provider->is_initialized = false;
         plugin_provider->is_explicit = plugin_module->is_explicit;
 
         HMODULE handle = LoadLibrary(plugin_module->plugin_path);
@@ -386,14 +386,14 @@ int32_t calculate_plugin_provider_initialization_order(
 int32_t initialize_plugins(
     const struct LoggerInterface *logger,
     const size_t *sorted_plugin_providers_indices,
-    const PluginProvider *plugin_providers,
+    PluginProvider *plugin_providers,
     size_t plugin_providers_len,
     InterfaceInstance *interface_instances,
     size_t *interface_instances_len)
 {
     for (size_t i = 0; i < plugin_providers_len; i++)
     {
-        const PluginProvider *plugin_provider = &plugin_providers[sorted_plugin_providers_indices[i]];
+        PluginProvider *plugin_provider = &plugin_providers[sorted_plugin_providers_indices[i]];
 
         InterfaceInstance *interface_instance = &interface_instances[*interface_instances_len];
         (*interface_instances_len)++;
@@ -404,6 +404,7 @@ int32_t initialize_plugins(
 
         if (plugin_provider->is_initialized || !plugin_provider->init)
         {
+            plugin_provider->is_initialized = true;
             continue;
         }
         int32_t init_ret = plugin_provider->init(interface_instance->iface->context);
