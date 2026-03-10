@@ -1,0 +1,10 @@
+interface_name = "logger"
+plugin_name = "console"
+static_only = true
+get_interface = "get_interface"
+init = "init"
+
+exported_declarations = [
+    "struct LoggerInterfaceContext;",
+    "void logger_console_on_program_exit(struct LoggerInterfaceContext *context, int exit_code);",
+]

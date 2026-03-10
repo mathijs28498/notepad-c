@@ -8,10 +8,10 @@
 
 #include "draw_2d_default.h"
 
-#define REGISTER_DEPENDENCIES(X) \
-    X(LoggerInterface, logger, logger)
+// #define REGISTER_DEPENDENCIES(X) \
+//     X(logger, logger)
 
-PLUGIN_REGISTER_DEPENDENCIES(Draw2dInterfaceContext, REGISTER_DEPENDENCIES);
+// PLUGIN_REGISTER_DEPENDENCIES(Draw2dInterfaceContext, REGISTER_DEPENDENCIES);
 
 Draw2dInterface *get_interface()
 {
@@ -24,4 +24,4 @@ Draw2dInterface *get_interface()
     return &iface;
 }
 
-PLUGIN_REGISTER_INTERFACE(get_interface, Draw2dInterface);
+// PLUGIN_REGISTER_INTERFACE(get_interface, Draw2dInterface);

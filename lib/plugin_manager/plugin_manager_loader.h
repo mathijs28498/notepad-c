@@ -7,16 +7,19 @@ struct LoggerInterface;
 struct RequestedPlugin;
 struct PluginRegistry;
 struct PluginModule;
+struct PluginDefinition;
 
 struct PluginProvider;
 struct InterfaceInstance;
 struct PluginStatic;
 
-int32_t resolve_requested_plugins_dynamic(
+int32_t resolve_requested_plugins(
     const struct LoggerInterface *logger,
     struct RequestedPlugin *requested_plugins,
     size_t requested_plugins_len,
     const struct PluginRegistry *plugin_registry,
+    struct PluginProvider *plugin_providers,
+    size_t plugin_providers_len,
     struct PluginModule *plugin_modules,
     size_t *plugin_modules_len);
 
@@ -26,15 +29,6 @@ int32_t load_plugin_modules(
     size_t plugin_modules_len,
     struct PluginProvider *interface_providers,
     size_t *interface_providers_len);
-
-int32_t resolve_requested_plugins_internal(
-    const struct LoggerInterface *logger,
-    struct RequestedPlugin *requested_plugins,
-    size_t requested_plugins_len,
-    const struct PluginProvider *internal_plugins,
-    size_t internal_plugins_len,
-    struct PluginProvider *plugin_providers,
-    size_t *plugin_providers_len);
 
 int32_t resolve_plugin_provider_dependencies(
     const struct LoggerInterface *logger,

@@ -47,66 +47,80 @@ def configure_file(
 def generate_plugin_manager_header(
     source_path: Path,
     destination_path: Path,
-    internal_plugins: list[InternalPlugin],
+    static_plugin_providers: list[PluginProvider],
 ):
-    forward_declarations = "\n\n".join(
-        "\n".join(internal_plugin.forward_declarations)
-        for internal_plugin in internal_plugins
+    forward_declarations_list: list[list[str]] = [
+        plugin_provider.plugin_manifest.exported_declarations
+        + plugin_provider.framework_declarations
+        for plugin_provider in static_plugin_providers
+    ]
+
+    forward_declarations_text = "\n\n".join(
+        "\n".join(forward_declaration for forward_declaration in forward_declarations)
+        for forward_declarations in forward_declarations_list
     )
+
     replacements = {
-        "FORWARD_DECLARATIONS": forward_declarations,
+        "FORWARD_DECLARATIONS": forward_declarations_text,
     }
 
     configure_file(source_path, destination_path, replacements, False)
 
 
+def get_formatted_plugin_provider_c_struct(plugin_provider: PluginProvider) -> str:
+    plugin_manifest = plugin_provider.plugin_manifest
+
+    return textwrap.dedent(
+        f"""\
+        {{
+            .interface_name = "{plugin_manifest.interface_name}",
+            .plugin_name = "{plugin_manifest.plugin_name}",
+            .get_interface = {plugin_provider.get_interface_fn_text},
+            .init = {plugin_provider.init_fn_text},
+            .shutdown = {plugin_provider.shutdown_fn_text},
+            .dependencies = {{0}},
+            .dependencies_len = {str(len(plugin_manifest.dependencies))},
+            .is_explicit = {str(plugin_provider.is_explicit).lower()},
+            .is_initialized = {str(plugin_provider.is_initialized).lower()},
+        }}"""
+    )
+
+
+def get_plugin_provider_index_by_interface_name(
+    plugin_providers: list[PluginProvider], interface_name: str
+) -> Optional[int]:
+    return next(
+        (
+            i
+            for i, plugin_provider in enumerate(plugin_providers)
+            if plugin_provider.plugin_manifest.interface_name == interface_name
+        ),
+        None,
+    )
+
+
 def generate_get_setup_context_src(
     source_path: Path,
     destination_path: Path,
-    internal_plugins: list[InternalPlugin],
-    plugin_list_data: PluginListData,
+    static_plugin_providers: list[PluginProvider],
+    requested_plugins: list[RequestedPlugin],
 ):
-    internal_plugins_text = f"{{0}}"
     requested_plugins_text = f"{{0}}"
     sorted_plugin_providers_indices_text = f"{{0}}"
     plugin_providers_text = f"{{0}}"
 
-    if len(internal_plugins):
-        internal_plugins_text = ",\n".join(
-            textwrap.dedent(
-                f"""\
-                {{
-                    .interface_name = "{internal_plugin.interface_name}",
-                    .plugin_name = "{internal_plugin.plugin_name}",
-                    .dependencies = {{0}},
-                    .dependencies_len = {str(len(internal_plugin.dependencies))},
-                    .get_interface = {internal_plugin.get_interface_fn_text},
-                    .init = {internal_plugin.init_fn_text},
-                    .shutdown = {internal_plugin.shutdown_fn_text},
-                    .is_explicit = {str(internal_plugin.is_explicit).lower()},
-                    .is_initialized = {str(internal_plugin.is_initialized).lower()},
-                }}"""
-            )
-            for internal_plugin in internal_plugins
-        )
-
-        internal_plugins_text = textwrap.indent(
-            f"\n{internal_plugins_text},\n{indent_prefix * 2}",
-            indent_prefix * 3,
-        )
-
-    if len(plugin_list_data.requested_plugins):
+    if requested_plugins:
         requested_plugins_text = ",\n".join(
             textwrap.dedent(
                 f"""\
                 {{
                     .interface_name = "{requested_plugin.interface_name}",
                     .plugin_name = "{requested_plugin.plugin_name or ""}",
-                    .is_explicit = {str(requested_plugin.is_explicit).lower()},
-                    .is_resolved = {str(requested_plugin.is_resolved).lower()},
+                    .is_explicit = true,
+                    .is_resolved = false,
                 }}"""
             )
-            for requested_plugin in plugin_list_data.requested_plugins
+            for requested_plugin in requested_plugins
         )
 
         requested_plugins_text = textwrap.indent(
@@ -114,15 +128,82 @@ def generate_get_setup_context_src(
             indent_prefix * 3,
         )
 
+    if static_plugin_providers:
+        plugin_providers_text = ",\n".join(
+            get_formatted_plugin_provider_c_struct(plugin_provider)
+            for plugin_provider in static_plugin_providers
+        )
+        plugin_providers_text = textwrap.indent(
+            f"\n{plugin_providers_text},\n{indent_prefix * 2}",
+            indent_prefix * 3,
+        )
+
+    logger_interface_name = "logger"
+    logger_plugin_provider_index = get_plugin_provider_index_by_interface_name(
+        static_plugin_providers, logger_interface_name
+    )
+
+    if logger_plugin_provider_index is None:
+        raise ValueError(
+            f"plugin provider implementing interface '{logger_interface_name}' not found, please provide '{logger_interface_name}' statically"
+        )
+
+    environment_interface_name = "environment"
+    environment_plugin_provider_index = get_plugin_provider_index_by_interface_name(
+        static_plugin_providers, environment_interface_name
+    )
+
+    if environment_plugin_provider_index is None:
+        raise ValueError(
+            f"plugin provider implementing interface '{environment_interface_name}' not found, please provide '{environment_interface_name}' statically"
+        )
+
     # TODO: Make this work with plugin providers and stuff
     replacements = {
-        "INTERNAL_PLUGINS_TEXT": internal_plugins_text,
-        "INTERNAL_PLUGINS_LEN": str(len(internal_plugins)),
         "REQUESTED_PLUGINS_TEXT": requested_plugins_text,
-        "REQUESTED_PLUGINS_LEN": str(len(plugin_list_data.requested_plugins)),
+        "REQUESTED_PLUGINS_LEN": str(len(requested_plugins)),
         "SORTED_PLUGIN_PROVIDERS_INDICES_TEXT": sorted_plugin_providers_indices_text,
         "PLUGIN_PROVIDERS_TEXT": plugin_providers_text,
-        "PLUGIN_PROVIDERS_LEN": str(len(plugin_list_data.plugin_providers)),
+        "PLUGIN_PROVIDERS_LEN": str(len(static_plugin_providers)),
+        "LOGGER_PLUGIN_PROVIDER_INDEX": str(logger_plugin_provider_index),
+        "ENVIRONMENT_PLUGIN_PROVIDER_INDEX": str(environment_plugin_provider_index),
+    }
+
+    configure_file(source_path, destination_path, replacements, False)
+
+
+def generate_plugin_registry_header(
+    source_path: Path,
+    destination_path: Path,
+    interface_definitions: list[InterfaceDefinition],
+):
+    # TODO: Figure out how to do this properly
+    max_plugin_definitions_len = max(
+        (
+            len(interface_definition.plugin_manifests)
+            for interface_definition in interface_definitions
+        ),
+        default=1,
+    )
+
+    max_plugin_dependencies_len = max(
+        max(
+            (
+                max(
+                    len(plugin_manifest.dependencies)
+                    for plugin_manifest in interface_definition.plugin_manifests
+                )
+                for interface_definition in interface_definitions
+            ),
+            default=1,
+        ),
+        1,
+    )
+
+    replacements = {
+        "INTERFACE_DEFINITIONS_LEN": str(len(interface_definitions)),
+        "PLUGIN_DEFINITIONS_LEN": str(max_plugin_definitions_len),
+        "PLUGIN_DEPENDENCY_DEFINITIONS_LEN": str(max_plugin_dependencies_len),
     }
 
     configure_file(source_path, destination_path, replacements, False)
@@ -134,21 +215,56 @@ def generate_plugin_registry_src(
     interface_definitions: list[InterfaceDefinition],
 ):
     interface_definitions_text = f"{{0}}"
-    if len(interface_definitions) > 0:
+    if interface_definitions:
         interface_definition_text_list: list[str] = []
         for interface_definition in interface_definitions:
-            plugin_definitions_text = f"{{0}}"
-            if len(interface_definition.plugin_definitions) > 0:
-                plugin_definitions_text = ",\n".join(
-                    textwrap.dedent(
+            plugin_definitions_text = f"{{{{0}}}}"
+            if interface_definition.plugin_manifests:
+                plugin_definitions_text_list: list[str] = []
+                for manifest in interface_definition.plugin_manifests:
+
+                    # Dependencies follow the same pattern as plugin_definitions
+                    plugin_dependencies_text = f"{{0}}"
+                    if manifest.dependencies:
+                        dependency_text_list: list[str] = []
+                        for dependency in manifest.dependencies:
+                            dependency_text_list.append(
+                                textwrap.dedent(
+                                    f"""\
+                                    {{
+                                        .interface_name = "{dependency.interface_name}",
+                                    }}"""
+                                )
+                            )
+
+                        dependency_definitions_text = ",\n".join(dependency_text_list)
+                        plugin_dependencies_text = textwrap.indent(
+                            f"\n{dependency_definitions_text},\n{indent_prefix * 1}",
+                            indent_prefix * 2,
+                        )
+
+                    dependency_placeholder = "@DEPENDENCY_DEFINITIONS_TEXT@"
+                    plugin_definition_text = textwrap.dedent(
                         f"""\
                         {{
-                            .plugin_name = "{plugin.plugin_name}",
-                            .module_path = "{plugin.module_path.as_posix()}",
+                            .interface_name = "{manifest.interface_name}",
+                            .target_name = "{manifest.target_name}",
+                            .plugin_name = "{manifest.plugin_name}",
+                            .dependencies = {{{dependency_placeholder}}},
+                            .dependencies_len = {str(len(manifest.dependencies))},
+                            .has_init = {"true" if manifest.init_fn else "false"},
+                            .has_shutdown = {"true" if manifest.shutdown_fn else "false"},
+                            .is_static_only = {str(manifest.static_only).lower()},
+                            .module_path = {f'"{manifest.module_path.as_posix()}"' if manifest.module_path is not None else "NULL"},
                         }}"""
                     )
-                    for plugin in interface_definition.plugin_definitions
-                )
+                    plugin_definition_text = plugin_definition_text.replace(
+                        dependency_placeholder,
+                        plugin_dependencies_text,
+                    )
+                    plugin_definitions_text_list.append(plugin_definition_text)
+
+                plugin_definitions_text = ",\n".join(plugin_definitions_text_list)
                 plugin_definitions_text = textwrap.indent(
                     f"\n{plugin_definitions_text},\n{indent_prefix * 1}",
                     indent_prefix * 2,
@@ -159,9 +275,9 @@ def generate_plugin_registry_src(
                 f"""\
                 {{
                     .interface_name = "{interface_definition.interface_name}",
-                    .default_plugin = "{interface_definition.default_plugin_name}",
+                    .default_plugin = "{interface_definition.default_plugin_manifest.plugin_name}",
                     .plugin_definitions = {{{plugin_definition_placeholder}}},
-                    .plugin_definitions_len = {len(interface_definition.plugin_definitions)},
+                    .plugin_definitions_len = {str(len(interface_definition.plugin_manifests))},
                 }}"""
             )
             interface_definition_text = interface_definition_text.replace(
@@ -183,57 +299,99 @@ def generate_plugin_registry_src(
     configure_file(source_path, destination_path, replacements, False)
 
 
-def generate_plugin_registry_header(
-    source_path: Path,
-    destination_path: Path,
-    interface_definitions: list[InterfaceDefinition],
-):
-    replacements = {
-        "INTERFACE_DEFINITIONS_LEN": str(len(interface_definitions)),
-        "PLUGIN_DEFINITIONS_LEN": str(
-            max(
-                (
-                    len(interface_definition.plugin_definitions)
-                    for interface_definition in interface_definitions
-                ),
-                default=0,
-            )
-        ),
-    }
-
-    configure_file(source_path, destination_path, replacements, False)
-
-
 def generate_plugin_manager_cmake(
     source_path: Path,
     destination_path: Path,
     target_name: str,
-    generated_get_setup_context_src_path: Path,
-    generated_plugin_registry_src_path: Path,
-    internal_plugins: list[InternalPlugin],
+    include_paths: list[Path],
+    source_paths: list[Path],
+    static_plugin_providers: list[PluginProvider],
 ):
     # TODO: Add loops in the template
     add_subdirectory_text = "\n\n".join(
         textwrap.dedent(
             f"""\
             add_subdirectory(
-                "{internal_plugin.source_data.source_path.as_posix()}"
-                "${{CMAKE_CURRENT_BINARY_DIR}}/generated_plugins/{internal_plugin.source_data.target_name}"
+                "{plugin_provider.plugin_manifest.source_path.as_posix()}"
+                "${{CMAKE_CURRENT_BINARY_DIR}}/generated_plugins/{plugin_provider.plugin_manifest.target_name}"
             )"""
         )
-        for internal_plugin in internal_plugins
+        for plugin_provider in static_plugin_providers
     )
 
-    plugin_target_cmake_list = f"\n{indent_prefix * 2}".join(
-        internal_plugin.source_data.target_name for internal_plugin in internal_plugins
+    plugin_target_cmake_list = f"\n{indent_prefix * 1}".join(
+        plugin_provider.plugin_manifest.target_name
+        for plugin_provider in static_plugin_providers
+    )
+
+    generated_include_directories_text = f"\n{indent_prefix * 1}".join(
+        f'"{include_path.as_posix()}"' for include_path in include_paths
+    )
+
+    generated_target_sources_text = f"\n{indent_prefix * 1}".join(
+        f'"{source_path.as_posix()}"' for source_path in source_paths
     )
 
     replacements = {
         "TARGET_NAME": target_name,
         "ADD_SUBDIRECTORY_TEXT": add_subdirectory_text,
         "PLUGIN_TARGET_CMAKE_LIST": plugin_target_cmake_list,
-        "GENERATED_GET_SETUP_CONTEXT_SRC_PATH": generated_get_setup_context_src_path.as_posix(),
-        "GENERATED_PLUGIN_REGISTRY_SRC_PATH": generated_plugin_registry_src_path.as_posix(),
+        "GENERATED_INCLUDE_DIRECTORIES_TEXT": generated_include_directories_text,
+        "GENERATED_TARGET_SOURCES_TEXT": generated_target_sources_text,
     }
 
     configure_file(source_path, destination_path, replacements, True)
+
+
+def generate_register_inc(
+    source_path: Path,
+    destination_path: Path,
+    build_dynamic: bool,
+    plugin_manifest: PluginManifest,
+):
+
+    define_plugin_target_name_text = (
+        f"#define PLUGIN_TARGET_NAME {plugin_manifest.target_name}"
+    )
+
+    define_build_shared_text = ""
+    if not plugin_manifest.static_only and build_dynamic:
+        define_build_shared_text = "#define PLUGIN_BUILD_SHARED"
+
+    interfacePascalCase = (
+        plugin_manifest.interface_name.replace("_", " ").title().replace(" ", "")
+    )
+
+    register_macros_text_list = [
+        f"PLUGIN_REGISTER_INTERFACE({plugin_manifest.get_interface_fn}, {interfacePascalCase}Interface)"
+    ]
+
+    if plugin_manifest.init_fn:
+        register_macros_text_list.append(
+            f"PLUGIN_REGISTER_INIT({plugin_manifest.init_fn}, {interfacePascalCase}InterfaceContext)"
+        )
+
+    if plugin_manifest.shutdown_fn:
+        register_macros_text_list.append(
+            f"PLUGIN_REGISTER_SHUTDOWN({plugin_manifest.shutdown_fn}, {interfacePascalCase}InterfaceContext)"
+        )
+
+    if plugin_manifest.dependencies:
+        dependency_x_macro_text_list = f" \\\n{indent_prefix}".join(
+            f"X({dependency.variable_name}, {dependency.interface_name})"
+            for dependency in plugin_manifest.dependencies
+        )
+        register_macros_text_list.append(
+            f"#define PLUGIN_DEPENDENCIES(X) \\\n{indent_prefix}{dependency_x_macro_text_list}"
+        )
+        register_macros_text_list.append(
+            f"PLUGIN_REGISTER_DEPENDENCIES({interfacePascalCase}InterfaceContext, PLUGIN_DEPENDENCIES)"
+        )
+
+    replacements = {
+        "DEFINE_BUILD_SHARED_TEXT": define_build_shared_text,
+        "DEFINE_PLUGIN_TARGET_NAME_TEXT": define_plugin_target_name_text,
+        "REGISTER_MACROS_TEXT": "\n\n".join(register_macros_text_list),
+    }
+
+    configure_file(source_path, destination_path, replacements, False)

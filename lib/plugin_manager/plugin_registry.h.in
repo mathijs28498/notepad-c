@@ -1,11 +1,25 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdbool.h>
+
+typedef struct PluginDependencyDefinition
+{
+    const char *interface_name;
+} PluginDependencyDefinition;
 
 typedef struct PluginDefinition
 {
+    const char *interface_name;
+    const char *target_name;
     const char *plugin_name;
+    const PluginDependencyDefinition dependencies[@PLUGIN_DEPENDENCY_DEFINITIONS_LEN@];
+    const size_t dependencies_len;
+    const bool has_init;
+    const bool has_shutdown;
+    const bool is_static_only;
     const char *module_path;
+
 } PluginDefinition;
 
 typedef struct InterfaceDefinition

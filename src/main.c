@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include <plugin_framework.h>
+#include <input_interface.h>
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
 #include <input_interface.h>
@@ -24,6 +25,16 @@ PLUGIN_FRAMEWORK_MAIN()
 
     // ret = PLUGIN_MANAGER_LINK_INTERFACES("draw", "draw_interfaces",
     //                                "draw_2d", "draw_3d", "draw_ui");
+
+    LoggerInterface *logger;
+    ret = PLUGIN_FRAMEWORK_GET("logger", &logger);
+
+    if (ret < 0)
+    {
+        return ret;
+    }
+
+    LOG_WRN(logger, "This works yes");
 
     GuiApplicationInterface *gui_application;
     ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);

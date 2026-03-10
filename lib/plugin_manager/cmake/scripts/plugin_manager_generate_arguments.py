@@ -6,8 +6,16 @@ from dataclasses import dataclass
 @dataclass
 class GenerateCmakeArguments:
     target_name: str
-    plugin_registry_json: Path
+    build_platform: str
+    build_dynamic_plugins: bool
+
+    plugin_registry_toml: Path
+    plugin_list_toml: Path
+    linked_plugins_json: Path
+
     source_cmake: Path
+
+    generated_include_dir: Path
     generated_plugin_registry_src: Path
     generated_get_setup_context_src: Path
     generated_cmake: Path
@@ -16,8 +24,16 @@ class GenerateCmakeArguments:
     def from_args(cls, args: argparse.Namespace) -> "GenerateCmakeArguments":
         return cls(
             target_name=args.target_name,
-            plugin_registry_json=args.plugin_registry_json_path,
+            build_platform=args.build_platform,
+            build_dynamic_plugins=args.build_dynamic_plugins,
+            #
+            plugin_registry_toml=args.plugin_registry_toml_path,
+            plugin_list_toml=args.plugin_list_toml_path,
+            linked_plugins_json=args.linked_plugins_json_path,
+            #
             source_cmake=args.source_cmake_path,
+            #
+            generated_include_dir=args.generated_include_dir_path,
             generated_plugin_registry_src=args.generated_plugin_registry_src_path,
             generated_get_setup_context_src=args.generated_get_setup_context_src_path,
             generated_cmake=args.generated_cmake_path,
@@ -28,8 +44,16 @@ def parse_cmake_arguments() -> GenerateCmakeArguments:
     parser = argparse.ArgumentParser(description="Generate cmake files")
 
     parser.add_argument("--target-name", required=True)
-    parser.add_argument("--plugin-registry-json-path", required=True, type=Path)
+    parser.add_argument("--build-platform", required=True)
+    parser.add_argument("--build-dynamic-plugins", action="store_true")
+
+    parser.add_argument("--plugin-registry-toml-path", required=True, type=Path)
+    parser.add_argument("--plugin-list-toml-path", required=True, type=Path)
+    parser.add_argument("--linked-plugins-json-path", required=True, type=Path)
+
     parser.add_argument("--source-cmake-path", required=True, type=Path)
+
+    parser.add_argument("--generated-include-dir-path", required=True, type=Path)
     parser.add_argument(
         "--generated-plugin-registry-src-path", required=True, type=Path
     )
@@ -47,9 +71,11 @@ def parse_cmake_arguments() -> GenerateCmakeArguments:
 class GenerateCCodeArguments:
     target_name: str
     build_platform: str
+    build_dynamic_plugins: bool
 
-    plugin_registry_json: Path
-    plugin_list_json: Path
+    plugin_registry_toml: Path
+    plugin_list_toml: Path
+    linked_plugins_json: Path
 
     source_plugin_registry_header: Path
     source_plugin_manager_header: Path
@@ -66,15 +92,17 @@ class GenerateCCodeArguments:
         return cls(
             target_name=args.target_name,
             build_platform=args.build_platform,
-
-            plugin_registry_json=args.plugin_registry_json_path,
-            plugin_list_json=args.plugin_list_json_path,
-
+            build_dynamic_plugins=args.build_dynamic_plugins,
+            #
+            plugin_registry_toml=args.plugin_registry_toml_path,
+            plugin_list_toml=args.plugin_list_toml_path,
+            linked_plugins_json=args.linked_plugins_json_path,
+            #
             source_plugin_registry_header=args.source_plugin_registry_header_path,
             source_plugin_manager_header=args.source_plugin_manager_header_path,
             source_plugin_registry_src=args.source_plugin_registry_src_path,
             source_get_setup_context_src=args.source_get_setup_context_src_path,
-
+            #
             generated_plugin_registry_header=args.generated_plugin_registry_header_path,
             generated_plugin_manager_header=args.generated_plugin_manager_header_path,
             generated_plugin_registry_src=args.generated_plugin_registry_src_path,
@@ -87,9 +115,11 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
 
     parser.add_argument("--target-name", required=True)
     parser.add_argument("--build-platform", required=True)
+    parser.add_argument("--build-dynamic-plugins", action="store_true")
 
-    parser.add_argument("--plugin-registry-json-path", required=True, type=Path)
-    parser.add_argument("--plugin-list-json-path", required=True, type=Path)
+    parser.add_argument("--plugin-registry-toml-path", required=True, type=Path)
+    parser.add_argument("--plugin-list-toml-path", required=True, type=Path)
+    parser.add_argument("--linked-plugins-json-path", required=True, type=Path)
 
     parser.add_argument(
         "--source-plugin-registry-header-path", required=True, type=Path
@@ -114,3 +144,35 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
     args = parser.parse_args()
 
     return GenerateCCodeArguments.from_args(args)
+
+
+@dataclass
+class GenerateRegisterIncArguments:
+    build_dynamic: bool
+    manifest_toml: Path
+    source_plugin_register_inc: Path
+    generated_plugin_register_inc: Path
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace) -> "GenerateRegisterIncArguments":
+        return cls(
+            build_dynamic=args.build_dynamic,
+            manifest_toml=args.manifest_toml_path,
+            source_plugin_register_inc=args.source_plugin_register_inc_path,
+            generated_plugin_register_inc=args.generated_plugin_register_inc_path,
+        )
+
+
+def parse_register_inc_arguments() -> GenerateRegisterIncArguments:
+    parser = argparse.ArgumentParser(description="Generate cmake files")
+
+    parser.add_argument("--build-dynamic", action="store_true")
+    parser.add_argument("--manifest-toml-path", required=True, type=Path)
+    parser.add_argument("--source-plugin-register-inc-path", required=True, type=Path)
+    parser.add_argument(
+        "--generated-plugin-register-inc-path", required=True, type=Path
+    )
+
+    args = parser.parse_args()
+
+    return GenerateRegisterIncArguments.from_args(args)

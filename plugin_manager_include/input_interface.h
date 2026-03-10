@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -27,4 +25,3 @@ typedef struct InputInterface
 #define KEY_PRESSED(interface, key) (interface->key_pressed(interface->context, key))
 #define KEY_HELD(interface, key) (interface->key_held(interface->context, key))
 #define KEY_RELEASED(interface, key) (interface->key_released(interface->context, key))
-

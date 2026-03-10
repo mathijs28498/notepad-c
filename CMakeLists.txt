@@ -24,12 +24,6 @@ endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-configure_file(
-    "${CMAKE_SOURCE_DIR}/plugin_registry.json"
-    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugin_registry.json" 
-    COPYONLY
-)
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/lib/plugin_manager")
 
 add_subdirectory(lib)

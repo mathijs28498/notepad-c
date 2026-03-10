@@ -1,20 +1,32 @@
 include_guard(GLOBAL)
 
-function(plugin_manager_setup TARGET_NAME PYTHON_SCRIPTS_PATH JSON_DIR_PATH GEN_DIR_PATH)
+function(plugin_manager_setup TARGET_NAME)
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+    set(oneValueArgs PYTHON_SCRIPTS_PATH GEN_DIR_PATH TOML_DIR_PATH)
+    cmake_parse_arguments(PARSE_ARGV 1 arg "" "${oneValueArgs}" "")
 
     message("TODO: Add multiplatform here")
     set(BUILD_PLATFORM "")
+
     if(WIN32)
         set(BUILD_PLATFORM "win32")
     endif()
 
-    set(GENERATED_INCLUDE_PATH "${GEN_DIR_PATH}/include")
-    set(GENERATED_SRC_PATH "${GEN_DIR_PATH}/src")
-    set(GENERATED_CMAKE_DIR_PATH "${GEN_DIR_PATH}/cmake")
+    set(DYNAMIC_PLUGIN_ARG "")
 
-    set(PLUGIN_REGISTRY_JSON_PATH "${JSON_DIR_PATH}/plugin_registry.json")
-    set(PLUGIN_LIST_JSON_PATH "${JSON_DIR_PATH}/plugin_list.json")
+    if(BUILD_SHARED_LIBS)
+        list(APPEND DYNAMIC_PLUGIN_ARG "--build-dynamic-plugins")
+    endif()
+
+    set(GENERATED_INCLUDE_PATH "${arg_GEN_DIR_PATH}/include")
+    set(GENERATED_SRC_PATH "${arg_GEN_DIR_PATH}/src")
+    set(GENERATED_CMAKE_DIR_PATH "${arg_GEN_DIR_PATH}/cmake")
+    set(GENERATED_JSON_DIR_PATH "${arg_GEN_DIR_PATH}/json")
+
+    set(PLUGIN_REGISTRY_TOML_PATH "${arg_TOML_DIR_PATH}/plugin_registry.toml")
+    set(PLUGIN_LIST_TOML_PATH "${arg_TOML_DIR_PATH}/plugin_list.toml")
+    set(GENERATED_LINKED_PLUGINS_JSON_PATH "${GENERATED_JSON_DIR_PATH}/linked_plugins.json")
 
     set(SOURCE_PLUGIN_REGISTRY_HEADER_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_registry.h.in")
     set(SOURCE_PLUGIN_MANAGER_HEADER_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_manager_interface_declarations.h.in")
@@ -23,75 +35,90 @@ function(plugin_manager_setup TARGET_NAME PYTHON_SCRIPTS_PATH JSON_DIR_PATH GEN_
     set(SOURCE_CMAKE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/PluginManagerGenerated.cmake.in")
 
     set(GENERATED_PLUGIN_REGISTRY_HEADER_PATH "${GENERATED_INCLUDE_PATH}/plugin_registry.h")
+    message("TODO: Change this variable name to the appropriate one and change it everywhere")
     set(GENERATED_PLUGIN_MANAGER_HEADER_PATH "${GENERATED_INCLUDE_PATH}/plugin_manager_interface_declarations.h")
     set(GENERATED_PLUGIN_REGISTRY_SRC_PATH "${GENERATED_SRC_PATH}/plugin_registry.c")
     set(GENERATED_GET_SETUP_CONTEXT_SRC_PATH "${GENERATED_SRC_PATH}/plugin_manager_get_setup_context.c")
     set(GENERATED_CMAKE_PATH "${GENERATED_CMAKE_DIR_PATH}/PluginManagerGenerated.cmake")
 
-    set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS 
+    set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
         "${SOURCE_CMAKE_PATH}"
-        "${PLUGIN_REGISTRY_JSON_PATH}"
-        "${PYTHON_SCRIPTS_PATH}/plugin_manager_generate_cmake.py"
-        "${PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
-        "${PYTHON_SCRIPTS_PATH}/plugin_manager_parse_json.py"
-        "${PYTHON_SCRIPTS_PATH}/plugin_manager_types.py"
-        "${PYTHON_SCRIPTS_PATH}/plugin_manager_generate_arguments.py"
+        "${PLUGIN_REGISTRY_TOML_PATH}"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_cmake.py"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_parse.py"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_types.py"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_arguments.py"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_static_plugin_resolver.py"
     )
-    
-    set(PLUGIN_MANAGER_GENERATE_CMAKE_SCRIPT_PATH "${PYTHON_SCRIPTS_PATH}/plugin_manager_generate_cmake.py")
+
+    set(PLUGIN_MANAGER_GENERATE_CMAKE_SCRIPT_PATH "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_cmake.py")
     message(STATUS "Running script: ${PLUGIN_MANAGER_GENERATE_CMAKE_SCRIPT_PATH}")
     execute_process(
         COMMAND "${Python3_EXECUTABLE}" "${PLUGIN_MANAGER_GENERATE_CMAKE_SCRIPT_PATH}"
-            --target-name "${TARGET_NAME}"
+        --target-name "${TARGET_NAME}"
+        --build-platform "${BUILD_PLATFORM}"
+        ${DYNAMIC_PLUGIN_ARG}
 
-            --plugin-registry-json-path "${PLUGIN_REGISTRY_JSON_PATH}"
-           
-            --source-cmake-path "${SOURCE_CMAKE_PATH}"
+        --plugin-registry-toml-path "${PLUGIN_REGISTRY_TOML_PATH}"
+        --plugin-list-toml-path "${PLUGIN_LIST_TOML_PATH}"
+        --linked-plugins-json-path "${GENERATED_LINKED_PLUGINS_JSON_PATH}"
 
-            --generated-plugin-registry-src-path "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
-            --generated-get-setup-context-src-path "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
-            --generated-cmake-path "${GENERATED_CMAKE_PATH}"
+        --source-cmake-path "${SOURCE_CMAKE_PATH}"
+
+        --generated-include-dir-path "${GENERATED_INCLUDE_PATH}"
+        --generated-plugin-registry-src-path "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
+        --generated-get-setup-context-src-path "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
+        --generated-cmake-path "${GENERATED_CMAKE_PATH}"
+
         COMMAND_ERROR_IS_FATAL ANY
     )
 
     include("${GENERATED_CMAKE_PATH}")
+    message("TODO: Add dependencies on toml files so they recompile when changed for each plugin")
 
-    set(PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH "${PYTHON_SCRIPTS_PATH}/plugin_manager_generate_c_code.py")
-    message(STATUS "Running script: ${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}")
+    set(PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_c_code.py")
+    message(STATUS "Adding custom command script: ${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}")
     add_custom_command(
         OUTPUT
-            "${GENERATED_PLUGIN_REGISTRY_HEADER_PATH}"
-            "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
-            "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
-            "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
+        "${GENERATED_PLUGIN_REGISTRY_HEADER_PATH}"
+        "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
+        "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
+        "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
+
         COMMAND "${Python3_EXECUTABLE}" "${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}"
-            --target-name "${TARGET_NAME}"
-            --build-platform "${BUILD_PLATFORM}"
+        --target-name "${TARGET_NAME}"
+        --build-platform "${BUILD_PLATFORM}"
+        ${DYNAMIC_PLUGIN_ARG}
 
-            --plugin-registry-json-path "${PLUGIN_REGISTRY_JSON_PATH}"
-            --plugin-list-json-path "${PLUGIN_LIST_JSON_PATH}"
+        --plugin-registry-toml-path "${PLUGIN_REGISTRY_TOML_PATH}"
+        --plugin-list-toml-path "${PLUGIN_LIST_TOML_PATH}"
+        --linked-plugins-json-path "${GENERATED_LINKED_PLUGINS_JSON_PATH}"
 
-            --source-plugin-registry-header-path "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
-            --source-plugin-manager-header-path "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"
-            --source-plugin-registry-src-path "${SOURCE_PLUGIN_REGISTRY_SRC_PATH}"
-            --source-get-setup-context-src-path "${SOURCE_GET_SETUP_CONTEXT_SRC_PATH}"
+        --source-plugin-registry-header-path "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
+        --source-plugin-manager-header-path "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"
+        --source-plugin-registry-src-path "${SOURCE_PLUGIN_REGISTRY_SRC_PATH}"
+        --source-get-setup-context-src-path "${SOURCE_GET_SETUP_CONTEXT_SRC_PATH}"
 
-            --generated-plugin-registry-header-path "${GENERATED_PLUGIN_REGISTRY_HEADER_PATH}"
-            --generated-plugin-manager-header-path "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
-            --generated-plugin-registry-src-path "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
-            --generated-get-setup-context-src-path "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
+        --generated-plugin-registry-header-path "${GENERATED_PLUGIN_REGISTRY_HEADER_PATH}"
+        --generated-plugin-manager-header-path "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
+        --generated-plugin-registry-src-path "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
+        --generated-get-setup-context-src-path "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
+
         DEPENDS
-            "${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}"
-            "${PLUGIN_REGISTRY_JSON_PATH}"
-            "${PLUGIN_LIST_JSON_PATH}"
-            "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
-            "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"
-            "${SOURCE_PLUGIN_REGISTRY_SRC_PATH}"
-            "${SOURCE_GET_SETUP_CONTEXT_SRC_PATH}"
-            "${PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
-            "${PYTHON_SCRIPTS_PATH}/plugin_manager_parse_json.py"
-            "${PYTHON_SCRIPTS_PATH}/plugin_manager_types.py"
-            "${PYTHON_SCRIPTS_PATH}/plugin_manager_generate_arguments.py"
+        "${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}"
+        "${PLUGIN_REGISTRY_TOML_PATH}"
+        "${PLUGIN_LIST_TOML_PATH}"
+        "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
+        "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"
+        "${SOURCE_PLUGIN_REGISTRY_SRC_PATH}"
+        "${SOURCE_GET_SETUP_CONTEXT_SRC_PATH}"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_parse.py"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_types.py"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_arguments.py"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_plugin_resolver.py"
+
         COMMENT "Generating c code files"
         VERBATIM
     )
@@ -101,8 +128,6 @@ function(plugin_manager_setup TARGET_NAME PYTHON_SCRIPTS_PATH JSON_DIR_PATH GEN_
         "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
         "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
         "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
-            PROPERTIES GENERATED TRUE
+        PROPERTIES GENERATED TRUE
     )
-
 endfunction()
-

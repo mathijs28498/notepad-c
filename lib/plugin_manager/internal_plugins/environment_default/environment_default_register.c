@@ -10,7 +10,7 @@
 #include "environment_default.h"
 
 TODO("Make this work with get_interface with naming collision figure out how to")
-EnvironmentInterface *env_get_interface(void)
+static EnvironmentInterface *get_interface(void)
 {
     static EnvironmentInterfaceContext context = {0};
 
@@ -24,4 +24,4 @@ EnvironmentInterface *env_get_interface(void)
     return &iface;
 }
 
-PLUGIN_REGISTER_INTERFACE(env_get_interface, EnvironmentInterface);
+#include "plugin_register.c.inc"

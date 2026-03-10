@@ -4,11 +4,15 @@ include_guard(GLOBAL)
 
 target_link_libraries(@TARGET_NAME@
     PRIVATE
-        @PLUGIN_TARGET_CMAKE_LIST@
+    @PLUGIN_TARGET_CMAKE_LIST@
+)
+
+target_include_directories(@TARGET_NAME@
+    PRIVATE
+    @GENERATED_INCLUDE_DIRECTORIES_TEXT@
 )
 
 target_sources(@TARGET_NAME@
     PRIVATE
-        "@GENERATED_GET_SETUP_CONTEXT_SRC_PATH@"
-        "@GENERATED_PLUGIN_REGISTRY_SRC_PATH@"
+    @GENERATED_TARGET_SOURCES_TEXT@
 )

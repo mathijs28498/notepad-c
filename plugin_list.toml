@@ -1,0 +1,4 @@
+plugins = [
+    { interface_name = "logger" },
+    { interface_name = "gui_application" },
+]

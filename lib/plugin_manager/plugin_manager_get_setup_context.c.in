@@ -2,20 +2,34 @@
 
 #include <stdbool.h>
 
+#include <logger_interface.h>
+#include <environment_interface.h>
+#include <plugin_utils.h>
+
 #include "plugin_manager_interface_declarations.h"
 #include "plugin_manager_types.h"
 
 struct PluginManagerSetupContext *plugin_manager_get_setup_context()
 {
     static PluginManagerSetupContext setup_context = {
-        .internal_plugins = {@INTERNAL_PLUGINS_TEXT@},
-        .internal_plugins_len = @INTERNAL_PLUGINS_LEN@,
         .requested_plugins = {@REQUESTED_PLUGINS_TEXT@},
         .requested_plugins_len = @REQUESTED_PLUGINS_LEN@,
         .sorted_plugin_providers_indices = {@SORTED_PLUGIN_PROVIDERS_INDICES_TEXT@},
         .plugin_providers = {@PLUGIN_PROVIDERS_TEXT@},
         .plugin_providers_len = @PLUGIN_PROVIDERS_LEN@,
     };
+
+    TODO("Make sure these plugins are statically initialized 1 by 1 in order via python")
+    PluginProvider *logger_plugin_provider = &setup_context.plugin_providers[@LOGGER_PLUGIN_PROVIDER_INDEX@];
+    LoggerInterface *logger_interface = (LoggerInterface *)logger_plugin_provider->get_interface();
+    if (logger_plugin_provider->init)
+    {
+        (void)logger_plugin_provider->init(logger_interface->context);
+    }
+    logger_plugin_provider->is_initialized = true;
+    setup_context.logger = logger_interface;
+
+    setup_context.environment = (EnvironmentInterface *)setup_context.plugin_providers[@ENVIRONMENT_PLUGIN_PROVIDER_INDEX@].get_interface();
 
     return &setup_context;
 }

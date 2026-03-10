@@ -1,12 +1,11 @@
 #include "input_default_register.h"
 
-#include <plugin_sdk.h>
 #include <input_interface.h>
 #include <logger_interface.h>
 
 #include "input_default.h"
 
-InputInterface *get_interface(void)
+static InputInterface *get_interface(void)
 {
     static InputInterfaceContext context = {0};
 
@@ -22,4 +21,4 @@ InputInterface *get_interface(void)
     return &iface;
 }
 
-PLUGIN_REGISTER_INTERFACE(get_interface, InputInterface)
+#include "plugin_register.c.inc"

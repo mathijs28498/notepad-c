@@ -2,16 +2,24 @@ add_library(logger_console STATIC)
 
 target_sources(logger_console
     PRIVATE
-        logger_console.c
-        logger_console_register.c
+    logger_console.c
+    logger_console_register.c
 
     PUBLIC
-        FILE_SET HEADERS
+    FILE_SET HEADERS
 )
 
 target_link_libraries(logger_console
     PRIVATE
-        plugin_manager_include
+    plugin_manager_include
 )
 
-target_compile_definitions(logger_console PRIVATE PLUGIN_INTERFACE_NAME=logger)
+set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager")
+
+include("${PLUGIN_MANAGER_DIR_PATH}/cmake/PluginSDK.cmake")
+plugin_generate_register_inc(logger_console
+    TOOLS_DIR_PATH "${PLUGIN_MANAGER_DIR_PATH}/tools"
+    PYTHON_SCRIPTS_PATH "${PLUGIN_MANAGER_DIR_PATH}/cmake/scripts"
+    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    TOML_DIR_PATH "${CMAKE_CURRENT_LIST_DIR}"
+)

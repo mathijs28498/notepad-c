@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <Windows.h>
 
-#include <plugin_sdk.h>
 #include <environment_interface.h>
 #include <window_interface.h>
 #include <logger_interface.h>
@@ -11,13 +10,7 @@
 #include "window_win32.h"
 #include "window_win32_window_events.h"
 
-#define PLUGIN_DEPENDENCIES(X)                        \
-    X(EnvironmentInterface, environment, environment) \
-    X(LoggerInterface, logger, logger)
-
-PLUGIN_REGISTER_DEPENDENCIES(WindowInterfaceContext, PLUGIN_DEPENDENCIES);
-
-WindowInterface *get_interface()
+static WindowInterface *get_interface()
 {
     static WindowInterfaceContext context = {0};
 
@@ -35,4 +28,4 @@ WindowInterface *get_interface()
     return &iface;
 }
 
-PLUGIN_REGISTER_INTERFACE(get_interface, WindowInterface);
+#include "plugin_register.c.inc"

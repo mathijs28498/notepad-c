@@ -9,13 +9,12 @@ TODO("Remove this windows include")
 #include <stdio.h>
 
 #include <logger_interface.h>
-#include <plugin_sdk.h>
 
 #include "logger_console.h"
 
 STATIC_ASSERT(LOG_LEVEL_MAX == LOGGER_CONSOLE_LOG_LEVEL_MAX, "log_level max_mismatch!");
 
-LoggerInterface *get_interface(void)
+static LoggerInterface *get_interface(void)
 {
     static LoggerInterfaceContext context = {
         .log_level = LOG_LEVEL_DEBUG,
@@ -33,9 +32,7 @@ LoggerInterface *get_interface(void)
     return &iface;
 }
 
-PLUGIN_REGISTER_INTERFACE(get_interface, LoggerInterface);
-
-int32_t init(LoggerInterfaceContext *context)
+static int32_t init(LoggerInterfaceContext *context)
 {
     (void)context;
 
@@ -63,4 +60,4 @@ int32_t init(LoggerInterfaceContext *context)
     return 0;
 }
 
-PLUGIN_REGISTER_INIT(init, LoggerInterfaceContext)
+#include "plugin_register.c.inc"

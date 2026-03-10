@@ -5,11 +5,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <cjson.h>
 #include <Windows.h>
 #include <assert.h>
 
 #include <plugin_framework.h>
+#include <plugin_utils.h>
 
 #include <environment_interface.h>
 #include <logger_interface.h>
@@ -44,17 +44,19 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
             PluginModule plugin_modules[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
             size_t plugin_modules_len = 0;
 
-            ret = resolve_requested_plugins_dynamic(
+            ret = resolve_requested_plugins(
                 logger,
                 setup_context->requested_plugins,
                 setup_context->requested_plugins_len,
                 plugin_registry,
+                setup_context->plugin_providers,
+                setup_context->plugin_providers_len,
                 plugin_modules,
                 &plugin_modules_len);
 
             if (ret < 0)
             {
-                LOG_ERR(logger, "Error in resolve_requested_plugins_dynamic: %d", ret);
+                LOG_ERR(logger, "Error in resolve_requested_plugins: %d", ret);
                 return ret;
             }
 
@@ -70,21 +72,6 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
                 LOG_ERR(logger, "Error in load_plugin_modules: %d", ret);
                 return ret;
             }
-        }
-
-        ret = resolve_requested_plugins_internal(
-            logger,
-            setup_context->requested_plugins,
-            setup_context->requested_plugins_len,
-            setup_context->internal_plugins,
-            setup_context->internal_plugins_len,
-            setup_context->plugin_providers,
-            &setup_context->plugin_providers_len);
-
-        if (ret < 0)
-        {
-            LOG_ERR(logger, "Error in resolve_requested_plugins_internal: %d", ret);
-            return ret;
         }
 
         setup_context->requested_plugins_len = 0;
@@ -142,32 +129,9 @@ int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, Plu
     *setup_context = new_setup_context;
     *runtime_context = &new_runtime_context;
 
-    for (size_t i = 0; i < new_setup_context->internal_plugins_len; i++)
-    {
-        PluginProvider *internal_plugin = &new_setup_context->internal_plugins[i];
-        if (strcmp(internal_plugin->interface_name, "logger") == 0)
-        {
-            if (internal_plugin->init)
-            {
-                internal_plugin->init(internal_plugin->get_interface()->context);
-            }
-            internal_plugin->is_initialized = true;
-
-            new_setup_context->logger = (LoggerInterface *)internal_plugin->get_interface();
-            new_runtime_context.logger = (LoggerInterface *)internal_plugin->get_interface();
-        }
-        else if (strcmp(internal_plugin->interface_name, "environment") == 0)
-        {
-            if (internal_plugin->init)
-            {
-                internal_plugin->init(internal_plugin->get_interface()->context);
-            }
-            internal_plugin->is_initialized = true;
-
-            EnvironmentInterface *environment = (EnvironmentInterface *)internal_plugin->get_interface();
-            environment_default_set_args(environment->context, argc, argv, platform_context);
-        }
-    }
+    TODO("Do init for these plugins when available in generated code");
+    new_runtime_context.logger = new_setup_context->logger;
+    environment_default_set_args(new_setup_context->environment->context, argc, argv, platform_context);
 
     ret = plugin_manager_load(new_setup_context, &new_runtime_context);
     if (ret < 0)
@@ -224,8 +188,14 @@ int32_t __plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const
     for (size_t i = 0; i < runtime_context->interface_instances_len; i++)
     {
         InterfaceInstance *interface_instance = &runtime_context->interface_instances[i];
-        if (strcmp(interface_name, interface_instance->interface_name) == 0 && interface_instance->is_explicit)
+        if (strcmp(interface_name, interface_instance->interface_name) == 0)
         {
+            if (!interface_instance->is_explicit)
+            {
+                LOG_ERR(runtime_context->logger, "Interface '%s' found but is not added explicitly. Consider adding it explicitly", interface_name);
+                *iface = NULL;
+                return -1;
+            }
             *iface = interface_instance->iface;
             return 0;
         }

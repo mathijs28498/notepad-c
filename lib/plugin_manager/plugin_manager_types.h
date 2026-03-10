@@ -11,9 +11,7 @@ TODO("Make this into cmake variables")
 #define PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN 64
 #define PLUGIN_MANAGER_MAX_PLUGINS_LEN 64
 
-#define PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN 2
 #define PLUGIN_MANAGER_MAX_DEPENDENCIES 64
-
 
 typedef struct RequestedPlugin
 {
@@ -28,7 +26,6 @@ typedef struct PluginManagerBaseInterface
     void *context;
 } PluginManagerBaseInterface;
 
-typedef void (*PluginGetDependencies_Fn)(const char *const **dependencies, uint32_t *len);
 typedef void (*PluginSetDependency_Fn)(void *context, void *iface);
 typedef PluginManagerBaseInterface *(*PluginGetInterface_Fn)(void);
 typedef int32_t (*PluginInit_Fn)(void *context);
@@ -37,25 +34,23 @@ typedef int32_t (*PluginShutdown_Fn)(void *context);
 TODO("Check if char arrays can become char pointer with static string")
 typedef struct PluginDependency
 {
-    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
+    const char *interface_name;
     bool is_resolved;
     PluginSetDependency_Fn set;
 } PluginDependency;
 
-TODO("Check if needs plugin_name")
+struct PluginDefinition;
 typedef struct PluginModule
 {
-    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
-    const char *plugin_name;
-    const char *plugin_path;
+    const struct PluginDefinition *plugin_definition;
     bool is_explicit;
 } PluginModule;
 
 TODO("Figure out if needs to remember the handle for shutdown")
 typedef struct PluginProvider
 {
-    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
-    char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
+    const char *interface_name;
+    const char *plugin_name;
 
     PluginDependency dependencies[PLUGIN_MANAGER_MAX_DEPENDENCIES];
     uint32_t dependencies_len;
@@ -68,13 +63,12 @@ typedef struct PluginProvider
 } PluginProvider;
 
 struct LoggerInterface;
+struct EnvironmentInterface;
 
 typedef struct PluginManagerSetupContext
 {
     struct LoggerInterface *logger;
-
-    PluginProvider internal_plugins[PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN];
-    size_t internal_plugins_len;
+    struct EnvironmentInterface *environment;
 
     RequestedPlugin requested_plugins[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
     size_t requested_plugins_len;
@@ -86,7 +80,7 @@ typedef struct PluginManagerSetupContext
 
 typedef struct InterfaceInstance
 {
-    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
+    const char *interface_name;
     PluginManagerBaseInterface *iface;
     bool is_explicit;
 } InterfaceInstance;

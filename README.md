@@ -18,20 +18,26 @@
 - [x] Json registration of plugins
 - [x] Remove build to get a clean build
 - [x] Look into json parsing code generation inside of python rather than cmake
+- [x] Separate array c generation and parsing
+- [x] Split python code generator between generating compile time/ configure time (only make cmake at configure time)
 
 ### 1
 - [ ] Fix all todos
 
 ### 2
 - [ ] Change char[] to char* where static chars are
-- [ ] Add configurations to plugins
 - [ ] Add sub interfaces for logic and draw
 - [ ] Add loops in my .in template files 
-- [ ] Separate array c generation and parsing
-- [ ] Split python code generator between generating compile time/ configure time (only make cmake at configure time)
+- [ ] Change json to toml for configs
+- [ ] Make logger and environment part of setup_context and make them statically loaded in the get_context method rather than at runtime in the init function
+- [ ] Remove the internal plugin name and change it just to static (which gets used by )
+- [ ] Combine internal and external plugins in registry and have the toml decide if a plugin is purely static or not
 
 ### 3
-- [ ] Create proper templating stuff with loops and everything
+- [ ] Figure out if exported declarations can also be supported dynamically where they are using dllexport so the framework can use them dynamically or if theyre purely for plugin_manager
+- [ ] Get rid of all static, non relative paths
+- [ ] Add configurations to plugins
+- [ ] Create proper templating stuff in python with loops and everything
   - [ ] Look into string.Template
 - [ ] Add logging to a file
 - [ ] Add error handling in cmake
@@ -40,3 +46,14 @@
     - [ ] Figure out naming collisions
 - [ ] Look into multiple threads
 - [ ] Look into singleton vs scoped vs transient
+    - [ ] This can now be described in the toml with different allocation methods for singleton vs the others possibly
+- [ ] Create memory management plugins/interfaces
+- [ ] figure out how to properly structure the code to be used outside this repo
+- [ ] Fix static dependencies
+
+### 4
+- [ ] Create syntax highlighting for .in files
+  - [ ] Make the lsp work, but add support for @...@ syntax
+  - [ ] Maybe even allow for strongly typed inclusions
+  - [ ] Add looping
+- [ ] Create go to definition in templating in python somehow
