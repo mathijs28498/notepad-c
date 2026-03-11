@@ -202,7 +202,7 @@ def generate_plugin_manager_cmake(
     target_name: str,
     include_paths: list[Path],
     source_paths: list[Path],
-    static_plugin_providers: list[PluginProvider],
+    plugin_providers: list[PluginProvider],
 ):
     # TODO: Add loops in the template
     add_subdirectory_text = "\n\n".join(
@@ -213,12 +213,12 @@ def generate_plugin_manager_cmake(
                 "${{CMAKE_CURRENT_BINARY_DIR}}/generated_plugins/{plugin_provider.plugin_manifest.target_name}"
             )"""
         )
-        for plugin_provider in static_plugin_providers
+        for plugin_provider in plugin_providers
     )
 
     plugin_target_cmake_list = f"\n{indent_prefix * 1}".join(
         plugin_provider.plugin_manifest.target_name
-        for plugin_provider in static_plugin_providers
+        for plugin_provider in plugin_providers
     )
 
     generated_include_directories_text = f"\n{indent_prefix * 1}".join(

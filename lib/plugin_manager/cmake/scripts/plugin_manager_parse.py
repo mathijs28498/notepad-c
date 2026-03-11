@@ -118,6 +118,7 @@ def parse_plugin_manifest(
     return PluginManifest(
         target_name=f"{interface_name}_{plugin_name}",
         static_only=manifest_dict.get("static_only", False),
+        core=manifest_dict.get("core", False),
         interface_name=interface_name,
         plugin_name=plugin_name,
         dependencies=dependencies,
@@ -136,6 +137,7 @@ def parse_plugin_list(plugin_list_dict: dict) -> list[RequestedPlugin]:
         RequestedPlugin(
             interface_name=requested_plugin["interface_name"],
             plugin_name=requested_plugin.get("plugin_name", ""),
+            is_explicit=True,
         )
         for requested_plugin in plugin_list_dict["plugins"]
     ]

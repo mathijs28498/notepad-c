@@ -36,6 +36,28 @@ PLUGIN_FRAMEWORK_MAIN()
 
     LOG_WRN(logger, "This works yes");
 
+    // WindowInterface *window;
+    // ret = PLUGIN_FRAMEWORK_GET("window", &window);
+
+    // if (ret < 0)
+    // {
+    //     return ret;
+    // }
+
+    // WindowInterfaceCreateWindowOptions create_window_options = {
+    //     .window_name = "My app",
+    // };
+    // window->create_window(window->context, &create_window_options);
+    // while (1)
+    // {
+    //     window->poll_os_events(window->context);
+    //     WindowEvent window_event;
+    //     while (window->pop_window_event(window->context, &window_event))
+    //     {
+
+    //     }
+    // }
+
     GuiApplicationInterface *gui_application;
     ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
     if (ret < 0)

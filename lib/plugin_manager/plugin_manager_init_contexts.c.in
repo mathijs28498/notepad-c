@@ -4,14 +4,18 @@
 #include <stdint.h>
 
 #include <logger_interface.h>
+LOGGER_INTERFACE_REGISTER(plugin_manager_init_contexts, LOG_LEVEL_DEBUG)
 #include <environment_interface.h>
 #include <plugin_utils.h>
 
 #include "plugin_manager_interface_declarations.h"
 #include "plugin_manager_types.h"
+#include "plugin_manager_loader.h"
 
 int32_t plugin_manager_init_contexts(struct PluginManagerSetupContext **out_setup_context, struct PluginManagerRuntimeContext **out_runtime_context)
 {
+    int ret;
+
     static PluginManagerSetupContext setup_context = {
         .requested_plugins = {@REQUESTED_PLUGINS_TEXT@},
         .requested_plugins_len = @REQUESTED_PLUGINS_LEN@,
@@ -20,19 +24,8 @@ int32_t plugin_manager_init_contexts(struct PluginManagerSetupContext **out_setu
         .plugin_providers_len = @PLUGIN_PROVIDERS_LEN@,
     };
 
-    static PluginManagerRuntimeContext runtime_context = {
-        .interface_instances = {@INTERFACE_INSTANCES_TEXT@},
-        .interface_instances_len = {@INTERFACE_INSTANCES_LEN@},
-    };
-
-    *out_setup_context = &setup_context;
-    *out_runtime_context = &runtime_context;
-
-    @PLUGIN_PROVIDER_INITIALIZATION_TEXT@
-
-    TODO("Do init for these plugins when available in generated code");
-    TODO("Make sure these plugins are statically initialized 1 by 1 in order via python")
-
+    static PluginManagerRuntimeContext runtime_context = {0};
+    TODO("Make sure the logger gets initialized like any other plugin, check that logger is not null in initialization call")
     PluginProvider *logger_plugin_provider = &setup_context.plugin_providers[@LOGGER_PLUGIN_PROVIDER_INDEX@];
     LoggerInterface *logger_interface = (LoggerInterface *)logger_plugin_provider->get_interface();
     setup_context.logger = logger_interface;
@@ -45,6 +38,36 @@ int32_t plugin_manager_init_contexts(struct PluginManagerSetupContext **out_setu
     }
     logger_plugin_provider->is_initialized = true;
 
+    *out_setup_context = &setup_context;
+    *out_runtime_context = &runtime_context;
+    
+    ret = resolve_plugin_provider_dependencies(
+        logger_interface,
+        false,
+        setup_context.plugin_providers,
+        setup_context.plugin_providers_len,
+        NULL,
+        NULL);
+
+    if (ret < 0)
+    {
+        LOG_ERR(logger_interface, "Error in resolve_plugin_provider_dependencies: %d", ret);
+        return ret;
+    }
+
+    ret = initialize_plugins(
+        logger_interface,
+        setup_context.sorted_plugin_providers_indices,
+        setup_context.plugin_providers,
+        setup_context.plugin_providers_len,
+        runtime_context.interface_instances,
+        &runtime_context.interface_instances_len);
+
+    if (ret < 0)
+    {
+        LOG_ERR(logger_interface, "Error in initialize_plugins: %d", ret);
+        return ret;
+    }
 
     return 0;
 }

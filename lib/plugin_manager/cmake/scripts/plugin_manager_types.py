@@ -12,6 +12,7 @@ class PluginDependency:
 @dataclass
 class PluginManifest:
     target_name: str
+    core: bool
     static_only: bool
     interface_name: str
     plugin_name: str
@@ -47,6 +48,7 @@ class InterfaceDefinition:
 class RequestedPlugin:
     interface_name: str
     plugin_name: str
+    is_explicit: bool
 
 
 @dataclass

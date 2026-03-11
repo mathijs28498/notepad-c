@@ -15,8 +15,8 @@ TODO("Make this into cmake variables")
 
 typedef struct RequestedPlugin
 {
-    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
-    char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
+    const char *interface_name;
+    const char *plugin_name;
     bool is_explicit;
     bool is_resolved;
 } RequestedPlugin;

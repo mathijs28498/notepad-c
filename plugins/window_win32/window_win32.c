@@ -32,6 +32,7 @@ int32_t window_win32_create_window(WindowInterfaceContext *context, WindowInterf
 
     RegisterClass(&wc);
 
+    TODO("Check if this can be done without fixed sized array (I want options->window_name to be a const char *)")
     wchar_t wide_window_name[sizeof(options->window_name)];
     if (MultiByteToWideChar(CP_UTF8, 0, options->window_name, -1, wide_window_name, sizeof(options->window_name)) == 0)
     {

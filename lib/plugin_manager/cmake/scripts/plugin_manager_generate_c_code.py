@@ -1,11 +1,10 @@
 from plugin_manager_generate_templates import *
 from plugin_manager_parse import *
 from plugin_manager_generate_arguments import parce_c_code_arguments
-from plugin_manager_plugin_resolver import (
-    create_static_plugin_providers,
-    create_interface_definitions,
-)
+from plugin_manager_plugin_resolver import *
 from plugin_manager_generate_init_contexts import generate_init_contexts_src
+
+RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH = 256
 
 
 def main():
@@ -25,30 +24,43 @@ def main():
         arguments.build_dynamic_plugins,
     )
     interface_definitions = create_interface_definitions(plugin_registry)
-    interface_instances = []
 
+    # TODO: Get the plugin_providers from json, dont figure it out yourself here
     if not arguments.build_dynamic_plugins:
+        # Make sure the same plugin is not requested more than once as this is not supported
+        requested_plugins.extend(
+            ensure_core_plugins_requested(plugin_providers, requested_plugins)
+        )
+
+        requested_plugin_providers: list[PluginProvider] = []
+        for _ in range(RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH):
+            if not requested_plugins:
+                break
+            new_requested_plugin_providers = resolve_requested_plugin_providers(
+                plugin_providers, requested_plugins
+            )
+
+            requested_plugins = check_resolved_requested_plugin_providers(
+                new_requested_plugin_providers,
+                requested_plugin_providers,
+                requested_plugins,
+            )
+
+            requested_plugin_providers.extend(new_requested_plugin_providers)
+        else:
+            print(
+                f"Hit maximum recursive dependency solver depth, maximum ({RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH})"
+            )
+            return -1
+        
+        plugin_providers = requested_plugin_providers
         requested_plugins = []
-        interface_definitions = []
 
     #     TODO: Configure time:
-    #     - Check requested plugins
-    #     - Resolve requested plugins
-    #     - Check dependencies of these plugins
-    #     - Add dependencies to requested plugins and repeat until no more
     #     - Save these plugins with their dependencies to json for compile time
-    #         - Make sure the is_explicit is only true for the original requested plugins
-
-    #     TODO: Compile time:
-    #     - Read inserted plugins created by configure
-    #     - Read registered methods
-    #         - This now happens for InternalPlugins, make sure this becomes 1 method
-    #     - Create plugin_providers list
-    #     - Do topological sort to figure out sorting order
-    #     - Put data into PluginListData
-    #         - Think of better name for PluginListData
-    #     - Make sure c file gets properly created
     #     """
+
+    plugin_providers = sort_plugin_providers(plugin_providers)
 
     generate_plugin_registry_header(
         arguments.source_plugin_registry_header,
@@ -75,7 +87,6 @@ def main():
         # The plugin_providers list is assumed to be properly sorted already, so sorted plugin indices can be created like this
         [i for i in range(len(plugin_providers))],
         plugin_providers,
-        interface_instances,
     )
 
 

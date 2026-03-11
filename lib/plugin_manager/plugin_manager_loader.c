@@ -13,6 +13,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager_loader, LOG_LEVEL_DEBUG)
 #include "plugin_manager.h"
 #include "plugin_registry.h"
 
+#if PLUGIN_BUILD_SHARED
 TODO("Check if this algorithm can/should be made better/faster")
 int32_t resolve_requested_plugins(
     const LoggerInterface *logger,
@@ -187,75 +188,6 @@ int32_t load_plugin_modules(
     return 0;
 }
 
-int32_t resolve_plugin_provider_dependencies(
-    const LoggerInterface *logger,
-    PluginProvider *plugin_providers,
-    size_t plugin_providers_len,
-    RequestedPlugin *requested_plugins,
-    size_t *requested_plugins_len)
-{
-    int32_t ret;
-    for (size_t i = 0; i < plugin_providers_len; i++)
-    {
-        PluginProvider *plugin_provider = &plugin_providers[i];
-        for (uint32_t j = 0; j < plugin_provider->dependencies_len; j++)
-        {
-            PluginProviderDependency *dependency = &plugin_provider->dependencies[j];
-            if (dependency->is_resolved)
-            {
-                continue;
-            }
-
-            for (uint32_t k = 0; k < plugin_providers_len; k++)
-            {
-                TODO("Check if dependent is the right term here")
-                const PluginProvider *dependent_plugin_provider = &plugin_providers[k];
-                if (strcmp(dependency->interface_name, dependent_plugin_provider->interface_name) != 0)
-                {
-                    continue;
-                }
-
-                dependency->set(plugin_provider->get_interface()->context, dependent_plugin_provider->get_interface());
-                dependency->is_resolved = true;
-                break;
-            }
-
-            if (dependency->is_resolved)
-            {
-                continue;
-            }
-
-            // Adding dependency to requested plugins as it is not found yet
-
-            // First check if dependency has already been reqeusted in the meantime
-            bool to_request = true;
-            for (size_t k = 0; k < *requested_plugins_len; k++)
-            {
-                if (strcmp(requested_plugins[k].interface_name, dependency->interface_name) == 0)
-                {
-                    to_request = false;
-                    break;
-                }
-            }
-
-            if (!to_request)
-            {
-                continue;
-            }
-
-            LOG_DBG(logger, "Dependency '%s' not found, adding to requested plugins", dependency->interface_name);
-            ret = plugin_manager_request_plugin(logger, dependency->interface_name, NULL, false, requested_plugins, requested_plugins_len);
-            if (ret < 0)
-            {
-                LOG_ERR(logger, "Unable to implicitly add dependency interface '%s'", dependency->interface_name);
-                return ret;
-            }
-        }
-    }
-
-    return 0;
-}
-
 bool plugin_provider_depends_on_interface(
     const PluginProvider *dependent_plugin_provider,
     const char *interface_name)
@@ -353,6 +285,111 @@ int32_t calculate_plugin_provider_initialization_order(
 
     return 0;
 }
+#endif // #if PLUGIN_BUILD_SHARED
+
+int32_t resolve_plugin_provider_dependencies(
+    const LoggerInterface *logger,
+    bool discover_dependencies,
+    PluginProvider *plugin_providers,
+    size_t plugin_providers_len,
+    RequestedPlugin *requested_plugins,
+    size_t *requested_plugins_len)
+{
+    int32_t ret;
+
+#if !PLUGIN_BUILD_SHARED
+    (void)ret;
+    (void)requested_plugins;
+    (void)requested_plugins_len;
+#endif // #if PLUGIN_BUILD_SHARED
+
+    for (size_t i = 0; i < plugin_providers_len; i++)
+    {
+        PluginProvider *plugin_provider = &plugin_providers[i];
+        for (uint32_t j = 0; j < plugin_provider->dependencies_len; j++)
+        {
+            PluginProviderDependency *dependency = &plugin_provider->dependencies[j];
+            if (dependency->is_resolved)
+            {
+                continue;
+            }
+
+            for (uint32_t k = 0; k < plugin_providers_len; k++)
+            {
+                TODO("Check if dependent is the right term here")
+                const PluginProvider *dependent_plugin_provider = &plugin_providers[k];
+                if (strcmp(dependency->interface_name, dependent_plugin_provider->interface_name) != 0)
+                {
+                    continue;
+                }
+
+                dependency->set(plugin_provider->get_interface()->context, dependent_plugin_provider->get_interface());
+                dependency->is_resolved = true;
+                break;
+            }
+
+            if (dependency->is_resolved)
+            {
+                continue;
+            }
+            if (!discover_dependencies)
+            {
+                LOG_ERR(logger, "Failed to resolve dependency '%s' required by '%s' (auto-discovery disabled)",
+                        dependency->interface_name,
+                        plugin_provider->interface_name);
+                return -1;
+            }
+
+#if PLUGIN_BUILD_SHARED
+            // Adding dependency to requested plugins as it is not found yet
+
+            // First check if dependency has already been reqeusted in the meantime
+            bool to_request = true;
+            for (size_t k = 0; k < *requested_plugins_len; k++)
+            {
+                if (strcmp(requested_plugins[k].interface_name, dependency->interface_name) == 0)
+                {
+                    to_request = false;
+                    break;
+                }
+            }
+
+            if (!to_request)
+            {
+                continue;
+            }
+
+            LOG_DBG(logger, "Unable to resolve '%s' required by '%s', adding to requested plugins", dependency->interface_name, plugin_provider->interface_name);
+            ret = plugin_manager_request_plugin(logger, dependency->interface_name, NULL, false, requested_plugins, requested_plugins_len);
+            if (ret < 0)
+            {
+                LOG_ERR(logger, "Failed to implicitly request dependency interface '%s' required by '%s'", dependency->interface_name, plugin_provider->interface_name);
+                return ret;
+            }
+#endif // #if PLUGIN_BUILD_SHARED
+        }
+    }
+
+    return 0;
+}
+
+bool is_plugin_provider_in_interface_instances(
+    const PluginProvider *plugin_provider,
+    InterfaceInstance *interface_instances,
+    size_t interface_instances_len,
+    InterfaceInstance **existing_interface_instance)
+{
+    for (size_t i = 0; i < interface_instances_len; i++)
+    {
+        if (strcmp(interface_instances[i].interface_name, plugin_provider->interface_name) == 0)
+        {
+            *existing_interface_instance = &interface_instances[i];
+            return true;
+        }
+    }
+
+    return false;
+}
 
 int32_t initialize_plugins(
     const struct LoggerInterface *logger,
@@ -365,6 +402,17 @@ int32_t initialize_plugins(
     for (size_t i = 0; i < plugin_providers_len; i++)
     {
         PluginProvider *plugin_provider = &plugin_providers[sorted_plugin_providers_indices[i]];
+
+        InterfaceInstance *existing_interface_instance = NULL;
+        if (is_plugin_provider_in_interface_instances(
+                plugin_provider,
+                interface_instances,
+                *interface_instances_len,
+                &existing_interface_instance))
+        {
+            existing_interface_instance->is_explicit = plugin_provider->is_explicit;
+            continue;
+        }
 
         InterfaceInstance *interface_instance = &interface_instances[*interface_instances_len];
         (*interface_instances_len)++;

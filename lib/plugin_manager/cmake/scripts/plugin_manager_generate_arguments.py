@@ -63,7 +63,6 @@ def parse_cmake_arguments() -> GenerateCmakeArguments:
     parser.add_argument("--generated-cmake-path", required=True, type=Path)
 
     args = parser.parse_args()
-    print(f"get contexts src path {args.generated_init_contexts_src_path}")
 
     return GenerateCmakeArguments.from_args(args)
 
@@ -143,7 +142,6 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
     )
 
     args = parser.parse_args()
-    print(f"get contexts src path {args.generated_init_contexts_src_path}")
 
     return GenerateCCodeArguments.from_args(args)
 

@@ -21,6 +21,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 #include "plugin_manager_loader.h"
 #include "plugin_manager_init_contexts.h"
 
+#if PLUGIN_BUILD_SHARED
 #define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 256
 
 int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context)
@@ -29,7 +30,6 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     LoggerInterface *logger = setup_context->logger;
     runtime_context->logger = logger;
 
-#if PLUGIN_BUILD_SHARED
     const PluginRegistry *plugin_registry = plugin_registry_get();
 
     SAFE_WHILE(
@@ -79,6 +79,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
         ret = resolve_plugin_provider_dependencies(
             logger,
+            true,
             setup_context->plugin_providers,
             setup_context->plugin_providers_len,
             setup_context->requested_plugins,
@@ -90,22 +91,9 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
             return ret;
         }
     }
-#else
-    ret = resolve_plugin_provider_dependencies(
-        logger,
-        setup_context->plugin_providers,
-        setup_context->plugin_providers_len,
-        setup_context->requested_plugins,
-        &setup_context->requested_plugins_len);
 
-    if (ret < 0)
-    {
-        LOG_ERR(logger, "Error in resolve_plugin_provider_dependencies: %d", ret);
-        return ret;
-    }
-#endif // #if PLUGIN_BUILD_SHARED
+    LOG_DBG(setup_context->logger, "plugin_providers_len %d", setup_context->plugin_providers_len);
 
-    TODO("Only run this if is shared")
     ret = calculate_plugin_provider_initialization_order(
         logger,
         setup_context->plugin_providers,
@@ -130,34 +118,6 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
         return ret;
     }
 
-    return 0;
-}
-
-int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, PluginManagerSetupContext **setup_context, PluginManagerRuntimeContext **runtime_context)
-{
-    assert(setup_context != NULL);
-    assert(runtime_context != NULL);
-
-    int ret;
-
-    ret = plugin_manager_init_contexts(setup_context, runtime_context);
-    if (ret < 0)
-    {
-        if (*setup_context != NULL && (*setup_context)->logger)
-        {
-            LOG_ERR((*setup_context)->logger, "Error getting setup context: %d", ret);
-        }
-        return ret;
-    }
-
-    environment_default_set_args((*setup_context)->environment->context, argc, argv, platform_context);
-
-    ret = plugin_manager_load(*setup_context, *runtime_context);
-    if (ret < 0)
-    {
-        LOG_ERR((*setup_context)->logger, "Error loading plugins: %d", ret);
-        return ret;
-    }
 
     return 0;
 }
@@ -183,12 +143,11 @@ int32_t plugin_manager_request_plugin(
     }
 
     struct RequestedPlugin *requested_plugin = &requested_plugins[*requested_plugins_len];
-
-    snprintf(requested_plugin->interface_name, PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN, "%s", interface_name);
+    requested_plugin->interface_name = interface_name;
 
     if (plugin_name == NULL)
     {
-        requested_plugin->plugin_name[0] = '\0';
+        requested_plugin->plugin_name = "";
     }
     else
     {
@@ -199,6 +158,38 @@ int32_t plugin_manager_request_plugin(
     requested_plugin->is_resolved = false;
 
     (*requested_plugins_len)++;
+    return 0;
+}
+#endif // #if PLUGIN_BUILD_SHARED
+
+int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, PluginManagerSetupContext **setup_context, PluginManagerRuntimeContext **runtime_context)
+{
+    assert(setup_context != NULL);
+    assert(runtime_context != NULL);
+
+    int ret;
+
+    ret = plugin_manager_init_contexts(setup_context, runtime_context);
+    if (ret < 0)
+    {
+        if (*setup_context != NULL && (*setup_context)->logger)
+        {
+            LOG_ERR((*setup_context)->logger, "Error getting setup context: %d", ret);
+        }
+        return ret;
+    }
+
+    environment_default_set_args((*setup_context)->environment->context, argc, argv, platform_context);
+
+#if PLUGIN_BUILD_SHARED
+    ret = plugin_manager_load(*setup_context, *runtime_context);
+    if (ret < 0)
+    {
+        LOG_ERR((*setup_context)->logger, "Error loading plugins: %d", ret);
+        return ret;
+    }
+#endif // #if PLUGIN_BUILD_SHARED
+
     return 0;
 }
 

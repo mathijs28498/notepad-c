@@ -96,9 +96,12 @@ def create_requested_plugins_text(requested_plugins: list[RequestedPlugin]) -> s
 
 
 def create_sorted_plugin_providers_indices_text(
-    sorted_plugin_providers: list[int],
+    sorted_plugin_providers_indices: list[int],
 ) -> str:
-    return f"{{0}}"
+    if not sorted_plugin_providers_indices:
+        return f"{{0}}"
+
+    return ", ".join(str(index) for index in sorted_plugin_providers_indices)
 
 
 def create_plugin_providers_text(plugin_providers: list[PluginProvider]) -> str:
@@ -117,33 +120,18 @@ def create_plugin_providers_text(plugin_providers: list[PluginProvider]) -> str:
     return text
 
 
-def create_plugin_provider_initialization_text(
-    sorted_plugin_providers: list[int], plugin_providers: list[PluginProvider]
-):
-    return ""
-
-
-def create_interface_instances_text(interface_instances: list[InterfaceInstance]):
-    return f"{{0}}"
-
-
 def generate_init_contexts_src(
     source_path: Path,
     destination_path: Path,
     requested_plugins: list[RequestedPlugin],
     sorted_plugin_providers_indices: list[int],
     plugin_providers: list[PluginProvider],
-    interface_instances: list[InterfaceInstance],
 ):
     requested_plugins_text = create_requested_plugins_text(requested_plugins)
     sorted_plugin_providers_indices_text = create_sorted_plugin_providers_indices_text(
         sorted_plugin_providers_indices
     )
     plugin_providers_text = create_plugin_providers_text(plugin_providers)
-    interface_instances_text = create_interface_instances_text(interface_instances)
-    plugin_provider_initialization_text = create_plugin_provider_initialization_text(
-        sorted_plugin_providers_indices, plugin_providers
-    )
 
     logger_plugin_provider_index = get_plugin_provider_index_by_interface_name(
         plugin_providers, "logger"
@@ -160,9 +148,6 @@ def generate_init_contexts_src(
         "SORTED_PLUGIN_PROVIDERS_INDICES_TEXT": sorted_plugin_providers_indices_text,
         "PLUGIN_PROVIDERS_TEXT": plugin_providers_text,
         "PLUGIN_PROVIDERS_LEN": str(len(plugin_providers)),
-        "INTERFACE_INSTANCES_TEXT": interface_instances_text,
-        "INTERFACE_INSTANCES_LEN": str(len(interface_instances)),
-        "PLUGIN_PROVIDER_INITIALIZATION_TEXT": plugin_provider_initialization_text,
         "LOGGER_PLUGIN_PROVIDER_INDEX": str(logger_plugin_provider_index),
         "ENVIRONMENT_PLUGIN_PROVIDER_INDEX": str(environment_plugin_provider_index),
     }

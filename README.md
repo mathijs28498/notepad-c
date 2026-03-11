@@ -20,18 +20,21 @@
 - [x] Look into json parsing code generation inside of python rather than cmake
 - [x] Separate array c generation and parsing
 - [x] Split python code generator between generating compile time/ configure time (only make cmake at configure time)
+- [x] Change char[] to char* where static chars are
+- [x] Change json to toml for configs
+- [x] Make logger and environment part of setup_context and make them statically loaded in the get_context method rather than at runtime in the init function
+- [x] Remove the internal plugin name and change it to initialized plugins/core in python
+- [x] Combine internal and external plugins in registry and have the toml decide if a plugin is purely static or not
+- [x] Add static loading
+    - [x] Figure out naming collisions
+- [x] Fix static dependencies
 
 ### 1
 - [ ] Fix all todos
 
 ### 2
-- [ ] Change char[] to char* where static chars are
 - [ ] Add sub interfaces for logic and draw
 - [ ] Add loops in my .in template files 
-- [ ] Change json to toml for configs
-- [ ] Make logger and environment part of setup_context and make them statically loaded in the get_context method rather than at runtime in the init function
-- [ ] Remove the internal plugin name and change it just to static (which gets used by )
-- [ ] Combine internal and external plugins in registry and have the toml decide if a plugin is purely static or not
 
 ### 3
 - [ ] Figure out if exported declarations can also be supported dynamically where they are using dllexport so the framework can use them dynamically or if theyre purely for plugin_manager
@@ -41,15 +44,11 @@
   - [ ] Look into string.Template
 - [ ] Add logging to a file
 - [ ] Add error handling in cmake
-- [ ] Add error handling for each part of json parsing in cmake
-- [ ] Add static loading
-    - [ ] Figure out naming collisions
 - [ ] Look into multiple threads
 - [ ] Look into singleton vs scoped vs transient
     - [ ] This can now be described in the toml with different allocation methods for singleton vs the others possibly
 - [ ] Create memory management plugins/interfaces
 - [ ] figure out how to properly structure the code to be used outside this repo
-- [ ] Fix static dependencies
 
 ### 4
 - [ ] Create syntax highlighting for .in files
