@@ -1,5 +1,7 @@
 import json
-
+from collections.abc import Iterator
+from collections import Counter
+from typing import Any
 import sys
 
 # TODO: Check if this properly works for older versions
@@ -28,7 +30,7 @@ from plugin_manager_types import *
 
 # TODO: Add error handling
 def parse_plugin_registry(
-    plugin_registry_dict: dict, build_platform: str
+    plugin_registry_dict: dict[str, Any], build_platform: str
 ) -> PluginRegistry:
 
     plugin_manifests = [
@@ -44,12 +46,7 @@ def parse_plugin_registry(
     for interface_definition_dict in interface_definitions_dict:
         interface_name = interface_definition_dict["interface_name"]
 
-        if "default" not in interface_definition_dict:
-            raise ValueError(
-                f"Failed to parse default plugin for interface '{interface_name}' in registry"
-            )
-
-        # TODO: Create a custom parsing interface error
+        # TODO: Create a custom parsing interface error. For errors of [] fields, add a try except and create a custom error at the end
         default_plugin_obj = interface_definition_dict.get("default")
         if default_plugin_obj is None:
             raise ValueError(
@@ -95,7 +92,7 @@ def parse_plugin_registry(
 
 # TODO: Add more sane defaults if necessary
 def parse_plugin_manifest(
-    manifest_dict: dict, manifest_dir_path: Path
+    manifest_dict: dict[str, Any], manifest_dir_path: Path
 ) -> PluginManifest:
 
     interface_name: str = manifest_dict["interface_name"]
@@ -131,7 +128,7 @@ def parse_plugin_manifest(
     )
 
 
-def parse_plugin_list(plugin_list_dict: dict) -> list[RequestedPlugin]:
+def parse_plugin_list(plugin_list_dict: dict[str, Any]) -> list[RequestedPlugin]:
     # TODO: Add error handling
     requested_plugins = [
         RequestedPlugin(
@@ -142,7 +139,45 @@ def parse_plugin_list(plugin_list_dict: dict) -> list[RequestedPlugin]:
         for requested_plugin in plugin_list_dict["plugins"]
     ]
 
+    interface_counts = Counter(req.interface_name for req in requested_plugins)
+    duplicates = [name for name, count in interface_counts.items() if count > 1]
+
+    if duplicates:
+        raise ValueError(
+            f"Duplicate requested plugins detected: {', '.join(duplicates)}. "
+            "Each interface can only be requested once."
+        )
+
     return requested_plugins
+
+
+def parse_statically_resolved_plugins(
+    statically_resolved_plugins_dict: list[dict[str, Any]],
+) -> Iterator[PluginProvider]:
+    for plugin_provider_dict in statically_resolved_plugins_dict:
+        plugin_manifest_dict = plugin_provider_dict["plugin_manifest"]
+        plugin_manifest_dict["source_path"] = Path(plugin_manifest_dict["source_path"])
+        if plugin_manifest_dict.get("module_path"):
+            plugin_manifest_dict["module_path"] = Path(
+                plugin_manifest_dict["module_path"]
+            )
+
+        plugin_manifest_dict["dependencies"] = [
+            PluginDependency(**dependency)
+            for dependency in plugin_manifest_dict["dependencies"]
+        ]
+
+        plugin_manifest = PluginManifest(**plugin_manifest_dict)
+
+        plugin_provider_dependencies = [
+            PluginProviderDependency(**dependency)
+            for dependency in plugin_provider_dict["dependencies"]
+        ]
+
+        plugin_provider_dict["plugin_manifest"] = plugin_manifest
+        plugin_provider_dict["dependencies"] = plugin_provider_dependencies
+
+        yield PluginProvider(**plugin_provider_dict)
 
 
 def read_json(source_path: Path):

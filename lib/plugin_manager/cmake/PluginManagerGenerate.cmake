@@ -26,7 +26,7 @@ function(plugin_manager_setup TARGET_NAME)
 
     set(PLUGIN_REGISTRY_TOML_PATH "${arg_TOML_DIR_PATH}/plugin_registry.toml")
     set(PLUGIN_LIST_TOML_PATH "${arg_TOML_DIR_PATH}/plugin_list.toml")
-    set(GENERATED_LINKED_PLUGINS_JSON_PATH "${GENERATED_JSON_DIR_PATH}/linked_plugins.json")
+    set(GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH "${GENERATED_JSON_DIR_PATH}/statically_resolved_plugins.json")
 
     set(SOURCE_PLUGIN_REGISTRY_HEADER_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_registry.h.in")
     set(SOURCE_PLUGIN_MANAGER_HEADER_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_manager_interface_declarations.h.in")
@@ -44,6 +44,7 @@ function(plugin_manager_setup TARGET_NAME)
     set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
         "${SOURCE_CMAKE_PATH}"
         "${PLUGIN_REGISTRY_TOML_PATH}"
+        "${PLUGIN_LIST_TOML_PATH}"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_cmake.py"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_parse.py"
@@ -62,7 +63,6 @@ function(plugin_manager_setup TARGET_NAME)
 
         --plugin-registry-toml-path "${PLUGIN_REGISTRY_TOML_PATH}"
         --plugin-list-toml-path "${PLUGIN_LIST_TOML_PATH}"
-        --linked-plugins-json-path "${GENERATED_LINKED_PLUGINS_JSON_PATH}"
 
         --source-cmake-path "${SOURCE_CMAKE_PATH}"
 
@@ -70,6 +70,7 @@ function(plugin_manager_setup TARGET_NAME)
         --generated-plugin-registry-src-path "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
         --generated-init-contexts-src-path "${GENERATED_INIT_CONTEXTS_SRC_PATH}"
         --generated-cmake-path "${GENERATED_CMAKE_PATH}"
+        --generated-statically-resolved-plugins-json-path "${GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH}"
 
         COMMAND_ERROR_IS_FATAL ANY
     )
@@ -93,7 +94,7 @@ function(plugin_manager_setup TARGET_NAME)
 
         --plugin-registry-toml-path "${PLUGIN_REGISTRY_TOML_PATH}"
         --plugin-list-toml-path "${PLUGIN_LIST_TOML_PATH}"
-        --linked-plugins-json-path "${GENERATED_LINKED_PLUGINS_JSON_PATH}"
+        --statically-resolved-plugins-json-path "${GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH}"
 
         --source-plugin-registry-header-path "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
         --source-plugin-manager-header-path "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"
@@ -109,6 +110,7 @@ function(plugin_manager_setup TARGET_NAME)
         "${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}"
         "${PLUGIN_REGISTRY_TOML_PATH}"
         "${PLUGIN_LIST_TOML_PATH}"
+        "${GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH}"
         "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
         "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"
         "${SOURCE_PLUGIN_REGISTRY_SRC_PATH}"

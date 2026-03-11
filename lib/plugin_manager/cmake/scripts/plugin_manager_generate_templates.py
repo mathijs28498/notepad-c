@@ -1,6 +1,8 @@
 from pathlib import Path
 from plugin_manager_types import *
 import textwrap
+import json
+from dataclasses import asdict
 
 indent_prefix = "    "
 
@@ -238,6 +240,17 @@ def generate_plugin_manager_cmake(
     }
 
     configure_file(source_path, destination_path, replacements, True)
+
+
+def generate_statically_resolved_plugin_providers_json(
+    destination_path: Path, plugin_providers: list[PluginProvider]
+):
+    plugin_providers_dict = [
+        asdict(plugin_provider) for plugin_provider in plugin_providers
+    ]
+
+    content = json.dumps(plugin_providers_dict, indent=4, default=str)
+    create_and_write_to_file(destination_path, content, False)
 
 
 def generate_register_inc(

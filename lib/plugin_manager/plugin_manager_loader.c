@@ -287,6 +287,7 @@ int32_t calculate_plugin_provider_initialization_order(
 }
 #endif // #if PLUGIN_BUILD_SHARED
 
+// Logger is NULL when discover_dependencies is false. This is when static plugins are being resolved, which wouldnt be initialized yet
 int32_t resolve_plugin_provider_dependencies(
     const LoggerInterface *logger,
     bool discover_dependencies,
@@ -334,9 +335,12 @@ int32_t resolve_plugin_provider_dependencies(
             }
             if (!discover_dependencies)
             {
-                LOG_ERR(logger, "Failed to resolve dependency '%s' required by '%s' (auto-discovery disabled)",
-                        dependency->interface_name,
-                        plugin_provider->interface_name);
+                if (logger != NULL)
+                {
+                    LOG_ERR(logger, "Failed to resolve dependency '%s' required by '%s' (auto-discovery disabled)",
+                            dependency->interface_name,
+                            plugin_provider->interface_name);
+                }
                 return -1;
             }
 
@@ -391,6 +395,7 @@ bool is_plugin_provider_in_interface_instances(
     return false;
 }
 
+// Logger can be NULL when static plugin providers are being initialized
 int32_t initialize_plugins(
     const struct LoggerInterface *logger,
     const size_t *sorted_plugin_providers_indices,
@@ -429,10 +434,13 @@ int32_t initialize_plugins(
         int32_t init_ret = plugin_provider->init(interface_instance->iface->context);
         if (init_ret < 0)
         {
-            LOG_ERR(logger, "Unable to init interface '%s'-'%s': %d",
-                    plugin_provider->interface_name,
-                    plugin_provider->plugin_name,
-                    init_ret);
+            if (logger != NULL)
+            {
+                LOG_ERR(logger, "Unable to init interface '%s'-'%s': %d",
+                        plugin_provider->interface_name,
+                        plugin_provider->plugin_name,
+                        init_ret);
+            }
             return init_ret;
         }
         plugin_provider->is_initialized = true;

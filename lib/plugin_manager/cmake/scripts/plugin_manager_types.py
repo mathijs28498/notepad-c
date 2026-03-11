@@ -67,8 +67,3 @@ class PluginProvider:
     shutdown_fn_text: str
     is_explicit: bool
     is_initialized: bool
-
-
-@dataclass
-class InterfaceInstance:
-    pass

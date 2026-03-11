@@ -7,6 +7,7 @@ from plugin_manager_plugin_resolver import (
     ensure_core_plugins_requested,
     resolve_requested_plugin_providers,
     check_resolved_requested_plugin_providers,
+    sort_plugin_providers,
 )
 
 RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH = 256
@@ -21,14 +22,13 @@ def main():
     plugin_registry = parse_plugin_registry(
         plugin_registry_dict, arguments.build_platform
     )
-    requested_plugins = parse_plugin_list(plugin_list_dict)
 
     plugin_providers = create_static_plugin_providers(
         plugin_registry, arguments.build_dynamic_plugins
     )
 
-    # TODO: Save the result of the dependency resolver/ requested plugins in a json compile time can use so doesnt have to be done again
     if not arguments.build_dynamic_plugins:
+        requested_plugins = parse_plugin_list(plugin_list_dict)
         # Make sure the same plugin is not requested more than once as this is not supported
         requested_plugins.extend(
             ensure_core_plugins_requested(plugin_providers, requested_plugins)
@@ -56,12 +56,10 @@ def main():
             return -1
 
         plugin_providers = requested_plugin_providers
-        requested_plugins = []
 
-    """
-    TODO: Configure time:
-    - Save these plugins with their dependencies to json for compile time
-    """
+    generate_statically_resolved_plugin_providers_json(
+        arguments.generated_statically_resolved_plugins_json, plugin_providers
+    )
 
     generate_plugin_manager_cmake(
         arguments.source_cmake,

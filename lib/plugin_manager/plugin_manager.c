@@ -118,7 +118,6 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
         return ret;
     }
 
-
     return 0;
 }
 
@@ -151,7 +150,7 @@ int32_t plugin_manager_request_plugin(
     }
     else
     {
-        snprintf(requested_plugin->plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN, "%s", plugin_name);
+        requested_plugin->plugin_name = plugin_name;
     }
 
     requested_plugin->is_explicit = is_explicit;

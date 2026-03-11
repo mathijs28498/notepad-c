@@ -11,7 +11,6 @@ class GenerateCmakeArguments:
 
     plugin_registry_toml: Path
     plugin_list_toml: Path
-    linked_plugins_json: Path
 
     source_cmake: Path
 
@@ -19,6 +18,7 @@ class GenerateCmakeArguments:
     generated_plugin_registry_src: Path
     generated_init_contexts_src: Path
     generated_cmake: Path
+    generated_statically_resolved_plugins_json: Path
 
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "GenerateCmakeArguments":
@@ -29,7 +29,6 @@ class GenerateCmakeArguments:
             #
             plugin_registry_toml=args.plugin_registry_toml_path,
             plugin_list_toml=args.plugin_list_toml_path,
-            linked_plugins_json=args.linked_plugins_json_path,
             #
             source_cmake=args.source_cmake_path,
             #
@@ -37,6 +36,7 @@ class GenerateCmakeArguments:
             generated_plugin_registry_src=args.generated_plugin_registry_src_path,
             generated_init_contexts_src=args.generated_init_contexts_src_path,
             generated_cmake=args.generated_cmake_path,
+            generated_statically_resolved_plugins_json=args.generated_statically_resolved_plugins_json_path,
         )
 
 
@@ -49,7 +49,6 @@ def parse_cmake_arguments() -> GenerateCmakeArguments:
 
     parser.add_argument("--plugin-registry-toml-path", required=True, type=Path)
     parser.add_argument("--plugin-list-toml-path", required=True, type=Path)
-    parser.add_argument("--linked-plugins-json-path", required=True, type=Path)
 
     parser.add_argument("--source-cmake-path", required=True, type=Path)
 
@@ -61,6 +60,7 @@ def parse_cmake_arguments() -> GenerateCmakeArguments:
         "--generated-init-contexts-src-path", required=True, type=Path
     )
     parser.add_argument("--generated-cmake-path", required=True, type=Path)
+    parser.add_argument("--generated-statically-resolved-plugins-json-path", required=True, type=Path)
 
     args = parser.parse_args()
 
@@ -75,7 +75,7 @@ class GenerateCCodeArguments:
 
     plugin_registry_toml: Path
     plugin_list_toml: Path
-    linked_plugins_json: Path
+    statically_resolved_plugins_json: Path
 
     source_plugin_registry_header: Path
     source_plugin_manager_header: Path
@@ -96,7 +96,7 @@ class GenerateCCodeArguments:
             #
             plugin_registry_toml=args.plugin_registry_toml_path,
             plugin_list_toml=args.plugin_list_toml_path,
-            linked_plugins_json=args.linked_plugins_json_path,
+            statically_resolved_plugins_json=args.statically_resolved_plugins_json_path,
             #
             source_plugin_registry_header=args.source_plugin_registry_header_path,
             source_plugin_manager_header=args.source_plugin_manager_header_path,
@@ -119,7 +119,7 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
 
     parser.add_argument("--plugin-registry-toml-path", required=True, type=Path)
     parser.add_argument("--plugin-list-toml-path", required=True, type=Path)
-    parser.add_argument("--linked-plugins-json-path", required=True, type=Path)
+    parser.add_argument("--statically-resolved-plugins-json-path", required=True, type=Path)
 
     parser.add_argument(
         "--source-plugin-registry-header-path", required=True, type=Path

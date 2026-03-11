@@ -25,24 +25,12 @@ int32_t plugin_manager_init_contexts(struct PluginManagerSetupContext **out_setu
     };
 
     static PluginManagerRuntimeContext runtime_context = {0};
-    TODO("Make sure the logger gets initialized like any other plugin, check that logger is not null in initialization call")
-    PluginProvider *logger_plugin_provider = &setup_context.plugin_providers[@LOGGER_PLUGIN_PROVIDER_INDEX@];
-    LoggerInterface *logger_interface = (LoggerInterface *)logger_plugin_provider->get_interface();
-    setup_context.logger = logger_interface;
-    runtime_context.logger = logger_interface;
-    setup_context.environment = (EnvironmentInterface *)setup_context.plugin_providers[@ENVIRONMENT_PLUGIN_PROVIDER_INDEX@].get_interface();
-
-    if (logger_plugin_provider->init)
-    {
-        (void)logger_plugin_provider->init(logger_interface->context);
-    }
-    logger_plugin_provider->is_initialized = true;
 
     *out_setup_context = &setup_context;
     *out_runtime_context = &runtime_context;
     
     ret = resolve_plugin_provider_dependencies(
-        logger_interface,
+        NULL,
         false,
         setup_context.plugin_providers,
         setup_context.plugin_providers_len,
@@ -51,12 +39,11 @@ int32_t plugin_manager_init_contexts(struct PluginManagerSetupContext **out_setu
 
     if (ret < 0)
     {
-        LOG_ERR(logger_interface, "Error in resolve_plugin_provider_dependencies: %d", ret);
         return ret;
     }
 
     ret = initialize_plugins(
-        logger_interface,
+        NULL,
         setup_context.sorted_plugin_providers_indices,
         setup_context.plugin_providers,
         setup_context.plugin_providers_len,
@@ -65,9 +52,13 @@ int32_t plugin_manager_init_contexts(struct PluginManagerSetupContext **out_setu
 
     if (ret < 0)
     {
-        LOG_ERR(logger_interface, "Error in initialize_plugins: %d", ret);
         return ret;
     }
+
+    LoggerInterface *logger_interface = (LoggerInterface *)setup_context.plugin_providers[@LOGGER_PLUGIN_PROVIDER_INDEX@].get_interface();
+    setup_context.logger = logger_interface;
+    runtime_context.logger = logger_interface;
+    setup_context.environment = (EnvironmentInterface *)setup_context.plugin_providers[@ENVIRONMENT_PLUGIN_PROVIDER_INDEX@].get_interface();
 
     return 0;
 }
