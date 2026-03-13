@@ -56,11 +56,11 @@ def parse_cmake_arguments() -> GenerateCmakeArguments:
     parser.add_argument(
         "--generated-plugin-registry-src-path", required=True, type=Path
     )
-    parser.add_argument(
-        "--generated-init-contexts-src-path", required=True, type=Path
-    )
+    parser.add_argument("--generated-init-contexts-src-path", required=True, type=Path)
     parser.add_argument("--generated-cmake-path", required=True, type=Path)
-    parser.add_argument("--generated-statically-resolved-plugins-json-path", required=True, type=Path)
+    parser.add_argument(
+        "--generated-statically-resolved-plugins-json-path", required=True, type=Path
+    )
 
     args = parser.parse_args()
 
@@ -119,12 +119,16 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
 
     parser.add_argument("--plugin-registry-toml-path", required=True, type=Path)
     parser.add_argument("--requested-plugins-toml-path", required=True, type=Path)
-    parser.add_argument("--statically-resolved-plugins-json-path", required=True, type=Path)
+    parser.add_argument(
+        "--statically-resolved-plugins-json-path", required=True, type=Path
+    )
 
     parser.add_argument(
         "--source-plugin-registry-header-path", required=True, type=Path
     )
-    parser.add_argument("--source-plugin-manager-interface-declarations-path", required=True, type=Path)
+    parser.add_argument(
+        "--source-plugin-manager-interface-declarations-path", required=True, type=Path
+    )
     parser.add_argument("--source-plugin-registry-src-path", required=True, type=Path)
     parser.add_argument("--source-init-contexts-src-path", required=True, type=Path)
 
@@ -132,14 +136,14 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
         "--generated-plugin-registry-header-path", required=True, type=Path
     )
     parser.add_argument(
-        "--generated-plugin-manager-interface-declarations-path", required=True, type=Path
+        "--generated-plugin-manager-interface-declarations-path",
+        required=True,
+        type=Path,
     )
     parser.add_argument(
         "--generated-plugin-registry-src-path", required=True, type=Path
     )
-    parser.add_argument(
-        "--generated-init-contexts-src-path", required=True, type=Path
-    )
+    parser.add_argument("--generated-init-contexts-src-path", required=True, type=Path)
 
     args = parser.parse_args()
 
@@ -151,7 +155,9 @@ class GenerateRegisterIncArguments:
     build_dynamic: bool
     manifest_toml: Path
     source_plugin_register_inc: Path
+    source_plugin_dependencies: Path
     generated_plugin_register_inc: Path
+    generated_plugin_dependencies: Path
 
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "GenerateRegisterIncArguments":
@@ -159,7 +165,9 @@ class GenerateRegisterIncArguments:
             build_dynamic=args.build_dynamic,
             manifest_toml=args.manifest_toml_path,
             source_plugin_register_inc=args.source_plugin_register_inc_path,
+            source_plugin_dependencies=args.source_plugin_dependencies_path,
             generated_plugin_register_inc=args.generated_plugin_register_inc_path,
+            generated_plugin_dependencies=args.generated_plugin_dependencies_path,
         )
 
 
@@ -169,8 +177,12 @@ def parse_register_inc_arguments() -> GenerateRegisterIncArguments:
     parser.add_argument("--build-dynamic", action="store_true")
     parser.add_argument("--manifest-toml-path", required=True, type=Path)
     parser.add_argument("--source-plugin-register-inc-path", required=True, type=Path)
+    parser.add_argument("--source-plugin-dependencies-path", required=True, type=Path)
     parser.add_argument(
         "--generated-plugin-register-inc-path", required=True, type=Path
+    )
+    parser.add_argument(
+        "--generated-plugin-dependencies-path", required=True, type=Path
     )
 
     args = parser.parse_args()

@@ -1,5 +1,3 @@
-find_package(Vulkan REQUIRED)
-
 add_executable(program main.c)
 
 if (WIN32)

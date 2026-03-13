@@ -1,12 +1,12 @@
 #pragma once
 
-#pragma pack(push, 8)
+#include "plugin_dependencies.h"
 
-struct LoggerInterface;
+#pragma pack(push, 8)
 
 typedef struct DrawInterfaceContext
 {
-    struct LoggerInterface *logger;
+    PLUGIN_CONTEXT_DEPENDENCIES
 } DrawInterfaceContext;
 
 #pragma pack(pop)

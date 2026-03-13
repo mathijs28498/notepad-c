@@ -29,6 +29,7 @@
     - [x] Figure out naming collisions
 - [x] Fix static dependencies
 - [x] Fix gen_plugin.py
+- [x] Make interface context dependencies automatically added to context
 
 ### 1
 - [ ] Fix all todos
@@ -50,6 +51,9 @@
     - [ ] This can now be described in the toml with different allocation methods for singleton vs the others possibly
 - [ ] Create memory management plugins/interfaces
 - [ ] figure out how to properly structure the code to be used outside this repo
+- [ ] Add docker
+- [ ] Add ecs
+- [ ] Add game objects scene logic
 
 ### 4
 - [ ] Create syntax highlighting for .in files

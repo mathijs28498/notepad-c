@@ -1,18 +1,12 @@
 #pragma once
 
-#pragma pack(push, 8)
+#include "plugin_dependencies.h"
 
-struct LoggerInterface;
-struct WindowInterface;
-struct InputInterface;
-struct DrawInterface;
+#pragma pack(push, 8)
 
 typedef struct GuiApplicationInterfaceContext
 {
-    struct LoggerInterface *logger;
-    struct WindowInterface *window;
-    struct InputInterface *input;
-    struct DrawInterface *draw;
+    PLUGIN_CONTEXT_DEPENDENCIES
 } GuiApplicationInterfaceContext;
 
 #pragma pack(pop)

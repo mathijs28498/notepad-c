@@ -4,9 +4,16 @@ import textwrap
 import json
 from dataclasses import asdict
 
+
+# TODO: Do this in a shared tools python file
+def snake_to_pascal_case(snake_str: str):
+    return "".join(x.capitalize() for x in snake_str.lower().split("_"))
+
+
 indent_prefix = "    "
 
 
+# TODO: Do this in a shared tools python file
 def create_and_write_to_file(
     destination_path: Path,
     content: str,
@@ -26,6 +33,7 @@ def create_and_write_to_file(
         f.write(content)
 
 
+# TODO: Do this in a shared tools python file
 def configure_file(
     source_path: Path,
     destination_path: Path,
@@ -297,6 +305,27 @@ def generate_register_inc(
         "DEFINE_BUILD_SHARED_TEXT": define_build_shared_text,
         "DEFINE_PLUGIN_TARGET_NAME_TEXT": define_plugin_target_name_text,
         "REGISTER_MACROS_TEXT": "\n\n".join(register_macros_text_list),
+    }
+
+    configure_file(source_path, destination_path, replacements, False)
+
+
+def generate_plugin_dependencies(
+    source_path: Path,
+    destination_path: Path,
+    plugin_manifest: PluginManifest,
+):
+    dependency_interface_forward_declarations_text = "\n".join(
+        f"struct {snake_to_pascal_case(dependency.interface_name)}Interface;"
+        for dependency in plugin_manifest.dependencies
+    )
+    dependency_variables_text = f" \\\n{indent_prefix}".join(
+        f"struct {snake_to_pascal_case(dependency.interface_name)}Interface *{dependency.variable_name};"
+        for dependency in plugin_manifest.dependencies
+    )
+    replacements = {
+        "DEPENDENCY_INTERFACE_FORWARD_DECLARATIONS_TEXT": dependency_interface_forward_declarations_text,
+        "DEPENDENCY_VARIABLES_TEXT": dependency_variables_text,
     }
 
     configure_file(source_path, destination_path, replacements, False)
