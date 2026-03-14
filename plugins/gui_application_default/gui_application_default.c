@@ -8,6 +8,7 @@ LOGGER_INTERFACE_REGISTER(gui_application_default, LOG_LEVEL_DEBUG)
 #include <input_interface.h>
 #include <plugin_utils.h>
 #include <draw_interface.h>
+#include <renderer_interface.h>
 
 #include "gui_application_default_register.h"
 
@@ -15,32 +16,31 @@ LOGGER_INTERFACE_REGISTER(gui_application_default, LOG_LEVEL_DEBUG)
 
 int32_t gui_application_default_setup(GuiApplicationInterfaceContext *context, WindowInterfaceCreateWindowOptions *create_window_options)
 {
-    context->window->create_window(context->window->context, create_window_options);
+    int32_t ret;
+    ret = window_create_window(context->window, create_window_options);
+    ret = renderer_init(context->renderer);
 
     return 0;
 }
 
 int32_t gui_application_default_run(GuiApplicationInterfaceContext *context)
 {
-    WindowInterface *window = context->window;
     LoggerInterface *logger = context->logger;
-    InputInterface *input = context->input;
-    DrawInterface *draw = context->draw;
 
-    LOG_INF(logger, "Starting main loop");
+    LOG_INF("Starting main loop");
 
     bool gui_application_running = true;
     while (gui_application_running)
     {
-        window->poll_os_events(window->context);
+        window_poll_os_events(context->window);
         WindowEvent window_event;
 
-        input->prepare_processing(input->context);
+        input_prepare_processing(context->input);
         SAFE_WHILE(
-            window->pop_window_event(window->context, &window_event),
+            window_pop_window_event(context->window, &window_event),
             GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME,
             {
-                LOG_WRN(logger, "Too many window events in one frame (%d), skipping events till next frame", GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME);
+                LOG_WRN("Too many window events in one frame (%d), skipping events till next frame", GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME);
             })
         {
             switch (window_event.type)
@@ -52,7 +52,7 @@ int32_t gui_application_default_run(GuiApplicationInterfaceContext *context)
             case WINDOW_EVENT_TYPE_MOUSE_MOVE:
             case WINDOW_EVENT_TYPE_MOUSE_PRESS:
             case WINDOW_EVENT_TYPE_MOUSE_SCROLL:
-                input->process_window_event(input->context, &window_event);
+                input_process_window_event(context->input, &window_event);
                 break;
             }
         }
@@ -61,10 +61,10 @@ int32_t gui_application_default_run(GuiApplicationInterfaceContext *context)
             break;
         }
 
-        if (KEY_PRESSED(input, WINDOW_EVENT_KEY_ESCAPE))
+        if (input_key_pressed(context->input, WINDOW_EVENT_KEY_ESCAPE))
         {
-            LOG_DBG(logger, "Closing application");
-            window->close_window(window->context);
+            LOG_DBG("Closing application");
+            window_close_window(context->window);
         }
 
         // logic->update(logic->context);
@@ -73,7 +73,7 @@ int32_t gui_application_default_run(GuiApplicationInterfaceContext *context)
         //     logic->fixed_update(logic->context);
         // }
 
-        draw->present(draw->context);
+        draw_present(context->draw);
     }
 
     return 0;

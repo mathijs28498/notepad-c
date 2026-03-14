@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -16,7 +14,6 @@ typedef struct WindowInterfaceCreateWindowOptions
     const char window_name[WINDOW_INTERFACE_MAX_WINDOW_NAME_LEN];
 } WindowInterfaceCreateWindowOptions;
 
-
 typedef struct WindowInterface
 {
     struct WindowInterfaceContext *context;
@@ -30,3 +27,27 @@ typedef struct WindowInterface
 
 #pragma pack(pop)
 
+static inline int32_t window_create_window(WindowInterface *iface, WindowInterfaceCreateWindowOptions *options)
+{
+    return iface->create_window(iface->context, options);
+}
+
+static inline int32_t window_close_window(WindowInterface *iface)
+{
+    return iface->close_window(iface->context);
+}
+
+static inline int32_t window_poll_os_events(WindowInterface *iface)
+{
+    return iface->poll_os_events(iface->context);
+}
+
+static inline int32_t window_wait_for_os_events(WindowInterface *iface)
+{
+    return iface->wait_for_os_events(iface->context);
+}
+
+static inline bool window_pop_window_event(WindowInterface *iface, WindowEvent *window_event)
+{
+    return iface->pop_window_event(iface->context, window_event);
+}

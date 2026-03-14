@@ -9,4 +9,6 @@ dependencies = [
     { interface_name = "window" },
     { interface_name = "draw" },
     { interface_name = "input" },
+    # TODO: Add this to draw in stead
+    { interface_name = "renderer" },
 ]

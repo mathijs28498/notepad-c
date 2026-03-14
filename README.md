@@ -30,13 +30,24 @@
 - [x] Fix static dependencies
 - [x] Fix gen_plugin.py
 - [x] Make interface context dependencies automatically added to context
+- [x] Create inline functions for interfaces
 
 ### 1
 - [ ] Fix all todos
 
 ### 2
+- [ ] Add attachments that are defined in .toml
+  - [ ] attachments are just interfaces
+  - [ ] if attachment wants to be callable it has to have own interface and needs to embed the attachment interface
+  - [ ] Create logger to file and console at same time
+  - [ ] Allow for requested toml to specify attachments
+- [ ] Add compile time configurations to plugins via toml
+  - [ ] figure out good structure for this
+- [ ] add option for requested plugins to be created at statically
+- [ ] dont force "core" in manifests, have a compile time check that at least the logger and environment are added, if not add them as interfaces with the default
 - [ ] Add sub interfaces for logic and draw
 - [ ] Add loops in my .in template files 
+- [ ] Figure out how to handle capacity in dynamic plugin resolution
 
 ### 3
 - [ ] Figure out if exported declarations can also be supported dynamically where they are using dllexport so the framework can use them dynamically or if theyre purely for plugin_manager
@@ -61,3 +72,7 @@
   - [ ] Maybe even allow for strongly typed inclusions
   - [ ] Add looping
 - [ ] Create go to definition in templating in python somehow
+
+# other
+interface inline regex creator:
+.* ([a-z].*) \(\*(.*)\)\(.* (.*)context \*context(.*);/static inline \1 _\2(\3 *iface \4\n{\n\treturn iface->\2(iface->context\4;\n}\n

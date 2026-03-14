@@ -16,3 +16,13 @@ typedef struct GuiApplicationInterface {
 
 #pragma pack(pop)
 
+static inline int32_t gui_application_setup(GuiApplicationInterface *iface, struct WindowInterfaceCreateWindowOptions *create_window_options)
+{
+    return iface->setup(iface->context, create_window_options);
+}
+
+static inline int32_t gui_application_run(GuiApplicationInterface *iface)
+{
+    return iface->run(iface->context);
+}
+

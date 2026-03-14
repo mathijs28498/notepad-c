@@ -35,7 +35,7 @@ PLUGIN_FRAMEWORK_MAIN()
         return ret;
     }
 
-    LOG_WRN(logger, "This works yes");
+    LOG_WRN("This works yes");
 
     // WindowInterface *window;
     // ret = PLUGIN_FRAMEWORK_GET("window", &window);

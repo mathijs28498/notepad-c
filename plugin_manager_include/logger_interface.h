@@ -20,11 +20,21 @@ typedef struct LoggerInterface
 
     void (*log)(const struct LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level, LoggerInterfaceLogLevel urgent_log_level, const char *tag, const char *message, ...);
     void (*set_level)(struct LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level);
-    void (*set_colors)(struct LoggerInterfaceContext *context, const char *[LOG_LEVEL_MAX]);
+    void (*set_colors)(struct LoggerInterfaceContext *context, const char *colors[LOG_LEVEL_MAX]);
 
 } LoggerInterface;
 
 #pragma pack(pop)
+
+static inline void logger_set_level(LoggerInterface *iface, LoggerInterfaceLogLevel log_level)
+{
+    iface->set_level(iface->context, log_level);
+}
+
+static inline void logger_set_colors(LoggerInterface *iface, const char *colors[LOG_LEVEL_MAX])
+{
+    iface->set_colors(iface->context, colors);
+}
 
 #define LOGGER_INTERFACE_REGISTER_URGENCY(tag, log_level, urgent_log_level)           \
     static const char LOGGER_INTERFACE_TAG[] = #tag;                                  \
@@ -42,7 +52,7 @@ typedef struct LoggerInterface
         }                                                                                                                      \
     } while (0)
 
-#define LOG_ERR(logger, ...) LOG(logger, LOG_LEVEL_ERROR, __VA_ARGS__)
-#define LOG_WRN(logger, ...) LOG(logger, LOG_LEVEL_WARNING, __VA_ARGS__)
-#define LOG_INF(logger, ...) LOG(logger, LOG_LEVEL_INFO, __VA_ARGS__)
-#define LOG_DBG(logger, ...) LOG(logger, LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define LOG_ERR(...) LOG(logger, LOG_LEVEL_ERROR, __VA_ARGS__)
+#define LOG_WRN(...) LOG(logger, LOG_LEVEL_WARNING, __VA_ARGS__)
+#define LOG_INF(...) LOG(logger, LOG_LEVEL_INFO, __VA_ARGS__)
+#define LOG_DBG(...) LOG(logger, LOG_LEVEL_DEBUG, __VA_ARGS__)

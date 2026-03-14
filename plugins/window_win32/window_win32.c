@@ -67,11 +67,12 @@ int32_t window_win32_close_window(struct WindowInterfaceContext *context)
 int32_t window_win32_poll_os_events(WindowInterfaceContext *context)
 {
     MSG msg;  
+    LoggerInterface *logger = context->logger;
     SAFE_WHILE(
             PeekMessage(&msg, NULL, 0, 0, PM_REMOVE),
             WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME,
             {
-                LOG_WRN(context->logger, "Too many os events in one frame (%d), skipping events till next frame", WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME);
+                LOG_WRN("Too many os events in one frame (%d), skipping events till next frame", WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME);
             })
         {
         if (msg.message == WM_QUIT)

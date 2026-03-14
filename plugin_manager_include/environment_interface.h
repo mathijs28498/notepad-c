@@ -26,3 +26,13 @@ typedef struct WindowsPlatformContext
 #endif // #if WINDOWS_GUI
 
 #pragma pack(pop)
+
+static inline void environment_get_args(EnvironmentInterface *iface, int *argc, char ***argv)
+{
+    iface->get_args(iface->context, argc, argv);
+}
+
+static inline void environment_get_platform_context(struct EnvironmentInterface *iface, void **platform_context)
+{
+    iface->get_platform_context(iface->context, platform_context);
+}

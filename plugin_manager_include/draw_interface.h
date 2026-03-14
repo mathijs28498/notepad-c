@@ -14,3 +14,7 @@ typedef struct DrawInterface
 } DrawInterface;
 
 #pragma pack(pop)
+static inline int32_t draw_present(DrawInterface *interface)
+{
+    return interface->present(interface->context);
+}
