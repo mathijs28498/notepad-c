@@ -48,6 +48,7 @@
 
 ### 2
 - [ ] Rename whole project to something acidy from framework
+- [ ] Determine if logger macro should take the logger argument or not
 - [ ] Make it so that plugins have access to the plugin_manager for scoped plugins for example (allow for scoped plugin dependencies)
 - [ ] Change calloc for context to use a static allocator
   - [ ] Also make it work with scopes

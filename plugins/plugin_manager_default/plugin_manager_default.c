@@ -30,34 +30,15 @@ bool is_lifetime_supported(const PluginMetadata *plugin_metadata, PluginLifetime
     return false;
 }
 
-int32_t add_plugins_to_scope(const LoggerInterface *logger,
-                             const PluginScope *singleton_scope,
-                             RegisteredPlugin *registered_plugins,
-                             const char **interface_names_to_add, PluginScope *scope)
-{
-    TODO("Get all dependencies of interfaces")
-    int32_t ret;
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(interface_names_to_add); i++)
-    {
-        const char *interface_name_to_add = interface_names_to_add[i];
-        ret = add_plugin_to_scope(logger, singleton_scope, registered_plugins, interface_name_to_add, scope);
-        if (ret < 0)
-        {
-            if (logger != NULL)
-                LOG_ERR("Unable to add plugin '%s' to scope '%d': %d", interface_name_to_add, scope->lifetime, ret);
-            return ret;
-        }
-    }
-
-    return 0;
-}
-
 TODO("Return the added plugins")
 int32_t add_plugin_to_scope(const LoggerInterface *logger,
                             const PluginScope *singleton_scope,
                             RegisteredPlugin *registered_plugins,
-                            const char *interface_name_to_add, PluginScope *scope)
+                            const char *interface_name_to_add,
+                            PluginScope *scope,
+                            ScopedPluginInterface **out_iface)
 {
+    TODO("Look for dependencies and add them if necessary")
     (void)singleton_scope;
     int32_t ret;
 
@@ -124,6 +105,7 @@ int32_t add_plugin_to_scope(const LoggerInterface *logger,
     scoped_plugin->interface_name = interface_name_to_add;
     scoped_plugin->iface.vtable = plugin_provider->vtable;
     scoped_plugin->iface.context = context;
+    *out_iface = &scoped_plugin->iface;
     GET_ARRAY_LENGTH(scope->plugins) += 1;
 
     registered_plugin_to_add->lifetime = scope->lifetime;

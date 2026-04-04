@@ -145,7 +145,6 @@ def create_plugin_metadata_replacements(
             "Metadata containing plugin manager not found, please ensure a plugin manager plugin is available"
         )
 
-
     return [
         (
             "GET_PLUGIN_METADATA_FORWARD_DECLARATIONS",
@@ -495,9 +494,16 @@ def generate_plugin_dependencies(
     destination_path: Path,
     plugin_manifest: PluginManifest,
 ):
-    dependency_interface_forward_declarations_text = "\n".join(
+    dependency_interface_forward_declarations_text_list = [
+        "\nstruct ScopedPluginInterface;"
+    ]
+    dependency_interface_forward_declarations_text_list.extend(
         f"struct {snake_to_pascal_case(dependency_interface_name)}Interface;"
         for dependency_interface_name in plugin_manifest.dependencies.keys()
+    )
+
+    dependency_interface_forward_declarations_text = "\n".join(
+        dependency_interface_forward_declarations_text_list
     )
 
     dependency_variables_text = ""
@@ -521,7 +527,7 @@ def generate_plugin_dependencies(
             f""" \
             \\
                 }}; \\
-                void *interfaces[{str(len(plugin_manifest.dependencies))}]; \\
+                struct ScopedPluginInterface *interfaces[{str(len(plugin_manifest.dependencies))}]; \\
             }};
             """
         )

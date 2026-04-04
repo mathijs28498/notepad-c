@@ -149,6 +149,8 @@ typedef union
         .arr = {__VA_ARGS__}};                                        \
     decl type *(var_name) = (type *)var_name##_.arr
 
+TODO("Create push method that checks capacity with error method call")
+
 #define GET_ARRAY_HEADER(arr_ptr) ((ArrayHeader_ *)(arr_ptr) - 1)
 #define GET_ARRAY_CAPACITY(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->capacity)
 #define GET_ARRAY_LENGTH(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->length)
