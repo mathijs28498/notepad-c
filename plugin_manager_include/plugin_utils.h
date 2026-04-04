@@ -78,6 +78,12 @@ typedef union
     void *align_ptr_;
 } ArrayHeader_;
 
+#define ARRAY_FIELD(type, var_name, cap) \
+    ArrayHeader_ header_##var_name##_;   \
+    type var_name[cap]
+
+#define INIT_ARRAY_FIELD(cap) {.header = {.length = 0, .capacity = (cap)}, .arr = {0}}
+
 #define CREATE_ARRAY(type, var_name, cap) \
     struct                                \
     {                                     \
@@ -89,6 +95,19 @@ typedef union
             .capacity = cap,              \
         },                                \
         .arr = {0}};                      \
+    type *(var_name) = var_name##_.arr
+
+#define CREATE_ARRAY_WITH_LEN(type, var_name, cap, len) \
+    struct                                              \
+    {                                                   \
+        ArrayHeader_ header;                            \
+        type arr[cap];                                  \
+    } var_name##_ = {                                   \
+        .header = {                                     \
+            .length = len,                              \
+            .capacity = cap,                            \
+        },                                              \
+        .arr = {0}};                                    \
     type *(var_name) = var_name##_.arr
 
 #define CREATE_ARRAY_WITH_DECL(decl, var_name, cap) \

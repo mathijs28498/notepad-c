@@ -43,8 +43,7 @@ typedef struct PluginManagerContext
 {
     TODO("Make sure that the PLUGIN_CONTEXT_DEPENDENCIES file is correctly formatted")
     PLUGIN_CONTEXT_DEPENDENCIES
-    struct RegisteredPlugin registered_plugins[MAX_REGISTERED_PLUGINS_LEN];
-    size_t registered_plugins_len;
+    ARRAY_FIELD(struct RegisteredPlugin, registered_plugins, MAX_REGISTERED_PLUGINS_LEN);
     PluginScope singleton_scope;
 } PluginManagerContext;
 

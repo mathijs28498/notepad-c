@@ -17,6 +17,8 @@ static const PluginManagerPMVtable plugin_vtable = {
 
 int32_t plugin_init(PluginManagerContext *context)
 {
+    GET_ARRAY_CAPACITY(context->registered_plugins) = ARRAY_SIZE(context->registered_plugins);
+
     context->singleton_scope.lifetime = PLUGIN_LIFETIME_SINGLETON;
     return 0;
 }

@@ -17,11 +17,11 @@ LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_DEBUG)
 #include "plugin_manager_default.h"
 
 int32_t resolve_requested_plugins(const LoggerInterface *logger,
-                                  const RequestedPlugin *requested_plugins, size_t requested_plugins_len,
+                                  const RequestedPlugin *requested_plugins,
                                   const PluginRegistry *plugin_registry,
-                                  const PluginDefinition **out_plugin_definitions, size_t *out_plugin_definitions_len)
+                                  const PluginDefinition **out_plugin_definitions)
 {
-    for (size_t i = 0; i < requested_plugins_len; i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(requested_plugins); i++)
     {
         const RequestedPlugin *requested_plugin = &requested_plugins[i];
         bool use_default = strlen(requested_plugin->plugin_name) == 0;
@@ -47,9 +47,14 @@ int32_t resolve_requested_plugins(const LoggerInterface *logger,
                     continue;
                 }
 
-                out_plugin_definitions[*out_plugin_definitions_len] = plugin_definition;
-                (*out_plugin_definitions_len)++;
-                TODO("Add max size check here")
+                if (GET_ARRAY_CAPACITY(out_plugin_definitions) == GET_ARRAY_LENGTH(out_plugin_definitions))
+                {
+                    if (logger != NULL)
+                        LOG_ERR("Tried to add plugin definition when array is full");
+                    return -1;
+                }
+                out_plugin_definitions[GET_ARRAY_LENGTH(out_plugin_definitions)] = plugin_definition;
+                GET_ARRAY_LENGTH(out_plugin_definitions) += 1;
                 if (logger != NULL)
                     LOG_DBG("Added requested plugin '%s' - '%s'", requested_plugin->interface_name, requested_plugin->plugin_name);
                 definition_found = true;
@@ -152,12 +157,12 @@ int32_t get_metadata_from_plugin_definition(const LoggerInterface *logger,
 }
 
 int32_t resolve_plugin_metadatas(const LoggerInterface *logger,
-                                 const PluginDefinition **plugin_definitions, size_t plugin_definitions_len,
+                                 const PluginDefinition **plugin_definitions,
                                  const PluginMetadata *const *static_plugin_metadatas,
-                                 RegisteredPlugin *out_registered_plugins, size_t *out_registered_plugins_len)
+                                 RegisteredPlugin *out_registered_plugins)
 {
     int32_t ret;
-    for (size_t i = 0; i < plugin_definitions_len; i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(plugin_definitions); i++)
     {
         const PluginDefinition *plugin_definition = plugin_definitions[i];
 
@@ -170,11 +175,16 @@ int32_t resolve_plugin_metadatas(const LoggerInterface *logger,
             return ret;
         }
 
-        TODO("Add max size check here")
-        RegisteredPlugin *new_registered_plugin = &out_registered_plugins[*out_registered_plugins_len];
+        if (GET_ARRAY_CAPACITY(out_registered_plugins) == GET_ARRAY_LENGTH(out_registered_plugins))
+        {
+            if (logger != NULL)
+                LOG_ERR("Tried to add registered plugin when array is full");
+            return -1;
+        }
+        RegisteredPlugin *new_registered_plugin = &out_registered_plugins[GET_ARRAY_LENGTH(out_registered_plugins)];
         new_registered_plugin->lifetime = PLUGIN_LIFETIME_UNKNOWN;
         new_registered_plugin->metadata = registered_plugin_metadata;
-        (*out_registered_plugins_len)++;
+        GET_ARRAY_LENGTH(out_registered_plugins) += 1;
         if (logger != NULL)
             LOG_DBG("Added registered plugin '%s'", plugin_definition->target_name);
     }
@@ -183,10 +193,10 @@ int32_t resolve_plugin_metadatas(const LoggerInterface *logger,
 }
 
 int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
-                                             const RegisteredPlugin *registered_plugins, size_t registered_plugins_len, size_t resolved_plugin_metadata_offset,
-                                             RequestedPlugin *out_requested_plugins, size_t *out_requested_plugins_len)
+                                             const RegisteredPlugin *registered_plugins, size_t resolved_plugin_metadata_offset,
+                                             RequestedPlugin *out_requested_plugins)
 {
-    for (size_t i = resolved_plugin_metadata_offset; i < registered_plugins_len; i++)
+    for (size_t i = resolved_plugin_metadata_offset; i < GET_ARRAY_LENGTH(registered_plugins); i++)
     {
         const PluginMetadata *plugin_metadata = registered_plugins[i].metadata;
         for (size_t j = 0; j < plugin_metadata->dependencies_len; j++)
@@ -195,7 +205,7 @@ int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
 
             bool dependency_already_present = false;
 
-            for (size_t k = 0; k < registered_plugins_len; k++)
+            for (size_t k = 0; k < GET_ARRAY_LENGTH(registered_plugins); k++)
             {
                 const PluginMetadata *plugin_metadata_to_check = registered_plugins[k].metadata;
                 if (strcmp(plugin_dependency->interface_name, plugin_metadata_to_check->interface_name) == 0)
@@ -212,7 +222,7 @@ int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
                 continue;
             }
 
-            for (size_t k = 0; k < *out_requested_plugins_len; k++)
+            for (size_t k = 0; k < GET_ARRAY_LENGTH(out_requested_plugins); k++)
             {
                 const RequestedPlugin *requested_plugin_to_check = &out_requested_plugins[k];
                 if (strcmp(plugin_dependency->interface_name, requested_plugin_to_check->interface_name) == 0)
@@ -230,9 +240,15 @@ int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
             }
 
             // The dependency is not plugin metadatas, and is not already requested, now we will request it
-            out_requested_plugins[*out_requested_plugins_len].interface_name = plugin_dependency->interface_name;
-            out_requested_plugins[*out_requested_plugins_len].plugin_name = "";
-            (*out_requested_plugins_len)++;
+            if (GET_ARRAY_CAPACITY(out_requested_plugins) == GET_ARRAY_LENGTH(out_requested_plugins))
+            {
+                if (logger != NULL)
+                    LOG_ERR("Tried to add requested plugin when array is full");
+                return -1;
+            }
+            out_requested_plugins[GET_ARRAY_LENGTH(out_requested_plugins)].interface_name = plugin_dependency->interface_name;
+            out_requested_plugins[GET_ARRAY_LENGTH(out_requested_plugins)].plugin_name = "";
+            GET_ARRAY_LENGTH(out_requested_plugins) += 1;
             if (logger != NULL)
                 LOG_DBG("Requesting dependency '%s'", plugin_dependency->interface_name);
             TODO("Add max size check here")
@@ -243,14 +259,14 @@ int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
 int32_t load_requested_plugins(const LoggerInterface *logger,
                                const PluginRegistry *plugin_registry,
                                const PluginMetadata *const *static_plugin_metadatas,
-                               RequestedPlugin *requested_plugins, size_t requested_plugins_len,
-                               RegisteredPlugin *out_registered_plugins, size_t *out_registered_plugins_len)
+                               RequestedPlugin *requested_plugins,
+                               RegisteredPlugin *out_registered_plugins)
 {
     int ret;
-    size_t resolved_plugin_metadata_offset = *out_registered_plugins_len;
+    size_t resolved_plugin_metadata_offset = GET_ARRAY_LENGTH(out_registered_plugins);
 
     SAFE_WHILE(
-        requested_plugins_len > 0,
+        GET_ARRAY_LENGTH(requested_plugins) > 0,
         PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH,
         {
             TODO("Add error log")
@@ -259,30 +275,29 @@ int32_t load_requested_plugins(const LoggerInterface *logger,
             return -1;
         })
     {
-        const PluginDefinition *plugin_definitions[MAX_REGISTERED_PLUGINS_LEN];
-        size_t plugin_definitions_len = 0;
+        CREATE_ARRAY(const PluginDefinition *, plugin_definitions, MAX_REGISTERED_PLUGINS_LEN);
 
         TODO("Add error handling messages")
         ret = resolve_requested_plugins(
             logger,
-            requested_plugins, requested_plugins_len,
+            requested_plugins,
             plugin_registry,
-            plugin_definitions, &plugin_definitions_len);
+            plugin_definitions);
 
         ret = resolve_plugin_metadatas(
             logger,
-            plugin_definitions, plugin_definitions_len,
+            plugin_definitions,
             static_plugin_metadatas,
-            out_registered_plugins, out_registered_plugins_len);
+            out_registered_plugins);
 
-        requested_plugins_len = 0;
+        GET_ARRAY_LENGTH(requested_plugins) = 0;
 
         ret = resolve_plugin_metadata_dependencies(
             logger,
-            out_registered_plugins, *out_registered_plugins_len, resolved_plugin_metadata_offset,
-            requested_plugins, &requested_plugins_len);
+            out_registered_plugins, resolved_plugin_metadata_offset,
+            requested_plugins);
 
-        resolved_plugin_metadata_offset = *out_registered_plugins_len;
+        resolved_plugin_metadata_offset = GET_ARRAY_LENGTH(out_registered_plugins);
     }
 
     return 0;
@@ -296,21 +311,21 @@ int32_t initialize_plugin_manager_dependencies(
     const PluginMetadata *const *static_plugin_metadatas)
 {
     int32_t ret;
+    CREATE_ARRAY(RequestedPlugin, requested_plugins, MAX_REGISTERED_PLUGINS_LEN);
 
     // We "abuse" the resolve dependencies acting like plugin manager registered plugin is a plugin array with length 1
     // so that we can load in the dependencies without loading in plugin_manager itself
-    RegisteredPlugin plugin_manager_registered_plugin = {
-        .lifetime = PLUGIN_LIFETIME_SINGLETON,
-        .metadata = plugin_manager_metadata,
-    };
-    RequestedPlugin requested_plugins[MAX_REGISTERED_PLUGINS_LEN] = {0};
-    size_t requested_plugins_len = 0;
-    resolve_plugin_metadata_dependencies(NULL, &plugin_manager_registered_plugin, 1, 0, requested_plugins, &requested_plugins_len);
+    CREATE_INITIALIZED_ARRAY(RegisteredPlugin, plugin_manager_registered_plugin_list,
+                             {
+                                 .lifetime = PLUGIN_LIFETIME_SINGLETON,
+                                 .metadata = plugin_manager_metadata,
+                             });
+    resolve_plugin_metadata_dependencies(NULL, plugin_manager_registered_plugin_list, 0, requested_plugins);
 
     // Save the dependencies the plugin manager requires to initialize them before step 2
-    const char *plugin_manager_dependency_interfaces[MAX_REGISTERED_PLUGINS_LEN];
-    size_t plugin_manager_dependency_interfaces_len = requested_plugins_len;
-    for (int i = 0; i < requested_plugins_len; i++)
+    CREATE_ARRAY_WITH_LEN(const char *, plugin_manager_dependency_interfaces,
+                          MAX_REGISTERED_PLUGINS_LEN, GET_ARRAY_LENGTH(requested_plugins));
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(plugin_manager_dependency_interfaces); i++)
     {
         plugin_manager_dependency_interfaces[i] = requested_plugins[i].interface_name;
     }
@@ -318,21 +333,26 @@ int32_t initialize_plugin_manager_dependencies(
     ret = load_requested_plugins(NULL,
                                  plugin_registry,
                                  static_plugin_metadatas,
-                                 requested_plugins, requested_plugins_len,
-                                 context->registered_plugins, &context->registered_plugins_len);
-
-    for (int i = 0; i < plugin_manager_dependency_interfaces_len; i++)
+                                 requested_plugins,
+                                 context->registered_plugins);
+    if (ret < 0)
     {
-        ret = add_plugin_to_scope(context->logger,
-                                  &context->singleton_scope,
-                                  context->registered_plugins, context->registered_plugins_len,
-                                  plugin_manager_dependency_interfaces[i], &context->singleton_scope);
-        if (ret < 0)
-        {
-            TODO("Add error log here")
-            return ret;
-        }
+        TODO("Add error log here")
+        return ret;
+    }
 
+    ret = add_plugins_to_scope(context->logger,
+                               &context->singleton_scope,
+                               context->registered_plugins,
+                               plugin_manager_dependency_interfaces, &context->singleton_scope);
+    if (ret < 0)
+    {
+        TODO("Add error log here")
+        return ret;
+    }
+
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(plugin_manager_dependency_interfaces); i++)
+    {
         ret = plugin_manager_default_get_singleton(
             context, plugin_manager_dependency_interfaces[i],
             (void **)&context->interfaces[i]);
@@ -351,15 +371,16 @@ int32_t initialize_plugin_manager_dependencies(
 int32_t seed_explicitly_requested_plugins(
     PluginManagerContext *context,
     const RequestedPlugin *requested_plugins_explicit,
-    RequestedPlugin *requested_plugins, size_t *requested_plugins_len)
+    RequestedPlugin *requested_plugins)
 {
+    LoggerInterface *logger = context->logger;
     for (size_t i = 0; i < GET_ARRAY_LENGTH(requested_plugins_explicit); i++)
     {
         const RequestedPlugin *requested_plugin_explicit = &requested_plugins_explicit[i];
         bool plugin_already_loaded = false;
         // Check if explicitly requested plugins are already loaded as a dependency of the plugin manager
         // If so, do not add them to requested plugins
-        for (size_t j = 0; j < context->registered_plugins_len; j++)
+        for (size_t j = 0; j < GET_ARRAY_LENGTH(context->registered_plugins); j++)
         {
             const PluginMetadata *plugin_metadata = context->registered_plugins[j].metadata;
             if (strcmp(requested_plugin_explicit->interface_name, plugin_metadata->interface_name) == 0)
@@ -374,9 +395,15 @@ int32_t seed_explicitly_requested_plugins(
             continue;
         }
 
-        requested_plugins[*requested_plugins_len].interface_name = requested_plugin_explicit->interface_name;
-        requested_plugins[*requested_plugins_len].plugin_name = requested_plugin_explicit->plugin_name;
-        (*requested_plugins_len)++;
+        if (GET_ARRAY_CAPACITY(requested_plugins) == GET_ARRAY_LENGTH(requested_plugins))
+        {
+            if (logger != NULL)
+                LOG_ERR("Tried to add requested plugin when array is full");
+            return -1;
+        }
+        requested_plugins[GET_ARRAY_LENGTH(requested_plugins)].interface_name = requested_plugin_explicit->interface_name;
+        requested_plugins[GET_ARRAY_LENGTH(requested_plugins)].plugin_name = requested_plugin_explicit->plugin_name;
+        GET_ARRAY_LENGTH(requested_plugins) += 1;
     }
 
     return 0;
@@ -384,7 +411,7 @@ int32_t seed_explicitly_requested_plugins(
 
 void registered_plugin_set_preferred_lifetime(RegisteredPlugin *registered_plugin)
 {
-    for (int i = 0; i < registered_plugin->metadata->supported_lifetimes_len; i++)
+    for (size_t i = 0; i < registered_plugin->metadata->supported_lifetimes_len; i++)
     {
         const PluginLifetime supported_lifetime = registered_plugin->metadata->supported_lifetimes[i];
         if (supported_lifetime == registered_plugin->metadata->preferred_lifetime)
@@ -398,9 +425,9 @@ void registered_plugin_set_preferred_lifetime(RegisteredPlugin *registered_plugi
 int32_t resolve_registered_plugins_lifetimes(
     const LoggerInterface *logger,
     const RequestedPlugin *requested_plugins_explicit,
-    RegisteredPlugin *registered_plugins, size_t registered_plugins_len)
+    RegisteredPlugin *registered_plugins)
 {
-    for (int i = 0; i < registered_plugins_len; i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(registered_plugins); i++)
     {
         RegisteredPlugin *registered_plugin = &registered_plugins[i];
         if (registered_plugin->lifetime != PLUGIN_LIFETIME_UNKNOWN)
@@ -410,7 +437,7 @@ int32_t resolve_registered_plugins_lifetimes(
 
         PluginLifetime requested_lifetime = PLUGIN_LIFETIME_UNKNOWN;
 
-        for (int j = 0; j < GET_ARRAY_LENGTH(requested_plugins_explicit); j++)
+        for (size_t j = 0; j < GET_ARRAY_LENGTH(requested_plugins_explicit); j++)
         {
             const RequestedPlugin *requested_plugin = &requested_plugins_explicit[j];
             if (strcmp(registered_plugin->metadata->interface_name, requested_plugin->interface_name) == 0)
@@ -451,9 +478,9 @@ int32_t resolve_registered_plugins_lifetimes(
 
 int32_t calculate_plugin_metadata_initialization_order(
     const LoggerInterface *logger,
-    const RegisteredPlugin *registered_plugins, size_t registered_plugins_len)
+    const RegisteredPlugin *registered_plugins)
 {
-    (void)logger, registered_plugins, registered_plugins_len;
+    (void)logger, registered_plugins;
     TODO("Topologically sort the registered")
     return 0;
 }
@@ -480,9 +507,8 @@ int32_t plugin_manager_default_bootstrap(
 
     const LoggerInterface *logger = context->logger;
 
-    RequestedPlugin requested_plugins[MAX_REGISTERED_PLUGINS_LEN] = {0};
-    size_t requested_plugins_len = 0;
-    ret = seed_explicitly_requested_plugins(context, requested_plugins_explicit, requested_plugins, &requested_plugins_len);
+    CREATE_ARRAY(RequestedPlugin, requested_plugins, MAX_REGISTERED_PLUGINS_LEN);
+    ret = seed_explicitly_requested_plugins(context, requested_plugins_explicit, requested_plugins);
     if (ret < 0)
     {
         LOG_ERR("Unable to seed requested plugins: %d", ret);
@@ -493,17 +519,19 @@ int32_t plugin_manager_default_bootstrap(
         logger,
         plugin_registry,
         static_plugin_metadatas,
-        requested_plugins, requested_plugins_len,
-        context->registered_plugins, &context->registered_plugins_len);
+        requested_plugins,
+        context->registered_plugins);
 
     ret = resolve_registered_plugins_lifetimes(
         logger,
         requested_plugins_explicit,
-        context->registered_plugins, context->registered_plugins_len);
+        context->registered_plugins);
 
-    TODO("Loop through all singleton registered plugins and add them to singleton scope after a topological sort (if theyre not yet added)");
 
-    ret = calculate_plugin_metadata_initialization_order(logger, context->registered_plugins, context->registered_plugins_len);
+    TODO("Do a topological Kahn sort and save the order in the context")
+    TODO("Now add the ")
+
+    ret = calculate_plugin_metadata_initialization_order(logger, context->registered_plugins);
     TODO("Do topological sort and figure out lifetimes. Initialize the singleton dependencies right away")
     TODO("Make scopes work (create singleton scope)")
     TODO("Add singletons based on requested plugins")

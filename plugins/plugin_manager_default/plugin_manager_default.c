@@ -30,18 +30,40 @@ bool is_lifetime_supported(const PluginMetadata *plugin_metadata, PluginLifetime
     return false;
 }
 
+int32_t add_plugins_to_scope(const LoggerInterface *logger,
+                             const PluginScope *singleton_scope,
+                             RegisteredPlugin *registered_plugins,
+                             const char **interface_names_to_add, PluginScope *scope)
+{
+    TODO("Get all dependencies of interfaces")
+    int32_t ret;
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(interface_names_to_add); i++)
+    {
+        const char *interface_name_to_add = interface_names_to_add[i];
+        ret = add_plugin_to_scope(logger, singleton_scope, registered_plugins, interface_name_to_add, scope);
+        if (ret < 0)
+        {
+            if (logger != NULL)
+                LOG_ERR("Unable to add plugin '%s' to scope '%d': %d", interface_name_to_add, scope->lifetime, ret);
+            return ret;
+        }
+    }
+
+    return 0;
+}
+
 int32_t add_plugin_to_scope(const LoggerInterface *logger,
                             const PluginScope *singleton_scope,
-                            RegisteredPlugin *registered_plugins, size_t registered_plugins_len,
+                            RegisteredPlugin *registered_plugins,
                             const char *interface_name_to_add, PluginScope *scope)
 {
     (void)singleton_scope;
     int32_t ret;
 
     RegisteredPlugin *registered_plugin_to_add = NULL;
-    for (size_t j = 0; j < registered_plugins_len; j++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(registered_plugins); i++)
     {
-        RegisteredPlugin *registered_plugin = &registered_plugins[j];
+        RegisteredPlugin *registered_plugin = &registered_plugins[i];
         if (strcmp(interface_name_to_add, registered_plugin->metadata->interface_name) == 0)
         {
             registered_plugin_to_add = registered_plugin;
@@ -51,16 +73,15 @@ int32_t add_plugin_to_scope(const LoggerInterface *logger,
 
     if (registered_plugin_to_add == NULL)
     {
-        TODO("Add error log");
         if (logger != NULL)
             LOG_ERR("Unable to add plugin '%s' to scope with lifetime '%d' as it is not registered", interface_name_to_add, scope->lifetime);
         return -1;
     }
 
+    TODO("Maybe check for lifetime promotion, where should this happen? Should this ever happen?")
     if (registered_plugin_to_add->lifetime != PLUGIN_LIFETIME_UNKNOWN &&
         registered_plugin_to_add->lifetime != scope->lifetime)
     {
-        TODO("Add error log - plugin already has a different lifetime, cant add it as this lifetime")
         if (logger != NULL)
             LOG_ERR("Unable to add plugin '%s' to scope with lifetime '%d' as its scope lifetime '%d' is incompatible",
                     interface_name_to_add, scope->lifetime, registered_plugin_to_add->lifetime);
@@ -81,7 +102,7 @@ int32_t add_plugin_to_scope(const LoggerInterface *logger,
     TODO("Figure out what needs to happen to do create_context without malloc, I want the context to live within the scope I think")
     void *context = plugin_provider->create_context();
     TODO("Check if should do != NULL instead")
-    if (plugin_provider->init)
+    if (plugin_provider->init != NULL)
     {
         ret = plugin_provider->init(context);
         if (ret < 0)

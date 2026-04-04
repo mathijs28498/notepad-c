@@ -36,6 +36,7 @@ typedef struct InterfaceDefinition
     size_t plugin_definitions_len;
 } InterfaceDefinition;
 
+TODO("Figure out how to handle capacity here")
 typedef struct PluginRegistry
 {
     const InterfaceDefinition *interface_definitions;

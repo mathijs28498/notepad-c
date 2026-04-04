@@ -43,10 +43,12 @@ typedef struct PluginMetadata
     const char *plugin_name;
 
     TODO("Check if this needs dependencies, as PluginDefintion already has those")
+    TODO("Check how to add capacity and stuff here")
     const PluginDependency *dependencies;
     size_t dependencies_len;
 
     TODO("Check if this needs to be here or needs to PluginDefinition")
+    TODO("Check how to add capacity and stuff here")
     const PluginLifetime *supported_lifetimes;
     size_t supported_lifetimes_len;
     const PluginLifetime preferred_lifetime;
