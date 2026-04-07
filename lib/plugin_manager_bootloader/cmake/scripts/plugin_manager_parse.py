@@ -146,6 +146,7 @@ def parse_plugin_manifest(
         has_init=has_init,
         has_shutdown=has_shutdown,
         dependencies=dependencies,
+        manifest_path=manifest_dir_path / "manifest.toml",
         source_path=source_path,
         module_path=module_path,
     )

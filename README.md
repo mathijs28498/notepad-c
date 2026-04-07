@@ -49,6 +49,7 @@
 - [ ] Fix all todos
 
 ### 2
+- [ ] Make static plugins work again
 - [ ] Rename whole project to something acidy from framework
 - [ ] Determine if logger macro should take the logger argument or not
 - [ ] Make it so that plugins have access to the plugin_manager for scoped plugins for example (allow for scoped plugin dependencies)

@@ -310,6 +310,17 @@ def generate_plugin_manager_bootloader_generated_src(
     configure_file(source_path, destination_path, replacements, False)
 
 
+def generate_plugin_manager_depfile(
+    destination_path: Path,
+    generated_src_path: Path,
+    plugin_registry: PluginRegistry,
+):
+    manifest_paths_content = " \\\n  ".join( manifest.manifest_path.as_posix() for manifest in plugin_registry.plugin_manifests)
+    manifest_paths_content = f"{generated_src_path.as_posix()}: \\\n  {manifest_paths_content}\n"
+
+    create_and_write_to_file(destination_path, manifest_paths_content, False)
+
+
 def generate_plugin_manager_cmake(
     source_path: Path,
     destination_path: Path,

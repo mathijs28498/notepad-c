@@ -44,6 +44,12 @@ def main():
         requested_plugins,
     )
 
+    generate_plugin_manager_depfile(
+        arguments.depfile,
+        arguments.generated_plugin_manager_bootloader_generated_src,
+        plugin_registry,
+    )
+
 
 if __name__ == "__main__":
     main()

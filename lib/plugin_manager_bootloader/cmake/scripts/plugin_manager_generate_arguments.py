@@ -110,6 +110,8 @@ class GenerateCCodeArguments:
     source_plugin_manager_bootloader_generated_src: Path
     generated_plugin_manager_bootloader_generated_src: Path
 
+    depfile: Path
+
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "GenerateCCodeArguments":
         return cls(
@@ -123,6 +125,7 @@ class GenerateCCodeArguments:
             #
             source_plugin_manager_bootloader_generated_src=args.source_plugin_manager_bootloader_generated_src_path,
             generated_plugin_manager_bootloader_generated_src=args.generated_plugin_manager_bootloader_generated_src_path,
+            depfile=args.depfile_path,
         )
 
 
@@ -165,6 +168,12 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
     )
     parser.add_argument(
         "--generated-plugin-manager-bootloader-generated-src-path",
+        required=True,
+        type=Path,
+    )
+
+    parser.add_argument(
+        "--depfile-path",
         required=True,
         type=Path,
     )

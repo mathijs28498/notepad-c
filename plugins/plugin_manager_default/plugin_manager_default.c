@@ -327,6 +327,7 @@ int32_t plugin_manager_default_get_singleton(PluginManagerContext *context, cons
     assert(context != NULL);
     assert(interface_name != NULL);
     assert(out_iface != NULL);
+    TODO("Add check if it is explicit or not, error when getting implicit plugin")
     return plugin_manager_default_get_scoped(context, &context->singleton_scope, interface_name, out_iface);
 }
 

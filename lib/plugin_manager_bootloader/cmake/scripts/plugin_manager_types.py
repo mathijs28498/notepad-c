@@ -25,6 +25,7 @@ class PluginManifest:
     has_init: bool
     has_shutdown: bool
     dependencies: dict[str, PluginDependency]
+    manifest_path: Path
     source_path: Path
     module_path: Path
 
