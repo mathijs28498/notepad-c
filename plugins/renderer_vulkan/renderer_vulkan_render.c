@@ -1,9 +1,12 @@
 #include "renderer_vulkan_render.h"
 
+#include <vk_mem_alloc.h>
+
 #include <stdint.h>
 #include <vulkan/vulkan.h>
 #include <assert.h>
 #include <math.h>
+
 
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_render, LOG_LEVEL_DEBUG)
@@ -96,6 +99,9 @@ int32_t renderer_vulkan_render(RendererContext *context)
 
     VK_RETURN_IF_ERROR(context->logger, result, vkWaitForFences(context->device, 1, &frame->render_fence, VK_TRUE, SECOND_IN_NS),
                        -1, "Failed to wait for render fence: %d", result);
+
+    rv_vk_destroy_queue_flush(&frame->destroy_queue);
+
     VK_RETURN_IF_ERROR(context->logger, result, vkResetFences(context->device, 1, &frame->render_fence),
                        -1, "Failed to reset render fence: %d", result);
 
@@ -125,7 +131,9 @@ int32_t renderer_vulkan_render(RendererContext *context)
     TODO("Do something here")
     // float flash = sin((float)(context->frame_number) / 120.));
     float color_val = fabsf(sinf(context->frame_number / 120.f));
-    VkClearColorValue clear_color = {{0., 0., color_val, 1.}};
+    float color_val_1 = fabsf(cosf(context->frame_number / 120.f));
+    float color_val_2 = 1.f - fabsf(cosf(context->frame_number / 120.f));
+    VkClearColorValue clear_color = {{color_val_1, color_val_2, color_val, 1.}};
     VkImageSubresourceRange clear_range = image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
 
     vkCmdClearColorImage(cmd, swapchain_image, VK_IMAGE_LAYOUT_GENERAL, &clear_color, 1, &clear_range);

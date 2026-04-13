@@ -14,10 +14,7 @@ LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
 #include <window_interface.h>
 #include <gui_application_interface.h>
 
-typedef struct TestStruct
-{
-    int test_number;
-} TestStruct;
+
 
 int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager)
 {
@@ -139,4 +136,3 @@ int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager)
 //     // ret = gui_application->run(gui_application->context);
 
 //     return 0;
-// }

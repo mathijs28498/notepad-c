@@ -4,4 +4,4 @@
 
 struct RendererContext;
 
-int32_t renderer_vulkant_render(struct RendererContext *context);
+int32_t renderer_vulkan_render(struct RendererContext *context);

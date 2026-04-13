@@ -7,6 +7,11 @@
 
 #pragma pack(push, 8)
 
+#define MAX_RV_VK_DESTROY_QUEUE_LEN 256
+
+#define FRAMES_LEN 2
+#define MAX_SWAPCHAIN_IMAGES_LEN 4
+
 CREATE_VK_HANDLE_DEFINITION(VkDebugUtilsMessengerEXT);
 CREATE_VK_HANDLE_DEFINITION(VkInstance);
 CREATE_VK_HANDLE_DEFINITION(VkSurfaceKHR);
@@ -20,6 +25,7 @@ CREATE_VK_HANDLE_DEFINITION(VkCommandPool);
 CREATE_VK_HANDLE_DEFINITION(VkCommandBuffer);
 CREATE_VK_HANDLE_DEFINITION(VkSemaphore);
 CREATE_VK_HANDLE_DEFINITION(VkFence);
+CREATE_VK_HANDLE_DEFINITION(VmaAllocator);
 
 typedef uint32_t RV_VkFormat;
 
@@ -29,6 +35,30 @@ typedef struct RV_VkExtent2D
     uint32_t height;
 } RV_VkExtent2D;
 
+typedef void (*rv_vk_destroy_1)(void *allocator);
+typedef void (*rv_vk_destroy_2)(void *subject, void *allocator);
+typedef void (*rv_vk_destroy_3)(void *context, void *subject, void *allocator);
+
+typedef struct RV_VkDestroyData
+{
+    void *context;
+    TODO("This technically violates aliasing rules as the pointer isnt guarantueed to be the right size on other machines, look into this")
+    void **subject;
+    void *allocator;
+    union
+    {
+        rv_vk_destroy_1 destroy_1;
+        rv_vk_destroy_2 destroy_2;
+        rv_vk_destroy_3 destroy_3;
+    };
+} RV_VkDestroyData;
+
+typedef struct RV_VkDestroyQueue
+{
+    RV_VkDestroyData queue[MAX_RV_VK_DESTROY_QUEUE_LEN];
+    size_t queue_len;
+} RV_VkDestroyQueue;
+
 typedef struct RendererFrameData
 {
     VkCommandPool command_pool;
@@ -36,11 +66,9 @@ typedef struct RendererFrameData
     VkSemaphore swapchain_semaphore;
     VkSemaphore render_semaphore;
     VkFence render_fence;
+
+    RV_VkDestroyQueue destroy_queue;
 } RendererFrameData;
-
-#define FRAMES_LEN 2
-#define MAX_SWAPCHAIN_IMAGES_LEN 4
-
 
 TODO("Maybe split up the struct into smaller structs, like a queue/logical device struct")
 TODO("The smaller struct could also be one for the bootstrap and one for runtime")
@@ -67,6 +95,10 @@ typedef struct RendererContext
 
     uint32_t frame_number;
     RendererFrameData frames[FRAMES_LEN];
+
+    VmaAllocator vma_allocator;
+
+    RV_VkDestroyQueue destroy_queue;
 } RendererContext;
 
 #pragma pack(pop)

@@ -49,6 +49,7 @@
 - [ ] Fix all todos
 
 ### 2
+- [ ] Create custom vma allocator 
 - [ ] Link vulkan indirectly for faster performance: https://docs.vulkan.org/guide/latest/loader.html#loader
 - [ ] Add project wide debug level
 - [ ] Add allocator plugin

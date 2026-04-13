@@ -1,6 +1,7 @@
 #include "renderer_vulkan_register.h"
 
 #include <renderer_interface.h>
+#include <plugin_utils.h>
 
 #include "renderer_vulkan.h"
 #include "renderer_vulkan_start.h"
@@ -13,8 +14,7 @@ static const RendererVtable plugin_vtable = {
 
 int32_t plugin_init(RendererContext *context)
 {
-    context->frame_number = 0;
-
+    (void)context;
     return 0;
 }
 

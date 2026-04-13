@@ -8,7 +8,7 @@
 
 TODO("Remove unnecessary includes")
 #include <logger_interface.h>
-LOGGER_INTERFACE_REGISTER(plugin_manager_default, LOG_LEVEL_DEBUG);
+LOGGER_INTERFACE_REGISTER(plugin_manager_default, LOG_LEVEL_WARNING);
 #include <plugin_manager_pm_interface.h>
 #include <plugin_sdk_types.h>
 #include <environment_interface.h>

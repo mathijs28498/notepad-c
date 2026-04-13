@@ -31,4 +31,3 @@ typedef struct QueueFamilyIndices
 struct RendererContext;
 
 int32_t renderer_vulkan_bootstrap(struct RendererContext *context);
-int32_t renderer_vulkan_bootstrap_cleanup(struct RendererContext *context);

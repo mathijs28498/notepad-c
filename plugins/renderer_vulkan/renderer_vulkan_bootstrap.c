@@ -173,34 +173,33 @@ int32_t setup_debug_messenger(RendererContext *context)
     VkDebugUtilsMessengerCreateInfoEXT debug_messenger_create_info = {0};
     populate_debug_messenger_create_info(context, &debug_messenger_create_info);
 
-    PFN_vkCreateDebugUtilsMessengerEXT func;
+    PFN_vkCreateDebugUtilsMessengerEXT create_func;
     RETURN_IF_ERROR(
         context->logger, ret,
-        vk_get_instance_proc(context->logger, context->instance, "vkCreateDebugUtilsMessengerEXT", (vk_func_void_void *)&func),
+        vk_get_instance_proc(context->logger, context->instance, "vkCreateDebugUtilsMessengerEXT", (vk_func_void_void *)&create_func),
         "Could not get instance proc: %d", ret);
 
-    func(context->instance, &debug_messenger_create_info, NULL, &context->debug_messenger);
+    create_func(context->instance, &debug_messenger_create_info, NULL, &context->debug_messenger);
 
-    return 0;
-}
-
-uint32_t vk_destroy_debug_messenger(RendererContext *context, const VkAllocationCallbacks *allocator)
-{
-    assert(context != NULL);
-
-    int32_t ret;
-    PFN_vkDestroyDebugUtilsMessengerEXT func;
-    ret = vk_get_instance_proc(context->logger, context->instance, "vkDestroyDebugUtilsMessengerEXT", (vk_func_void_void *)&func);
+    PFN_vkDestroyDebugUtilsMessengerEXT destroy_func;
+    ret = vk_get_instance_proc(context->logger, context->instance, "vkDestroyDebugUtilsMessengerEXT", (vk_func_void_void *)&destroy_func);
     if (ret < 0)
     {
         LOG_ERR(context->logger, "Could not get instance proc: %d", ret);
         return ret;
     }
 
-    func(context->instance, context->debug_messenger, allocator);
+    RV_VkDestroyData destroy_data = {
+        .context = context->instance,
+        .subject = &context->debug_messenger,
+        .destroy_3 = (rv_vk_destroy_3)destroy_func,
+    };
+    RETURN_IF_ERROR(context->logger, ret, rv_vk_destroy_queue_push(context->logger, &context->destroy_queue, &destroy_data),
+                    "Failed to push instance destroy data to destroy queue: %d", ret);
 
     return 0;
 }
+
 #endif // #if IS_DEBUG
 
 int32_t create_instance(RendererContext *context)
@@ -264,8 +263,17 @@ int32_t create_instance(RendererContext *context)
 #endif // #if IS_DEBUG
 
     VkResult result;
+    int32_t ret;
+
     VK_RETURN_IF_ERROR(context->logger, result, vkCreateInstance(&instance_create_info, NULL, &context->instance),
                        -1, "Failed to create vulkan instance!");
+
+    RV_VkDestroyData destroy_data = {
+        .subject = &context->instance,
+        .destroy_2 = (rv_vk_destroy_2)vkDestroyInstance,
+    };
+    RETURN_IF_ERROR(context->logger, ret, rv_vk_destroy_queue_push(context->logger, &context->destroy_queue, &destroy_data),
+                    "Failed to push instance destroy data to destroy queue: %d", ret);
 
     return 0;
 }
@@ -276,6 +284,14 @@ int32_t create_surface(RendererContext *context)
     int32_t ret;
     RETURN_IF_ERROR(context->logger, ret, renderer_vulkan_platform_create_surface(context, &context->surface),
                     "Failed to create platform surface: %d", ret);
+
+    RV_VkDestroyData destroy_data = {
+        .context = context->instance,
+        .subject = &context->surface,
+        .destroy_3 = (rv_vk_destroy_3)vkDestroySurfaceKHR,
+    };
+    RETURN_IF_ERROR(context->logger, ret, rv_vk_destroy_queue_push(context->logger, &context->destroy_queue, &destroy_data),
+                    "Failed to push surface destroy data to destroy queue: %d", ret);
     return 0;
 }
 
@@ -669,6 +685,13 @@ int32_t create_logical_device(RendererContext *context)
     VK_RETURN_IF_ERROR(context->logger, result, vkCreateDevice(context->physical_device, &device_create_info, NULL, &context->device),
                        -1, "Failed to create device: %d", result);
 
+    RV_VkDestroyData destroy_data = {
+        .subject = &context->device,
+        .destroy_2 = (rv_vk_destroy_2)vkDestroyDevice,
+    };
+    RETURN_IF_ERROR(context->logger, ret, rv_vk_destroy_queue_push(context->logger, &context->destroy_queue, &destroy_data),
+                    "Failed to push device destroy data to destroy queue: %d", ret);
+
     vkGetDeviceQueue(context->device, queue_family_indices.graphics_family, 0, &context->graphics_queue);
     assert(context->graphics_queue != NULL);
     context->graphics_queue_family = queue_family_indices.graphics_family;
@@ -825,6 +848,14 @@ int32_t create_swapchain(RendererContext *context)
     VK_RETURN_IF_ERROR(context->logger, result, vkCreateSwapchainKHR(context->device, &swapchain_create_info, NULL, &context->swapchain),
                        -1, "Failed to create swapchain: %d", ret);
 
+    RV_VkDestroyData destroy_data = {
+        .context = context->device,
+        .subject = &context->swapchain,
+        .destroy_3 = (rv_vk_destroy_3)vkDestroySwapchainKHR,
+    };
+    RETURN_IF_ERROR(context->logger, ret, rv_vk_destroy_queue_push(context->logger, &context->destroy_queue, &destroy_data),
+                    "Failed to push swapchain destroy data to destroy queue: %d", ret);
+
     SET_ARRAY_FIELD_CAPACITY(context->swapchain_images);
     assert(GET_ARRAY_CAPACITY(context->swapchain_images) >= swapchain_images_len);
     GET_ARRAY_LENGTH(context->swapchain_images) = (size_t)swapchain_images_len;
@@ -845,6 +876,7 @@ int32_t create_image_views(RendererContext *context)
     GET_ARRAY_LENGTH(context->swapchain_image_views) = GET_ARRAY_LENGTH(context->swapchain_images);
 
     VkResult result;
+    int32_t ret;
 
     VkImageViewCreateInfo image_view_create_info = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -870,6 +902,14 @@ int32_t create_image_views(RendererContext *context)
 
         VK_RETURN_IF_ERROR(context->logger, result, vkCreateImageView(context->device, &image_view_create_info, NULL, &context->swapchain_image_views[i]),
                            -1, "Failed to create image view %d: %d", i, result);
+
+        RV_VkDestroyData destroy_data = {
+            .context = context->device,
+            .subject = &context->swapchain_image_views[i],
+            .destroy_3 = (rv_vk_destroy_3)vkDestroyImageView,
+        };
+        RETURN_IF_ERROR(context->logger, ret, rv_vk_destroy_queue_push(context->logger, &context->destroy_queue, &destroy_data),
+                        "Failed to push image view destroy data to destroy queue: %d", ret);
     }
 
     return 0;
@@ -885,45 +925,22 @@ int32_t renderer_vulkan_bootstrap(RendererContext *context)
     }
 
     int32_t ret;
-    VK_TRY_INIT(context->logger, ret, create_instance(context), (void)renderer_vulkan_bootstrap_cleanup(context),
+    VK_TRY_INIT(context->logger, ret, create_instance(context), &context->destroy_queue,
                 "Failed to create instance: %d", ret);
 #if IS_DEBUG
-    VK_TRY_INIT(context->logger, ret, setup_debug_messenger(context), (void)renderer_vulkan_bootstrap_cleanup(context),
+    VK_TRY_INIT(context->logger, ret, setup_debug_messenger(context), &context->destroy_queue,
                 "Failed to setup debug messenger: %d", ret);
 #endif // #if IS_DEBUG
-    VK_TRY_INIT(context->logger, ret, create_surface(context), (void)renderer_vulkan_bootstrap_cleanup(context),
+    VK_TRY_INIT(context->logger, ret, create_surface(context), &context->destroy_queue,
                 "Failed to create surface: %d", ret);
-    VK_TRY_INIT(context->logger, ret, pick_physical_device(context), (void)renderer_vulkan_bootstrap_cleanup(context),
+    VK_TRY_INIT(context->logger, ret, pick_physical_device(context), &context->destroy_queue,
                 "failed to pick physical device: %d", ret);
-    VK_TRY_INIT(context->logger, ret, create_logical_device(context), (void)renderer_vulkan_bootstrap_cleanup(context),
+    VK_TRY_INIT(context->logger, ret, create_logical_device(context), &context->destroy_queue,
                 "Failed to create logical device: %d", ret);
-    VK_TRY_INIT(context->logger, ret, create_swapchain(context), (void)renderer_vulkan_bootstrap_cleanup(context),
+    VK_TRY_INIT(context->logger, ret, create_swapchain(context), &context->destroy_queue,
                 "failed to create swapchain, %d", ret);
-    VK_TRY_INIT(context->logger, ret, create_image_views(context), (void)renderer_vulkan_bootstrap_cleanup(context),
+    VK_TRY_INIT(context->logger, ret, create_image_views(context), &context->destroy_queue,
                 "Failed to create image views: %d", ret);
-
-    return 0;
-}
-
-int32_t renderer_vulkan_bootstrap_cleanup(RendererContext *context)
-{
-    assert(context != NULL);
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(context->swapchain_image_views); i++)
-    {
-        VkImageView image_view = context->swapchain_image_views[i];
-        VK_DESTROY_CHECKED(image_view, vkDestroyImageView(context->device, image_view, NULL));
-    }
-
-    VK_DESTROY_CHECKED(context->swapchain, vkDestroySwapchainKHR(context->device, context->swapchain, NULL));
-    VK_DESTROY_CHECKED(context->device, vkDestroyDevice(context->device, NULL));
-    VK_DESTROY_CHECKED(context->surface, vkDestroySurfaceKHR(context->instance, context->surface, NULL));
-
-#if IS_DEBUG
-    TODO("Figure out what to do with the error code if something goes wrong");
-    VK_DESTROY_CHECKED(context->debug_messenger, (void)vk_destroy_debug_messenger(context, NULL));
-#endif // #if IS_DEBUG
-
-    VK_DESTROY_CHECKED(context->instance, vkDestroyInstance(context->instance, NULL));
 
     return 0;
 }

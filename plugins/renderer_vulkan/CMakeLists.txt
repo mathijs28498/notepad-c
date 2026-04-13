@@ -25,6 +25,7 @@ target_link_libraries(renderer_vulkan
     PRIVATE
     plugin_manager_include
     Vulkan::Vulkan
+    vma
 )
 
 set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager_bootloader")

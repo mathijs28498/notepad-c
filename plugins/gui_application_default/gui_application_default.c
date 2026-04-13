@@ -79,10 +79,11 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
         // if (gui_application_do_fixed_update(context))
         // {
         //     logic->fixed_update(logic->context);
-        // }
+        // 12321231113244568790p96890120346056hallo `}
 
         RETURN_IF_ERROR(context->logger, ret, draw_present(context->draw),
                         "Failed to present draw: %d", ret);
+      
     }
 
     return 0;
