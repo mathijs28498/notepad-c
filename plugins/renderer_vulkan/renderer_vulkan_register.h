@@ -26,6 +26,7 @@ CREATE_VK_HANDLE_DEFINITION(VkCommandBuffer);
 CREATE_VK_HANDLE_DEFINITION(VkSemaphore);
 CREATE_VK_HANDLE_DEFINITION(VkFence);
 CREATE_VK_HANDLE_DEFINITION(VmaAllocator);
+CREATE_VK_HANDLE_DEFINITION(VmaAllocation);
 
 typedef uint32_t RV_VkFormat;
 
@@ -35,29 +36,43 @@ typedef struct RV_VkExtent2D
     uint32_t height;
 } RV_VkExtent2D;
 
-typedef void (*rv_vk_destroy_1)(void *allocator);
-typedef void (*rv_vk_destroy_2)(void *subject, void *allocator);
-typedef void (*rv_vk_destroy_3)(void *context, void *subject, void *allocator);
-
-typedef struct RV_VkDestroyData
+typedef struct RV_VkExtent3D
 {
-    void *context;
-    TODO("This technically violates aliasing rules as the pointer isnt guarantueed to be the right size on other machines, look into this")
-    void **subject;
-    void *allocator;
-    union
-    {
-        rv_vk_destroy_1 destroy_1;
-        rv_vk_destroy_2 destroy_2;
-        rv_vk_destroy_3 destroy_3;
-    };
-} RV_VkDestroyData;
+    uint32_t width;
+    uint32_t height;
+    uint32_t depth;
+} RV_VkExtent3D;
 
-typedef struct RV_VkDestroyQueue
+typedef void (*rv_call_fn_any)(void);
+
+typedef void (*rv_call_fn_1)(uint64_t);
+typedef void (*rv_call_fn_2)(uint64_t, uint64_t);
+typedef void (*rv_call_fn_3)(uint64_t, uint64_t, uint64_t);
+typedef void (*rv_call_fn_4)(uint64_t, uint64_t, uint64_t, uint64_t);
+
+typedef enum RV_CallType
 {
-    RV_VkDestroyData queue[MAX_RV_VK_DESTROY_QUEUE_LEN];
+    RV_CALL_TYPE_1,
+    RV_CALL_TYPE_2,
+    RV_CALL_TYPE_3,
+    RV_CALL_TYPE_4,
+} RV_CallType;
+
+typedef struct RV_CallRecord
+{
+    RV_CallType call_type;
+    uint64_t arg_0;
+    uint64_t arg_1;
+    uint64_t arg_2;
+    uint64_t arg_3;
+    rv_call_fn_any fn;
+} RV_CallRecord;
+
+typedef struct RV_CallQueue
+{
+    RV_CallRecord queue[MAX_RV_VK_DESTROY_QUEUE_LEN];
     size_t queue_len;
-} RV_VkDestroyQueue;
+} RV_CallQueue;
 
 typedef struct RendererFrameData
 {
@@ -67,8 +82,17 @@ typedef struct RendererFrameData
     VkSemaphore render_semaphore;
     VkFence render_fence;
 
-    RV_VkDestroyQueue destroy_queue;
+    RV_CallQueue destroy_queue;
 } RendererFrameData;
+
+typedef struct RV_AllocatedImage
+{
+    VkImage image;
+    VkImageView image_view;
+    VmaAllocation allocation;
+    RV_VkExtent3D image_extent;
+    RV_VkFormat image_format;
+} RV_AllocatedImage;
 
 TODO("Maybe split up the struct into smaller structs, like a queue/logical device struct")
 TODO("The smaller struct could also be one for the bootstrap and one for runtime")
@@ -98,7 +122,11 @@ typedef struct RendererContext
 
     VmaAllocator vma_allocator;
 
-    RV_VkDestroyQueue destroy_queue;
+    RV_AllocatedImage draw_image;
+    RV_VkExtent2D draw_extent;
+
+    RV_CallQueue main_destroy_queue;
+    RV_CallQueue swapchain_destroy_queue;
 } RendererContext;
 
 #pragma pack(pop)

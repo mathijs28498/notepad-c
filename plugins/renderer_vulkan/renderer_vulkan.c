@@ -22,7 +22,8 @@ int32_t renderer_vulkan_cleanup(RendererContext *context)
                            -1, "Failed to wait for device to idle: %d", result);
     }
 
-    rv_vk_destroy_queue_flush(&context->destroy_queue);
+    rv_call_queue_flush(&context->swapchain_destroy_queue);
+    rv_call_queue_flush(&context->main_destroy_queue);
 
     return 0;
 }
