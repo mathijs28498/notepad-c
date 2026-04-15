@@ -14,6 +14,7 @@ LOGGER_INTERFACE_REGISTER(draw_default, LOG_LEVEL_DEBUG);
 
 int32_t draw_default_start(DrawContext *context)
 {
+    assert(context != NULL);
     int32_t ret;
 
     RETURN_IF_ERROR(context->logger, ret, renderer_start(context->renderer),
@@ -24,9 +25,17 @@ int32_t draw_default_start(DrawContext *context)
 
 int32_t draw_default_present(DrawContext *context)
 {
+    assert(context != NULL);
     int32_t ret;
 
     RETURN_IF_ERROR(context->logger, ret, renderer_render(context->renderer),
                     "Error rendering renderer: %d", ret);
     return 0;
+}
+
+void draw_default_on_window_resize(DrawContext *context, uint32_t width, uint32_t height)
+{
+    assert(context != NULL);
+
+    renderer_on_window_resize(context->renderer, width, height);
 }

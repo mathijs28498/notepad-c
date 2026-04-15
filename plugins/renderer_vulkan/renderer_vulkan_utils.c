@@ -68,9 +68,11 @@ int32_t rv_call_queue_push_1(LoggerInterface *logger, RV_CallQueue *queue, rv_ca
     return rv_call_queue_push_(logger, queue, RV_CALL_TYPE_1, fn, arg_0, 0U, 0U, 0U);
 }
 
+TODO("Maybe look into error handling if necessary");
 void rv_call_queue_flush(RV_CallQueue *queue)
 {
     assert(queue != NULL);
+
     for (size_t i = 0; i < queue->queue_len; i++)
     {
         size_t queue_index = queue->queue_len - i - 1;
@@ -243,7 +245,7 @@ void rv_copy_image_to_image(VkCommandBuffer cmd, VkImage source, VkImage destina
         .dstImage = destination,
         .dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         .srcImage = source,
-        .srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
         .filter = VK_FILTER_LINEAR,
         .regionCount = 1,
         .pRegions = &blit_region,

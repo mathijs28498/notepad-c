@@ -53,12 +53,18 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
             case WINDOW_EVENT_TYPE_QUIT:
                 gui_application_running = false;
                 break;
+            case WINDOW_EVENT_TYPE_RESIZE:
+                draw_on_window_resize(context->draw, window_event.resize.width, window_event.resize.height);
+                break;
             case WINDOW_EVENT_TYPE_KEY_PRESS:
             case WINDOW_EVENT_TYPE_MOUSE_MOVE:
             case WINDOW_EVENT_TYPE_MOUSE_PRESS:
             case WINDOW_EVENT_TYPE_MOUSE_SCROLL:
                 RETURN_IF_ERROR(context->logger, ret, input_process_window_event(context->input, &window_event),
                                 "Failed to process window event: %d", ret);
+                break;
+            default:
+                LOG_WRN(context->logger, "Unrecognized event: %d", window_event.type);
                 break;
             }
         }
@@ -79,11 +85,11 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
         // if (gui_application_do_fixed_update(context))
         // {
         //     logic->fixed_update(logic->context);
-        // 12321231113244568790p96890120346056hallo `}
+        // }
 
         RETURN_IF_ERROR(context->logger, ret, draw_present(context->draw),
                         "Failed to present draw: %d", ret);
-      
+        TODO("If returns 1 wait for events ");
     }
 
     return 0;

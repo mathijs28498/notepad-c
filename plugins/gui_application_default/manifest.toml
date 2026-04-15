@@ -1,7 +1,7 @@
 interface_name = "gui_application"
 plugin_name = "default"
 # TODO: Fix paths
-module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/gui_application_default.dll"
+module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/gui_application_default.dll"
 supported_lifetimes = ["singleton"]
 init = true
 

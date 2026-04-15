@@ -8,6 +8,9 @@
     struct object##_T;                      \
     typedef struct object##_T *object;
 
+#define VK_RETURN_IF_ERROR_CONDITION(logger, err_var, condition, func_call, err_ret_val, ...) \
+    RETURN_IF_ERROR_CONDITION_RET_VALUE(logger, err_var, (condition), func_call, err_ret_val, ##__VA_ARGS__)
+
 #define VK_RETURN_IF_ERROR(logger, err_var, func_call, err_ret_val, ...) \
     RETURN_IF_ERROR_CONDITION_RET_VALUE(logger, err_var, ((err_var) < VK_SUCCESS), func_call, err_ret_val, ##__VA_ARGS__)
 
@@ -67,10 +70,13 @@ struct VkExtent3D;
 struct VkImageViewCreateInfo;
 enum VkFormat;
 
-struct VkImageSubresourceRange rv_image_subresource_range(uint32_t aspect_mask);
+typedef uint32_t VkImageAspectFlags; 
+typedef uint64_t VkPipelineStageFlags2;
+
+struct VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask);
 // ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples
 void rv_transition_image(VkCommandBuffer cmd, VkImage image, enum VkImageLayout current_layout, enum VkImageLayout new_layout);
-struct VkSemaphoreSubmitInfo rv_create_semaphore_submit_info(uint32_t stage_mask, VkSemaphore semaphore);
+struct VkSemaphoreSubmitInfo rv_create_semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore);
 struct VkCommandBufferSubmitInfo rv_create_command_buffer_submit_info(VkCommandBuffer cmd);
 struct VkSubmitInfo2 rv_create_submit_info(struct VkCommandBufferSubmitInfo *cmd, struct VkSemaphoreSubmitInfo *signal_semaphore_info, struct VkSemaphoreSubmitInfo *wait_semaphore_info);
 

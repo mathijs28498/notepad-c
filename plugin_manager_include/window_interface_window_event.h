@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include <stdbool.h>
 #include <stdint.h>
 #include "window_interface_window_event_enums.h"
@@ -11,6 +9,7 @@
 typedef enum WindowEventType
 {
     WINDOW_EVENT_TYPE_QUIT,
+    WINDOW_EVENT_TYPE_RESIZE,
     WINDOW_EVENT_TYPE_KEY_PRESS,
     WINDOW_EVENT_TYPE_MOUSE_PRESS,
     WINDOW_EVENT_TYPE_MOUSE_MOVE,
@@ -27,8 +26,12 @@ typedef struct WindowEvent
             WindowEventKey key;
             bool is_pressed;
         } key_press;
-    } data;
+        struct
+        {
+            uint32_t width;
+            uint32_t height;
+        } resize;
+    };
 } WindowEvent;
 
 #pragma pack(pop)
-

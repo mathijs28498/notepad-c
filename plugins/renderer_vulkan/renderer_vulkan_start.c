@@ -200,3 +200,37 @@ int32_t renderer_vulkan_start(RendererContext *context)
 
     return 0;
 }
+
+int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
+{
+    TODO("What needs to happen of fail? delete all queues?")
+    assert(context != NULL);
+    assert(context->device != VK_NULL_HANDLE);
+    assert(context->swapchain != VK_NULL_HANDLE);
+
+    int32_t ret;
+    VkResult result;
+
+    VK_RETURN_IF_ERROR(context->logger, result, vkDeviceWaitIdle(context->device),
+                       -1, "Failed to wait for device to idle: %d", result);
+
+    rv_call_queue_flush(&context->swapchain_destroy_queue);
+
+    if (context->resize_extent.width == 0 || context->resize_extent.height == 0)
+    {
+        context->recreate_swapchain = false;
+        context->halt_render = true;
+        return 0;
+    }
+
+    context->halt_render = false;
+
+    RETURN_IF_ERROR(context->logger, ret, renderer_vulkan_bootstrap_recreate_swapchain(context),
+                    "Failed to bootstrap recreate swapchain: %d", ret);
+
+    RETURN_IF_ERROR(context->logger, ret, create_draw_image(context),
+                    "Failed to recreate draw image: %d", ret);
+
+    context->recreate_swapchain = false;
+    return 0;
+}

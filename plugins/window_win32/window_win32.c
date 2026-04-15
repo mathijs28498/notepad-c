@@ -155,6 +155,8 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
 
+    WindowEvent window_event;
+
     switch (uMsg)
     {
     case WM_PAINT:
@@ -162,19 +164,20 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_SIZE:
-        TODO("Recreate shit!")
+        window_event.type = WINDOW_EVENT_TYPE_RESIZE;
+        window_event.resize.width = (uint32_t)LOWORD(lParam);
+        window_event.resize.height = (uint32_t)HIWORD(lParam);
+
+        window_win32_window_events_push(context, &window_event);
         return 0;
 
     case WM_KEYDOWN:
     case WM_KEYUP:
         WindowEventKey key = win32_key_to_window_event_key(wParam);
-        WindowEvent window_event = {
-            .type = WINDOW_EVENT_TYPE_KEY_PRESS,
-            .data.key_press = {
-                .is_pressed = uMsg == WM_KEYDOWN,
-                .key = key,
-            },
-        };
+        window_event.type = WINDOW_EVENT_TYPE_KEY_PRESS;
+        window_event.key_press.is_pressed = uMsg == WM_KEYDOWN;
+        window_event.key_press.key = key;
+
         window_win32_window_events_push(context, &window_event);
         break;
 

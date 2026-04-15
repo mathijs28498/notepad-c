@@ -34,12 +34,12 @@ int32_t input_default_process_window_event(InputContext *context, WindowEvent *w
     switch (window_event->type)
     {
     case WINDOW_EVENT_TYPE_KEY_PRESS:
-        WindowEventKey key = window_event->data.key_press.key;
+        WindowEventKey key = window_event->key_press.key;
         size_t key_state_index, key_state_bit_index;
         get_key_state_bitfield_indices(key, &key_state_index, &key_state_bit_index);
 
         uint32_t bit_mask = 1U << key_state_bit_index;
-        if (window_event->data.key_press.is_pressed)
+        if (window_event->key_press.is_pressed)
         {
             context->key_state_current[key_state_index] |= bit_mask;
         }

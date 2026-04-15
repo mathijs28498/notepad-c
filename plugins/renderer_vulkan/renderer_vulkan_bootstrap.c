@@ -756,6 +756,14 @@ int32_t choose_swap_extent(LoggerInterface *logger, WindowInterface *window, VkS
     return 0;
 }
 
+void destroy_main_swapchain(RendererContext *context)
+{
+    assert(context != NULL);
+    assert(context->swapchain != NULL);
+
+    vkDestroySwapchainKHR(context->device, context->swapchain, NULL);
+}
+
 int32_t create_swapchain(RendererContext *context)
 {
     assert(context != NULL);
@@ -788,17 +796,18 @@ int32_t create_swapchain(RendererContext *context)
         swapchain_images_len = swapchain_images_max_len;
     }
 
+    TODO("Check if color attachment bit is necessary? vkguide.dev has no is weird")
     VkSwapchainCreateInfoKHR swapchain_create_info = {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = context->surface,
+        .oldSwapchain = context->old_swapchain,
 
         .minImageCount = swapchain_images_len,
         .imageFormat = surface_format.format,
         .imageColorSpace = surface_format.colorSpace,
         .imageExtent = surface_extent,
         .imageArrayLayers = 1,
-        TODO("Check if color attachment bit is necessary? vkguide.dev has no is weird")
-            .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         // swapchain_create_info.imageUsage = VK_IMAGE_USAGE_TRANSFER_DST_BIT,
     };
 
@@ -829,14 +838,19 @@ int32_t create_swapchain(RendererContext *context)
     swapchain_create_info.presentMode = present_mode;
     swapchain_create_info.clipped = VK_TRUE;
 
-    swapchain_create_info.oldSwapchain = VK_NULL_HANDLE;
-
     VK_RETURN_IF_ERROR(context->logger, result, vkCreateSwapchainKHR(context->device, &swapchain_create_info, NULL, &context->swapchain),
                        -1, "Failed to create swapchain: %d", ret);
 
-    RETURN_IF_ERROR(context->logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->logger, &context->swapchain_destroy_queue, vkDestroySwapchainKHR, context->device, context->swapchain, NULL),
-                    "Failed to push swapchain destroy data to destroy queue: %d", ret);
+    if (context->old_swapchain == VK_NULL_HANDLE)
+    {
+        RETURN_IF_ERROR(context->logger, ret,
+                        RV_CALL_QUEUE_PUSH_1(context->logger, &context->main_destroy_queue, destroy_main_swapchain, context),
+                        "Failed to push swapchain destroy data to destroy queue: %d", ret);
+    }
+    else
+    {
+        vkDestroySwapchainKHR(context->device, context->old_swapchain, NULL);
+    }
 
     SET_ARRAY_FIELD_CAPACITY(context->swapchain_images);
     assert(GET_ARRAY_CAPACITY(context->swapchain_images) >= swapchain_images_len);
@@ -846,6 +860,7 @@ int32_t create_swapchain(RendererContext *context)
     context->swapchain_image_format = (RV_VkFormat)surface_format.format;
     context->swapchain_extent.width = surface_extent.width;
     context->swapchain_extent.height = surface_extent.height;
+    context->old_swapchain = context->swapchain;
 
     return 0;
 }
@@ -921,6 +936,20 @@ int32_t renderer_vulkan_bootstrap(RendererContext *context)
                 "failed to create swapchain, %d", ret);
     VK_TRY_INIT(context->logger, ret, create_image_views(context), &context->main_destroy_queue,
                 "Failed to create image views: %d", ret);
+
+    return 0;
+}
+
+int32_t renderer_vulkan_bootstrap_recreate_swapchain(RendererContext *context)
+{
+    TODO("Figure out if need to use VK_TRY_INIT or not");
+    assert(context != NULL);
+    int32_t ret;
+
+    VK_TRY_INIT(context->logger, ret, create_swapchain(context), &context->main_destroy_queue,
+                "failed to recreate swapchain, %d", ret);
+    VK_TRY_INIT(context->logger, ret, create_image_views(context), &context->main_destroy_queue,
+                "Failed to recreate image views: %d", ret);
 
     return 0;
 }

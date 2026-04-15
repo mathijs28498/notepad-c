@@ -1,5 +1,5 @@
 interface_name = "environment"
 plugin_name = "default"
-module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/environment_default.dll"
+module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/environment_default.dll"
 supported_lifetimes = ["singleton"]
 

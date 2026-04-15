@@ -18,7 +18,7 @@ target_link_libraries(window_win32
     plugin_manager_include
 )
 
-set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager_bootloader")
+set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/lib/plugin_manager_bootloader")
 
 include("${PLUGIN_MANAGER_DIR_PATH}/cmake/PluginSDK.cmake")
 plugin_generate_register_inc(window_win32

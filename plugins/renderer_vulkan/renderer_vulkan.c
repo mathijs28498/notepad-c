@@ -27,3 +27,12 @@ int32_t renderer_vulkan_cleanup(RendererContext *context)
 
     return 0;
 }
+
+void renderer_vulkan_on_window_resize(RendererContext *context, uint32_t width, uint32_t height)
+{
+    assert(context != NULL);
+
+    context->recreate_swapchain = true;
+    context->resize_extent.width = width;
+    context->resize_extent.height = height;
+}

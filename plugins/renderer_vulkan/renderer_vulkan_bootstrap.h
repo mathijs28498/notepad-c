@@ -26,8 +26,7 @@ typedef struct QueueFamilyIndices
     uint32_t present_family;
 } QueueFamilyIndices;
 
-
-
 struct RendererContext;
 
 int32_t renderer_vulkan_bootstrap(struct RendererContext *context);
+int32_t renderer_vulkan_bootstrap_recreate_swapchain(struct RendererContext *context);

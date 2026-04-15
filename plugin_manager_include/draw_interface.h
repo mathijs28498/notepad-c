@@ -10,6 +10,7 @@ typedef struct DrawVtable
 {
     int32_t (*start)(struct DrawContext *context);
     int32_t (*present)(struct DrawContext *context);
+    void (*on_window_resize)(struct DrawContext *context, uint32_t width, uint32_t height);
 } DrawVtable;
 
 typedef struct DrawInterface
@@ -21,12 +22,17 @@ typedef struct DrawInterface
 
 #pragma pack(pop)
 
-static inline int32_t draw_start(DrawInterface *interface)
+static inline int32_t draw_start(DrawInterface *iface)
 {
-    return interface->vtable->start(interface->context);
+    return iface->vtable->start(iface->context);
 }
 
-static inline int32_t draw_present(DrawInterface *interface)
+static inline int32_t draw_present(DrawInterface *iface)
 {
-    return interface->vtable->present(interface->context);
+    return iface->vtable->present(iface->context);
+}
+
+static inline void draw_on_window_resize(DrawInterface *iface, uint32_t width, uint32_t height)
+{
+    iface->vtable->on_window_resize(iface->context, width, height);
 }

@@ -10,7 +10,8 @@
 static const RendererVtable plugin_vtable = {
     .start = renderer_vulkan_start,
     .render = renderer_vulkan_render,
-}; 
+    .on_window_resize = renderer_vulkan_on_window_resize,
+};
 
 int32_t plugin_init(RendererContext *context)
 {

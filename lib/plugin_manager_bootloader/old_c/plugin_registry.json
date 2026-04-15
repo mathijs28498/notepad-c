@@ -4,7 +4,7 @@
             "interface_name": "logger",
             "plugin_name": "console",
             "cmake_target_name": "logger_console",
-            "plugin_source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager/internal_plugins/logger_console",
+            "plugin_source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/lib/plugin_manager/internal_plugins/logger_console",
             "plugin_forward_declarations": [
                 "struct LoggerInterfaceContext;",
                 "void logger_console_on_program_exit(struct LoggerInterfaceContext *context, int exit_code);"
@@ -14,7 +14,7 @@
             "interface_name": "environment",
             "plugin_name": "default",
             "cmake_target_name": "environment_default",
-            "plugin_source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager/internal_plugins/environment_default",
+            "plugin_source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/lib/plugin_manager/internal_plugins/environment_default",
             "plugin_forward_declarations": [
                 "struct EnvironmentInterfaceContext;",
                 "int32_t environment_default_set_args(struct EnvironmentInterfaceContext *context, int argc, char **argv, void *platform_context);"
@@ -33,8 +33,8 @@
             "plugins": [
                 {
                     "plugin_name": "win32",
-                    "module_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/window_win32.dll",
-                    "source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/window_win32"
+                    "module_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/window_win32.dll",
+                    "source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/window_win32"
                 }
             ]
         },
@@ -44,8 +44,8 @@
             "plugins": [
                 {
                     "plugin_name": "default",
-                    "module_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/gui_application_default.dll",
-                    "source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/gui_application_default"
+                    "module_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/gui_application_default.dll",
+                    "source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/gui_application_default"
                 }
             ]
         },
@@ -55,8 +55,8 @@
             "plugins": [
                 {
                     "plugin_name": "default",
-                    "module_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/draw_default.dll",
-                    "source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/draw_default"
+                    "module_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/draw_default.dll",
+                    "source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/draw_default"
                 }
             ]
         },
@@ -66,8 +66,8 @@
             "plugins": [
                 {
                     "plugin_name": "default",
-                    "module_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/input_default.dll",
-                    "source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/input_default"
+                    "module_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/input_default.dll",
+                    "source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/input_default"
                 }
             ]
         }

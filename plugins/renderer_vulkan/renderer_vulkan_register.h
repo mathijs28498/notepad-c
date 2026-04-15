@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #include <plugin_utils.h>
 
 #include "plugin_dependencies.h"
@@ -111,6 +113,10 @@ typedef struct RendererContext
     VkQueue present_queue;
     uint32_t present_queue_family;
     VkSwapchainKHR swapchain;
+    VkSwapchainKHR old_swapchain;
+    bool recreate_swapchain;
+    bool halt_render;
+    RV_VkExtent2D resize_extent;
     TODO("Figure out what to do with the size/capacity here")
     ARRAY_FIELD(VkImage, swapchain_images, MAX_SWAPCHAIN_IMAGES_LEN);
     ARRAY_FIELD(VkImageView, swapchain_image_views, MAX_SWAPCHAIN_IMAGES_LEN);
