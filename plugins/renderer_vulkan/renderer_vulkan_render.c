@@ -44,7 +44,7 @@ int32_t begin_frame(RendererContext *context, RendererFrameData **out_frame, uin
 
     VkResult result;
 
-    if (context->recreate_swapchain)
+    if (context->resize_requested)
     {
         renderer_vulkan_start_recreate_swapchain(context);
     }

@@ -32,7 +32,7 @@ void renderer_vulkan_on_window_resize(RendererContext *context, uint32_t width, 
 {
     assert(context != NULL);
 
-    context->recreate_swapchain = true;
+    context->resize_requested = true;
     context->resize_extent.width = width;
     context->resize_extent.height = height;
 }

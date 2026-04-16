@@ -49,7 +49,7 @@
 - [ ] Fix all todos
 
 ### 2
-- [ ] Create custom vma allocator 
+- [ ] Change to glsl
 - [ ] Link vulkan indirectly for faster performance: https://docs.vulkan.org/guide/latest/loader.html#loader
 - [ ] Add project wide debug level
 - [ ] Add allocator plugin
@@ -120,9 +120,10 @@
 - [ ] Create go to definition in templating in python somehow
 
 ### 5
-- [ ] Create C to C transpiler in framework (for ACID lang)
-
+- [ ] Create C dutch to C transpiler in framework (for ACID lang)
+  - [ ] Aslang :^ 
 ### 6
+- [ ] Create custom vma allocator 
 - [ ] ACID (Another C Inspired Design) programming language
 - [ ] BASE (Barely Another Storage Engine) sql database, add ACID syntax with it
 - [ ] BUFFER (...) text editor

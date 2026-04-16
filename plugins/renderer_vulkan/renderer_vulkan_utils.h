@@ -14,6 +14,7 @@
 #define VK_RETURN_IF_ERROR(logger, err_var, func_call, err_ret_val, ...) \
     RETURN_IF_ERROR_CONDITION_RET_VALUE(logger, err_var, ((err_var) < VK_SUCCESS), func_call, err_ret_val, ##__VA_ARGS__)
 
+    TODO("This does not flush multiple queues when for example the swapchain and the main queue have to be flushed, fix this")
 #define VK_TRY_INIT(logger, err_var, create_func_call, destroy_queue, ...) \
     do                                                                     \
     {                                                                      \

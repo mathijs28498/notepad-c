@@ -125,16 +125,16 @@ typedef union
         .arr = {0}};                                \
     decl type *(var_name) = var_name##_.arr
 
-#define CREATE_INITIALIZED_ARRAY(type, var_name, ...)                 \
-    struct                                                            \
-    {                                                                 \
-        ArrayHeader_ header;                                          \
+#define CREATE_INITIALIZED_ARRAY(type, var_name, ...)               \
+    struct                                                          \
+    {                                                               \
+        ArrayHeader_ header;                                        \
         type arr[sizeof((type[])__VA_ARGS__) / sizeof(type)];       \
-    } var_name##_ = {                                                 \
-        .header = {                                                   \
+    } var_name##_ = {                                               \
+        .header = {                                                 \
             .length = sizeof((type[])__VA_ARGS__) / sizeof(type),   \
             .capacity = sizeof((type[])__VA_ARGS__) / sizeof(type), \
-        },                                                            \
+        },                                                          \
         .arr = __VA_ARGS__};                                        \
     type *(var_name) = var_name##_.arr
 
@@ -142,19 +142,22 @@ typedef union
     decl struct                                                       \
     {                                                                 \
         ArrayHeader_ header;                                          \
-        type arr[sizeof((type[])__VA_ARGS__) / sizeof(type)];       \
+        type arr[sizeof((type[])__VA_ARGS__) / sizeof(type)];         \
     } var_name##_ = {                                                 \
         .header = {                                                   \
-            .length = sizeof((type[])__VA_ARGS__) / sizeof(type),   \
-            .capacity = sizeof((type[])__VA_ARGS__) / sizeof(type), \
+            .length = sizeof((type[])__VA_ARGS__) / sizeof(type),     \
+            .capacity = sizeof((type[])__VA_ARGS__) / sizeof(type),   \
         },                                                            \
-        .arr = __VA_ARGS__};                                        \
+        .arr = __VA_ARGS__};                                          \
     decl type *(var_name) = (type *)var_name##_.arr
 
 #define GET_ARRAY_HEADER(arr_ptr) ((ArrayHeader_ *)(arr_ptr) - 1)
 #define GET_ARRAY_CAPACITY(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->capacity)
 #define GET_ARRAY_LENGTH(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->length)
 #define SET_ARRAY_FIELD_CAPACITY(arr) GET_ARRAY_CAPACITY(arr) = ARRAY_SIZE(arr);
+
+#define ARRAY_FOR(arr_ptr, index_name) \
+    for (size_t index_name = 0; index_name < GET_ARRAY_LENGTH(arr_ptr); ++index_name)
 
 #define ARRAY_PUSH_CHECKED(arr_ptr, element, on_err)                  \
     do                                                                \
@@ -178,7 +181,7 @@ typedef union
         GET_ARRAY_LENGTH(arr_ptr) += (element_count);                                                                  \
     } while (0)
 
-#define ARRAY_PUSH_ARRAY(arr_ptr, other_arr_ptr, on_err)\
+#define ARRAY_PUSH_ARRAY(arr_ptr, other_arr_ptr, on_err) \
     ARRAY_PUSH_MULTI_CHECKED(arr_ptr, other_arr_ptr, GET_ARRAY_LENGTH(other_arr_ptr), on_err)
 
 #define RETURN_IF_TRUE(logger, condition, err_ret_val, ...) \

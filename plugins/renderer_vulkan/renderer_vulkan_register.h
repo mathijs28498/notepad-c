@@ -27,6 +27,10 @@ CREATE_VK_HANDLE_DEFINITION(VkCommandPool);
 CREATE_VK_HANDLE_DEFINITION(VkCommandBuffer);
 CREATE_VK_HANDLE_DEFINITION(VkSemaphore);
 CREATE_VK_HANDLE_DEFINITION(VkFence);
+CREATE_VK_HANDLE_DEFINITION(VkDescriptorPool);
+CREATE_VK_HANDLE_DEFINITION(VkDescriptorSetLayout);
+CREATE_VK_HANDLE_DEFINITION(VkDescriptorSet);
+
 CREATE_VK_HANDLE_DEFINITION(VmaAllocator);
 CREATE_VK_HANDLE_DEFINITION(VmaAllocation);
 
@@ -114,7 +118,7 @@ typedef struct RendererContext
     uint32_t present_queue_family;
     VkSwapchainKHR swapchain;
     VkSwapchainKHR old_swapchain;
-    bool recreate_swapchain;
+    bool resize_requested;
     bool halt_render;
     RV_VkExtent2D resize_extent;
     TODO("Figure out what to do with the size/capacity here")
@@ -133,6 +137,12 @@ typedef struct RendererContext
 
     RV_CallQueue main_destroy_queue;
     RV_CallQueue swapchain_destroy_queue;
+
+    VkDescriptorPool global_descriptor_pool;
+
+    VkDescriptorSetLayout draw_image_descriptor_set_layout;
+    VkDescriptorSet draw_image_descriptor_set;
+    
 } RendererContext;
 
 #pragma pack(pop)
