@@ -9,6 +9,7 @@ target_sources(renderer_vulkan
     renderer_vulkan_utils.c
     renderer_vulkan_start.c
     renderer_vulkan_render.c
+    renderer_vulkan_descriptor_set.c
     renderer_vulkan.c
 
     PUBLIC

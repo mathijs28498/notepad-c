@@ -90,11 +90,11 @@ typedef union
     struct                                \
     {                                     \
         ArrayHeader_ header;              \
-        type arr[cap];                    \
+        type arr[(cap)];                  \
     } var_name##_ = {                     \
         .header = {                       \
             .length = 0,                  \
-            .capacity = cap,              \
+            .capacity = (cap),            \
         },                                \
         .arr = {0}};                      \
     type *(var_name) = var_name##_.arr
@@ -103,14 +103,17 @@ typedef union
     struct                                              \
     {                                                   \
         ArrayHeader_ header;                            \
-        type arr[cap];                                  \
+        type arr[(cap)];                                \
     } var_name##_ = {                                   \
         .header = {                                     \
-            .length = len,                              \
-            .capacity = cap,                            \
+            .length = (len),                            \
+            .capacity = (cap),                          \
         },                                              \
         .arr = {0}};                                    \
     type *(var_name) = var_name##_.arr
+
+#define CREATE_ARRAY_FILLED(type, var_name, cap) \
+    CREATE_ARRAY_WITH_LEN(type, var_name, cap, cap)
 
 #define CREATE_ARRAY_WITH_DECL(decl, var_name, cap) \
     decl struct                                     \
@@ -166,9 +169,18 @@ typedef union
         {                                                             \
             on_err                                                    \
         }                                                             \
-        (arr_ptr)[GET_ARRAY_LENGTH(arr_ptr)] = (element);             \
-        GET_ARRAY_LENGTH(arr_ptr) += 1;                               \
+        else                                                          \
+        {                                                             \
+            (arr_ptr)[GET_ARRAY_LENGTH(arr_ptr)] = (element);         \
+            GET_ARRAY_LENGTH(arr_ptr) += 1;                           \
+        }                                                             \
     } while (0)
+
+#define ARRAY_PUSH_CHECKED_DEFAULT_RETURN(logger, arr_ptr, element)            \
+    ARRAY_PUSH_CHECKED(arr_ptr, element, {                                     \
+        LOG_ERR(logger, "Unable to push to " #arr_ptr ", exceeding capacity"); \
+        return -1;                                                             \
+    })
 
 #define ARRAY_PUSH_MULTI_CHECKED(arr_ptr, first_element, element_count, on_err)                                        \
     do                                                                                                                 \

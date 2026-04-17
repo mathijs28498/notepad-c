@@ -1,13 +1,12 @@
 add_library(plugin_manager_bootloader STATIC)
 
-cmake_path(GET CMAKE_CURRENT_LIST_DIR PARENT_PATH PARENT_DIR)
-cmake_path(GET PARENT_DIR PARENT_PATH TOML_DIR_PATH)
-
 if(WIN32 AND PLUGIN_MANAGER_GUI)
     target_compile_definitions(plugin_manager_bootloader PRIVATE UNICODE _UNICODE COBJMACROS)
 endif()
 
-message("TODO: Put these back")
+cmake_path(GET CMAKE_CURRENT_LIST_DIR PARENT_PATH PARENT_DIR)
+cmake_path(GET PARENT_DIR PARENT_PATH TOML_DIR_PATH)
+
 
 include(cmake/PluginManagerBootloaderGenerate.cmake)
 
