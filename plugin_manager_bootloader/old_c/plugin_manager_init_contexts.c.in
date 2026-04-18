@@ -3,10 +3,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <logger_interface.h>
+#include <plugin_sdk/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager_init_contexts, LOG_LEVEL_DEBUG)
-#include <environment_interface.h>
-#include <plugin_utils.h>
+#include <plugin_sdk/environment_interface.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include "plugin_manager_interface_declarations.h"
 #include "plugin_manager_types.h"

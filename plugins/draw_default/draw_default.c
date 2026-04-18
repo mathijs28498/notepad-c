@@ -3,12 +3,12 @@
 #include <stdint.h>
 #include <assert.h>
 
-#include <logger_interface.h>
+#include <plugin_sdk/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(draw_default, LOG_LEVEL_DEBUG);
-#include <renderer_interface.h>
-#include <plugin_utils.h>
+#include <plugin_sdk/renderer_interface.h>
+#include <plugin_sdk/plugin_utils.h>
 
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include "draw_default_register.h"
 

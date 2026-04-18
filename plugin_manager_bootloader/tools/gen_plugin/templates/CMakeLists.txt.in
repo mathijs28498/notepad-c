@@ -10,7 +10,7 @@ target_sources(@TARGET_NAME@
 
 target_link_libraries(@TARGET_NAME@
     PRIVATE
-    plugin_manager_include
+    plugin_sdk
 )
 
 include("pluginSDK")

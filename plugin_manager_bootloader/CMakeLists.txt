@@ -32,7 +32,7 @@ target_sources(plugin_manager_bootloader
 
 target_link_libraries(plugin_manager_bootloader
     PRIVATE
-    plugin_manager_include
+    plugin_sdk
     plugin_manager_default
 )
 

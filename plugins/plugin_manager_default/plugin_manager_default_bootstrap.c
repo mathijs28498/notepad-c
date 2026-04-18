@@ -1,5 +1,5 @@
 #include "plugin_manager_default_bootstrap.h"
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -9,12 +9,12 @@ TODO("Make sure this is done in a separate file for platform specific shit")
 #include <stdio.h>
 #include <string.h>
 
-#include <logger_interface.h>
+#include <plugin_sdk/logger_interface.h>
 // LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_DEBUG)
 LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_WARNING)
-#include <plugin_manager_pm_interface.h>
-#include <plugin_sdk_types.h>
-#include <environment_pm_interface.h>
+#include <plugin_sdk/plugin_manager_pm_interface.h>
+#include <plugin_sdk/plugin_sdk_types.h>
+#include <plugin_sdk/environment_pm_interface.h>
 
 #include "plugin_manager_default_register.h"
 #include "plugin_manager_default.h"

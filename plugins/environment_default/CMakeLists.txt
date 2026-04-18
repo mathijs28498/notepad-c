@@ -4,16 +4,16 @@ target_compile_options(environment_default PRIVATE ${MY_STRICT_WARNINGS})
 
 target_sources(environment_default
     PRIVATE
-        environment_default.c
-        environment_default_register.c
+    environment_default.c
+    environment_default_register.c
 
     PUBLIC
-        FILE_SET HEADERS
+    FILE_SET HEADERS
 )
 
 target_link_libraries(environment_default
     PRIVATE
-        plugin_manager_include
+    plugin_sdk
 )
 
 include("PluginSDK")

@@ -1,6 +1,6 @@
 #include "logger_console_register.h"
 
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -10,7 +10,7 @@ TODO("Remove this windows include")
 #include <stdlib.h>
 #include <conio.h>
 
-#include <logger_interface.h>
+#include <plugin_sdk/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(logger_console, LOG_LEVEL_DEBUG);
 
 #include "logger_console.h"

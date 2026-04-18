@@ -1,6 +1,6 @@
 #include "window_win32_register.h"
 
-#include <window_interface.h>
+#include <plugin_sdk/window_interface.h>
 
 #include "window_win32.h"
 #include "window_win32_window_events.h"

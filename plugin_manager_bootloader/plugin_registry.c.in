@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include <plugin_manager_pm_interface.h>
+#include <plugin_sdk/plugin_manager_pm_interface.h>
 
 @PLUGIN_DEPENDENCIES_TEXT@
 

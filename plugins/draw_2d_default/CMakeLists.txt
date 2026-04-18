@@ -12,7 +12,7 @@ target_sources(draw_2d_default
 
 target_link_libraries(draw_2d_default
     PRIVATE
-    plugin_manager_include
+    plugin_sdk
 )
 
 include("pluginSDK")

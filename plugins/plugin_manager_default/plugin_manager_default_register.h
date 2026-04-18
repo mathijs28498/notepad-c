@@ -1,6 +1,6 @@
 #pragma once
 
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include "plugin_dependencies.h"
 

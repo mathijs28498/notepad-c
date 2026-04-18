@@ -3,10 +3,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <plugin_sdk_types.h>
-#include <plugin_utils.h>
-#include <plugin_manager_interface.h>
-#include <plugin_manager_pm_interface.h>
+#include <plugin_sdk/plugin_sdk_types.h>
+#include <plugin_sdk/plugin_utils.h>
+#include <plugin_sdk/plugin_manager_interface.h>
+#include <plugin_sdk/plugin_manager_pm_interface.h>
 
 // #include "plugin_registry.h"
 // #include "plugin_metadata.h"

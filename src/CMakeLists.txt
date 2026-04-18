@@ -11,6 +11,6 @@ message("TODO: Add other OS support")
 
 target_link_libraries(program
     PRIVATE
-    plugin_manager_include
     plugin_manager_bootloader
+    plugin_sdk
 )

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <window_interface_window_event.h>
+#include <plugin_sdk/window_interface_window_event.h>
 
 #include "plugin_dependencies.h"
 

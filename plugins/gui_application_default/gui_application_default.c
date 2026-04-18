@@ -2,13 +2,13 @@
 
 #include <stdint.h>
 
-#include <window_interface.h>
-#include <logger_interface.h>
+#include <plugin_sdk/window_interface.h>
+#include <plugin_sdk/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(gui_application_default, LOG_LEVEL_DEBUG)
-#include <input_interface.h>
-#include <plugin_utils.h>
-#include <draw_interface.h>
-#include <renderer_interface.h>
+#include <plugin_sdk/input_interface.h>
+#include <plugin_sdk/plugin_utils.h>
+#include <plugin_sdk/draw_interface.h>
+#include <plugin_sdk/renderer_interface.h>
 
 #include "gui_application_default_register.h"
 

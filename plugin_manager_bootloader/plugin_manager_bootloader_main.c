@@ -1,6 +1,6 @@
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 #include <stdint.h>
-#include <plugin_manager_interface.h>
+#include <plugin_sdk/plugin_manager_interface.h>
 
 #include "plugin_manager_bootloader.h"
 

@@ -17,7 +17,7 @@ target_compile_definitions(window_win32 PRIVATE UNICODE _UNICODE COBJMACROS)
 
 target_link_libraries(window_win32
     PRIVATE
-    plugin_manager_include
+    plugin_sdk
 )
 
 include("PluginSDK")

@@ -13,7 +13,7 @@ target_sources(logger_console
 
 target_link_libraries(logger_console
     PRIVATE
-    plugin_manager_include
+    plugin_sdk
 )
 
 include("PluginSDK")

@@ -6,9 +6,9 @@
 #include <stdbool.h>
 #include <conio.h>
 
-#include <logger_interface.h>
+#include <plugin_sdk/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(logger_console, LOG_LEVEL_DEBUG);
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include "logger_console_register.h" 
 

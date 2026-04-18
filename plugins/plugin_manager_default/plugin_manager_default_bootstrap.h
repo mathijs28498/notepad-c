@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 TODO("Figure out where these belong")
 #define PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN 256

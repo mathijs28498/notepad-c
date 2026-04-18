@@ -1,18 +1,18 @@
 // #include <stdio.h>
 // #include <stdbool.h>
 #include <stdint.h>
-#include <plugin_manager_interface.h>
+#include <plugin_sdk/plugin_manager_interface.h>
 #include <windows.h>
 
 // #include <plugin_framework.h>
-// #include <input_interface.h>
-// #include <draw_2d_interface.h>
-#include <logger_interface.h>
+// #include <plugin_sdk/input_interface.h>
+// #include <plugin_sdk/draw_2d_interface.h>
+#include <plugin_sdk/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
-// #include <input_interface.h>
-// #include <environment_interface.h>
-#include <window_interface.h>
-#include <gui_application_interface.h>
+// #include <plugin_sdk/input_interface.h>
+// #include <plugin_sdk/environment_interface.h>
+#include <plugin_sdk/window_interface.h>
+#include <plugin_sdk/gui_application_interface.h>
 
 
 

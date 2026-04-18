@@ -4,8 +4,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include <plugin_utils.h>
-#include <plugin_sdk_types.h>
+#include <plugin_sdk/plugin_utils.h>
+#include <plugin_sdk/plugin_sdk_types.h>
 
 // const PluginMetadata *plugin_manager_default_get_plugin_metadata(void);
 @GET_PLUGIN_METADATA_FORWARD_DECLARATIONS@

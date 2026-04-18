@@ -1,6 +1,6 @@
 #include "draw_default_register.h"
 
-#include <draw_interface.h>
+#include <plugin_sdk/draw_interface.h>
 
 #include "draw_default.h"
 

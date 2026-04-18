@@ -15,7 +15,7 @@ target_sources(plugin_manager_default
 
 target_link_libraries(plugin_manager_default
     PRIVATE
-    plugin_manager_include
+    plugin_sdk
 )
 
 include("PluginSDK")

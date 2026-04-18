@@ -4,16 +4,16 @@ target_compile_options(gui_application_default PRIVATE ${MY_STRICT_WARNINGS})
 
 target_sources(gui_application_default
     PRIVATE
-        gui_application_default_register.c
-        gui_application_default.c
-    
+    gui_application_default_register.c
+    gui_application_default.c
+
     PUBLIC
-        FILE_SET HEADERS
+    FILE_SET HEADERS
 )
 
 target_link_libraries(gui_application_default
     PRIVATE
-        plugin_manager_include
+    plugin_sdk
 )
 
 include("PluginSDK")

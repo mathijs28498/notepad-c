@@ -9,10 +9,10 @@
 #include <assert.h>
 
 #include <plugin_framework.h>
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
-#include <environment_interface.h>
-#include <logger_interface.h>
+#include <plugin_sdk/environment_interface.h>
+#include <plugin_sdk/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 
 #include "plugin_manager_interface_declarations.h"

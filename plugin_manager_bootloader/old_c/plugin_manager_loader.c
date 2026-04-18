@@ -5,9 +5,9 @@
 #include <Windows.h>
 #include <stdio.h>
 
-#include <logger_interface.h>
+#include <plugin_sdk/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager_loader, LOG_LEVEL_DEBUG)
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include "plugin_manager_types.h"
 #include "plugin_manager.h"

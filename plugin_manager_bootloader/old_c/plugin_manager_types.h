@@ -2,9 +2,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
-#include <plugin_sdk_types.h>
+#include <plugin_sdk/plugin_sdk_types.h>
 
 
 typedef struct RequestedPlugin

@@ -1,5 +1,5 @@
 #include "plugin_manager_default.h"
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include <stdint.h>
 #include <assert.h>
@@ -7,12 +7,12 @@
 #include <stdio.h>
 
 TODO("Remove unnecessary includes")
-#include <logger_interface.h>
+#include <plugin_sdk/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager_default, LOG_LEVEL_WARNING);
-#include <plugin_manager_pm_interface.h>
-#include <plugin_sdk_types.h>
-#include <environment_interface.h>
-#include <environment_pm_interface.h>
+#include <plugin_sdk/plugin_manager_pm_interface.h>
+#include <plugin_sdk/plugin_sdk_types.h>
+#include <plugin_sdk/environment_interface.h>
+#include <plugin_sdk/environment_pm_interface.h>
 
 #include "plugin_manager_default_register.h"
 

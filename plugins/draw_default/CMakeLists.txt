@@ -4,16 +4,16 @@ target_compile_options(draw_default PRIVATE ${MY_STRICT_WARNINGS})
 
 target_sources(draw_default
     PRIVATE
-        draw_default.c
-        draw_default_register.c
+    draw_default.c
+    draw_default_register.c
 
     PUBLIC
-        FILE_SET HEADERS
+    FILE_SET HEADERS
 )
 
 target_link_libraries(draw_default
     PRIVATE
-        plugin_manager_include
+    plugin_sdk
 )
 
 include("PluginSDK")
