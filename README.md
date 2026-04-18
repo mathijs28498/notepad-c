@@ -49,6 +49,7 @@
 - [ ] Fix all todos
 
 ### 2
+- [ ] Make dependencies a struct created called PluginDependencies and add it like "PluginDependencies dep;"
 - [ ] Change to glsl
 - [ ] Link vulkan indirectly for faster performance: https://docs.vulkan.org/guide/latest/loader.html#loader
 - [ ] Add project wide debug level

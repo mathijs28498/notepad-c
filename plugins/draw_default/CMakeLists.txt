@@ -16,9 +16,8 @@ target_link_libraries(draw_default
         plugin_manager_include
 )
 
-set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/lib/plugin_manager_bootloader")
-
-include("${PLUGIN_MANAGER_DIR_PATH}/cmake/PluginSDK.cmake")
+include("PluginSDK")
+message(STATUS "Generate inc: draw default")
 plugin_generate_register_inc(draw_default
     TOOLS_DIR_PATH "${PLUGIN_MANAGER_DIR_PATH}/tools"
     PYTHON_SCRIPTS_PATH "${PLUGIN_MANAGER_DIR_PATH}/cmake/scripts"

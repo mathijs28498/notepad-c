@@ -1,5 +1,6 @@
 find_package(Vulkan REQUIRED)
 
+# add_library(renderer_vulkan)
 add_library(renderer_vulkan)
 
 target_compile_options(renderer_vulkan PRIVATE ${MY_STRICT_WARNINGS})
@@ -30,9 +31,7 @@ target_link_libraries(renderer_vulkan
     vma
 )
 
-set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/lib/plugin_manager_bootloader")
-
-include("${PLUGIN_MANAGER_DIR_PATH}/cmake/PluginSDK.cmake")
+include("PluginSDK")
 plugin_generate_register_inc(renderer_vulkan
     TOOLS_DIR_PATH "${PLUGIN_MANAGER_DIR_PATH}/tools"
     PYTHON_SCRIPTS_PATH "${PLUGIN_MANAGER_DIR_PATH}/cmake/scripts"

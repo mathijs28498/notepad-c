@@ -4,7 +4,7 @@
         {
             "label": "Generate interface and plugin",
             "type": "shell",
-            "command": "\"python\" \"${workspaceFolder}/lib/plugin_manager/tools/gen_plugin/gen_plugin.py\" --interface-name \"${input:interfaceName}\" --plugin-name \"${input:pluginName}\" --interface-include-directory \"${input:interfaceIncludeDirectory}\" --plugin-base-directory \"${input:pluginBaseDirectory}\"",
+            "command": "\"python\" \"${workspaceFolder}/plugin_manager/tools/gen_plugin/gen_plugin.py\" --interface-name \"${input:interfaceName}\" --plugin-name \"${input:pluginName}\" --interface-include-directory \"${input:interfaceIncludeDirectory}\" --plugin-base-directory \"${input:pluginBaseDirectory}\"",
             "problemMatcher": []
         }
     ],

@@ -16,10 +16,7 @@ target_link_libraries(environment_default
         plugin_manager_include
 )
 
-message("TODO: Make this path relative and not hardcoded likeuh this")
-set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/lib/plugin_manager_bootloader")
-
-include("${PLUGIN_MANAGER_DIR_PATH}/cmake/PluginSDK.cmake")
+include("PluginSDK")
 plugin_generate_register_inc(environment_default
     TOOLS_DIR_PATH "${PLUGIN_MANAGER_DIR_PATH}/tools"
     PYTHON_SCRIPTS_PATH "${PLUGIN_MANAGER_DIR_PATH}/cmake/scripts"

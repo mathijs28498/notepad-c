@@ -16,9 +16,8 @@ target_link_libraries(input_default
         plugin_manager_include
 )
 
-set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/lib/plugin_manager_bootloader")
-
-include("${PLUGIN_MANAGER_DIR_PATH}/cmake/PluginSDK.cmake")
+include("PluginSDK")
+message(STATUS "Generate inc: inp")
 plugin_generate_register_inc(input_default
     TOOLS_DIR_PATH "${PLUGIN_MANAGER_DIR_PATH}/tools"
     PYTHON_SCRIPTS_PATH "${PLUGIN_MANAGER_DIR_PATH}/cmake/scripts"

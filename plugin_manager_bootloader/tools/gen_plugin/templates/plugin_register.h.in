@@ -1,0 +1,15 @@
+#pragma once
+
+#include "plugin_dependencies.h"
+
+#pragma pack(push, 8)
+
+struct LoggerInterface;
+
+typedef struct @INTERFACE_CONTEXT_TYPE_NAME@
+{
+    PLUGIN_CONTEXT_DEPENDENCIES
+} @INTERFACE_CONTEXT_TYPE_NAME@;
+
+#pragma pack(pop)
+

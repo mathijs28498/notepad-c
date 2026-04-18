@@ -4,7 +4,7 @@
             "interface_name": "logger",
             "plugin_name": "console",
             "cmake_target_name": "logger_console",
-            "plugin_source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/lib/plugin_manager/internal_plugins/logger_console",
+            "plugin_source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugin_manager/internal_plugins/logger_console",
             "plugin_forward_declarations": [
                 "struct LoggerInterfaceContext;",
                 "void logger_console_on_program_exit(struct LoggerInterfaceContext *context, int exit_code);"
@@ -14,7 +14,7 @@
             "interface_name": "environment",
             "plugin_name": "default",
             "cmake_target_name": "environment_default",
-            "plugin_source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/lib/plugin_manager/internal_plugins/environment_default",
+            "plugin_source_path": "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugin_manager/internal_plugins/environment_default",
             "plugin_forward_declarations": [
                 "struct EnvironmentInterfaceContext;",
                 "int32_t environment_default_set_args(struct EnvironmentInterfaceContext *context, int argc, char **argv, void *platform_context);"
