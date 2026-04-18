@@ -1,8 +1,0 @@
-interface_name = "logger"
-plugin_name = "composite"
-# TODO: Fix paths
-module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/logger_composite.dll"
-
-dependencies = [
-    { interface_name = "logger" },
-]
