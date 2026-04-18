@@ -104,6 +104,9 @@
 - [ ] Add logging to a file
 - [ ] Add error handling in cmake
 - [ ] Look into multiple threads
+  - [ ] Add a job interface, this interface hides the type of system like pthreads vs fibers vs ...
+  - [ ] Make singleton plugins either thread safe or not
+  - [ ] If not thread safe singleton, error on grabbibng form other thread than creatred
 - [ ] Look into singleton vs scoped vs transient
     - [ ] This can now be described in the toml with different allocation methods for singleton vs the others possibly
 - [ ] Create memory management plugins/interfaces
@@ -118,10 +121,12 @@
   - [ ] Maybe even allow for strongly typed inclusions
   - [ ] Add looping
 - [ ] Create go to definition in templating in python somehow
+- [ ] Hot reloading
 
 ### 5
 - [ ] Create C dutch to C transpiler in framework (for ACID lang)
   - [ ] Aslang :^ 
+
 ### 6
 - [ ] Create custom vma allocator 
 - [ ] ACID (Another C Inspired Design) programming language
