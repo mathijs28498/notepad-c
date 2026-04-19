@@ -49,6 +49,12 @@
 - [ ] Fix all todos
 
 ### 2
+- [ ] Automatic python dependency tracking: https://www.perplexity.ai/search/i-have-this-cmake-code-message-s.fOhSFMS_Ssx0ouZ9YzjQ?sm=d
+  - [ ] custom commands create their own dependency .d depfile
+  - [ ] configure needs to add the cmake
+    - [ ] 2 stage configure where the first stage creates the cmake file dependencies for the second stage
+- [ ] Create depfile for python dependencies dynamically
+- [ ] 
 - [ ] Make dependencies a struct created called PluginDependencies and add it like "PluginDependencies dep;"
 - [ ] Change to glsl
 - [ ] Link vulkan indirectly for faster performance: https://docs.vulkan.org/guide/latest/loader.html#loader

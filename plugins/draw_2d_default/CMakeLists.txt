@@ -18,8 +18,6 @@ target_link_libraries(draw_2d_default
 include("pluginSDK")
 message(STATUS "Generate inc: draw 2d")
 plugin_generate_register_inc(draw_2d_default
-    TOOLS_DIR_PATH "${PLUGIN_MANAGER_DIR_PATH}/tools"
-    PYTHON_SCRIPTS_PATH "${PLUGIN_MANAGER_DIR_PATH}/cmake/scripts"
     GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
     TOML_DIR_PATH "${CMAKE_CURRENT_LIST_DIR}"
 )

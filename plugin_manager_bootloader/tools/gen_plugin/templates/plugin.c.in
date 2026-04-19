@@ -1,6 +1,0 @@
-#include "@PLUGIN_HEADER_FILE_NAME@"
-
-#include <plugin_sdk/logger_interface.h>
-LOGGER_INTERFACE_REGISTER(@TARGET_NAME@, LOG_LEVEL_DEBUG)
-
-#include "@PLUGIN_REGISTER_HEADER_FILE_NAME@"

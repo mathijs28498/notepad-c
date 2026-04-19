@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/plugin_sdk/build_tools",
+        "${workspaceFolder}plugin_manager_bootloader/build_tools"
+    ]
+}

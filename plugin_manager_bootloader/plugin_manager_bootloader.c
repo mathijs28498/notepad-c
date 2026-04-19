@@ -8,8 +8,6 @@
 #include <plugin_sdk/plugin_manager_interface.h>
 #include <plugin_sdk/plugin_manager_pm_interface.h>
 
-// #include "plugin_registry.h"
-// #include "plugin_metadata.h"
 #include "plugin_manager_bootloader_generated.h"
 
 int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager);
