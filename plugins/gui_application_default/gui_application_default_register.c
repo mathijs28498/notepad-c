@@ -1,6 +1,6 @@
 #include "gui_application_default_register.h"
 
-#include <plugin_sdk/gui_application_interface.h>
+#include <plugin_sdk/gui_application/v1/gui_application_interface.h>
 
 #include "gui_application_default.h"
 

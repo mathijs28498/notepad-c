@@ -1,6 +1,6 @@
 #include "draw_2d_default_register.h"
 
-#include <plugin_sdk/draw_2d_interface.h>
+#include <plugin_sdk/draw_2d/v1/draw_2d_interface.h>
 
 #include "draw_2d_default.h"
 

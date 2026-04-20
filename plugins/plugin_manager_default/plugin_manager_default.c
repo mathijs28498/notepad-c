@@ -7,12 +7,12 @@
 #include <stdio.h>
 
 TODO("Remove unnecessary includes")
-#include <plugin_sdk/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager_default, LOG_LEVEL_WARNING);
-#include <plugin_sdk/plugin_manager_pm_interface.h>
-#include <plugin_sdk/plugin_sdk_types.h>
-#include <plugin_sdk/environment_interface.h>
-#include <plugin_sdk/environment_pm_interface.h>
+#include <plugin_sdk/plugin_manager/v1/plugin_manager_pm_interface.h>
+#include <plugin_sdk/plugin_sdk_types/v1/plugin_sdk_types.h>
+#include <plugin_sdk/environment/v1/environment_interface.h>
+#include <plugin_sdk/environment/v1/environment_pm_interface.h>
 
 #include "plugin_manager_default_register.h"
 

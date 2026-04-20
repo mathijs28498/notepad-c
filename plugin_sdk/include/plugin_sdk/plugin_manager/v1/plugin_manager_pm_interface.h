@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "plugin_utils.h"
+#include "../../plugin_utils.h"
 #include "plugin_manager_interface.h"
 
 #pragma pack(push, 8)

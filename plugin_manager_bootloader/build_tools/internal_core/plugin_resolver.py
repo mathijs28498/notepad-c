@@ -10,7 +10,6 @@ def resolve_requested_plugins(
     plugin_registry: PluginRegistry, requested_plugins: list[RequestedPlugin]
 ) -> list[PluginManifest]:
     registered_plugin_manifests: list[PluginManifest] = []
-
     for requested_plugin in requested_plugins:
         interface_name = requested_plugin.interface_name
         plugin_name = requested_plugin.plugin_name

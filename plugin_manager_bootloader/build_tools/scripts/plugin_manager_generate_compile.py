@@ -1,6 +1,12 @@
-
-from internal_core.generators.generate_compile_files import generate_plugin_manager_bootloader_generated_src, generate_plugin_manager_depfile
-from internal_core.parsers.plugin_manager_parse import parse_app_dict, parse_plugin_registry, parse_statically_resolved_plugin_manifests
+from internal_core.generators.generate_compile_files import (
+    generate_plugin_manager_bootloader_generated_src,
+    generate_plugin_manager_depfile,
+)
+from internal_core.parsers.plugin_manager_parse import (
+    parse_app_dict,
+    parse_plugin_registry,
+    parse_statically_resolved_plugin_manifests,
+)
 from internal_core.plugin_resolver import create_interface_definitions
 
 from plugin_sdk_core.utils import read_json, read_toml
@@ -96,9 +102,6 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
     return GenerateCCodeArguments.from_args(args)
 
 
-RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH = 256
-
-
 def main():
     arguments = parce_c_code_arguments()
 
@@ -112,22 +115,16 @@ def main():
         plugin_registry_dict,
         arguments.build_platform,
     )
-    # TODO: Make a class for app_config that has all app configurations rather than just a list of requested plugins
+
     app_config = parse_app_dict(app_dict)
 
     plugin_manifests = list(
-        parse_statically_resolved_plugin_manifests(statically_resolved_plugin_manifests_dict)
+        parse_statically_resolved_plugin_manifests(
+            statically_resolved_plugin_manifests_dict
+        )
     )
 
     interface_definitions = create_interface_definitions(plugin_registry)
-    # plugin_providers = sort_plugin_providers(plugin_providers)
-
-    # TODO: Make sure this gets a proper name and gets filled appropiately
-    # plugin_manifests_for_metadata = [
-    #     plugin_manifest
-    #     for plugin_manifest in plugin_registry.plugin_manifests
-    #     if plugin_manifest.interface_name == "plugin_manager"
-    # ]
 
     generate_plugin_manager_bootloader_generated_src(
         arguments.source_plugin_manager_bootloader_generated_src,

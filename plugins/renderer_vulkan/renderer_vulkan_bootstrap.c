@@ -10,10 +10,10 @@
 #include <string.h>
 #include <assert.h>
 
-#include <plugin_sdk/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface.h>
 // LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_DEBUG)
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
-#include <plugin_sdk/window_interface.h>
+#include <plugin_sdk/window/v1/window_interface.h>
 
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_utils.h"

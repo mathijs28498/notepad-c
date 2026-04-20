@@ -1,6 +1,6 @@
 #include "input_default_register.h"
 
-#include <plugin_sdk/input_interface.h>
+#include <plugin_sdk/input/v1/input_interface.h>
 
 #include "input_default.h"
 

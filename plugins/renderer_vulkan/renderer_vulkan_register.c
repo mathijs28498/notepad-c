@@ -1,6 +1,6 @@
 #include "renderer_vulkan_register.h"
 
-#include <plugin_sdk/renderer_interface.h>
+#include <plugin_sdk/renderer/v1/renderer_interface.h>
 #include <plugin_sdk/plugin_utils.h>
 
 #include "renderer_vulkan.h"

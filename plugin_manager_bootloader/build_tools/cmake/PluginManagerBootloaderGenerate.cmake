@@ -48,23 +48,27 @@ function(plugin_manager_bootloader_setup TARGET_NAME)
 
     set(PLUGIN_MANAGER_DEPFILE_PATH "${arg_GEN_DIR_PATH}/plugin_manager_generate.d")
 
+    set(PLUGIN_MANAGER_GENERATE_CONFIGURE_SCRIPT_PATH "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_configure.py")
     set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
         "${SOURCE_CMAKE_PATH}"
         "${PLUGIN_REGISTRY_TOML_PATH}"
         "${APP_TOML_PATH}"
-        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_cmake.py"
-        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
-        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_parse.py"
-        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_types.py"
-        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_arguments.py"
-        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_static_plugin_resolver.py"
+
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/plugin_resolver.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/generators/generate_configure_files.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/parsers/plugin_manager_parse"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/datatypes.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/utils.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/datatypes.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/parsers/manifest_parse.py"
+
+        "${PLUGIN_MANAGER_GENERATE_CONFIGURE_SCRIPT_PATH}"
     )
 
-    set(PLUGIN_MANAGER_GENERATE_CMAKE_SCRIPT_PATH "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_configure.py")
-    message(STATUS "Running script: ${PLUGIN_MANAGER_GENERATE_CMAKE_SCRIPT_PATH}")
+    message(STATUS "Running script: ${PLUGIN_MANAGER_GENERATE_CONFIGURE_SCRIPT_PATH}")
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E env "PYTHONPATH=${PYTHON_PATHS_NATIVE}"
-        "${Python3_EXECUTABLE}" "${PLUGIN_MANAGER_GENERATE_CMAKE_SCRIPT_PATH}"
+        "${Python3_EXECUTABLE}" "${PLUGIN_MANAGER_GENERATE_CONFIGURE_SCRIPT_PATH}"
 
         --target-name "${TARGET_NAME}"
         --build-platform "${BUILD_PLATFORM}"
@@ -85,15 +89,14 @@ function(plugin_manager_bootloader_setup TARGET_NAME)
     )
     include("${GENERATED_CMAKE_PATH}")
 
-    message("TODO: Add dependencies properly back")
-    set(PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_compile.py")
-    message(STATUS "Adding custom command script: ${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}")
+    set(PLUGIN_MANAGER_GENERATE_COMPILE_SCRIPT_PATH "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_compile.py")
+    message(STATUS "Adding custom command script: ${PLUGIN_MANAGER_GENERATE_COMPILE_SCRIPT_PATH}")
     add_custom_command(
         OUTPUT
         ${GENERATED_PLUGIN_MANAGER_BOOTLOADER_GENERATED_SRC_PATH}
 
         COMMAND ${CMAKE_COMMAND} -E env "PYTHONPATH=${PYTHON_PATHS_NATIVE}"
-        "${Python3_EXECUTABLE}" "${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}"
+        "${Python3_EXECUTABLE}" "${PLUGIN_MANAGER_GENERATE_COMPILE_SCRIPT_PATH}"
 
         --target-name "${TARGET_NAME}"
         --build-platform "${BUILD_PLATFORM}"
@@ -110,20 +113,20 @@ function(plugin_manager_bootloader_setup TARGET_NAME)
         --depfile-path "${PLUGIN_MANAGER_DEPFILE_PATH}"
 
         DEPENDS
-        "${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}"
+        "${PLUGIN_MANAGER_GENERATE_COMPILE_SCRIPT_PATH}"
         "${PLUGIN_REGISTRY_TOML_PATH}"
         "${APP_TOML_PATH}"
         "${GENERATED_STATICALLY_RESOLVED_PLUGIN_MANIFACTS_JSON_PATH}"
 
         "${SOURCE_PLUGIN_MANAGER_BOOTLOADER_GENERATED_SRC_PATH}"
 
-        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/compile_time_plugin_resolver.py"
-        # "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
-        # "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_parse.py"
-        # "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_types.py"
-        # "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_arguments.py"
-        # "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_plugin_resolver.py"
-
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/plugin_resolver.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/generators/generate_compile_files.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/parsers/plugin_manager_parse"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/datatypes.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/utils.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/datatypes.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/parsers/manifest_parse.py"
         DEPFILE "${PLUGIN_MANAGER_DEPFILE_PATH}"
 
         COMMENT "Generating c code files"

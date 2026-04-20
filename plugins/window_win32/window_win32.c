@@ -3,10 +3,10 @@
 #include <Windows.h>
 #include <assert.h>
 
-#include <plugin_sdk/window_interface.h>
-#include <plugin_sdk/environment_interface.h>
+#include <plugin_sdk/window/v1/window_interface.h>
+#include <plugin_sdk/environment/v1/environment_interface.h>
 #include <plugin_sdk/plugin_utils.h>
-#include <plugin_sdk/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(window_win32, LOG_LEVEL_DEBUG);
 
 #include "window_win32_register.h"

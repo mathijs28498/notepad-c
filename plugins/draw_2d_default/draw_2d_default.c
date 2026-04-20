@@ -1,6 +1,6 @@
 #include "draw_2d_default.h"
 
-#include <plugin_sdk/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(draw_2d_default, LOG_LEVEL_DEBUG)
 
 #include "draw_2d_default_register.h"

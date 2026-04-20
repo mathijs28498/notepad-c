@@ -1,10 +1,10 @@
 #include <stdint.h>
-#include <plugin_sdk/plugin_manager_interface.h>
+#include <plugin_sdk/plugin_manager/v1/plugin_manager_interface.h>
 
-#include <plugin_sdk/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
-#include <plugin_sdk/window_interface.h>
-#include <plugin_sdk/gui_application_interface.h>
+#include <plugin_sdk/window/v1/window_interface.h>
+#include <plugin_sdk/gui_application/v1/gui_application_interface.h>
 
 
 

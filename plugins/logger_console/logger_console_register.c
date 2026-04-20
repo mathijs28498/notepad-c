@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <conio.h>
 
-#include <plugin_sdk/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(logger_console, LOG_LEVEL_DEBUG);
 
 #include "logger_console.h"

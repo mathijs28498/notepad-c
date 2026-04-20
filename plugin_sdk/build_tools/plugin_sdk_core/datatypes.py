@@ -17,6 +17,7 @@ class PluginLifetime(Enum):
 class PluginManifest:
     target_name: str
     interface_name: str
+    interface_version: str
     plugin_name: str
     supported_lifetimes: list[PluginLifetime]
     preferred_lifetime: PluginLifetime

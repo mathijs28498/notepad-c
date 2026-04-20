@@ -1,8 +1,8 @@
 #include "plugin_manager_default_register.h"
 
-#include <plugin_sdk/plugin_manager_interface.h>
-#include <plugin_sdk/plugin_manager_pm_interface.h>
-#include <plugin_sdk/plugin_sdk_types.h>
+#include <plugin_sdk/plugin_manager/v1/plugin_manager_interface.h>
+#include <plugin_sdk/plugin_manager/v1/plugin_manager_pm_interface.h>
+#include <plugin_sdk/plugin_sdk_types/v1/plugin_sdk_types.h>
 
 #include "plugin_manager_default.h"
 #include "plugin_manager_default_bootstrap.h"

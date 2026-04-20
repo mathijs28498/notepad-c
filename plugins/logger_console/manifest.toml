@@ -1,4 +1,5 @@
 interface_name = "logger"
+interface_version = "1"
 plugin_name = "console"
 init = true
 shutdown = true

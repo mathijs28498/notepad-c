@@ -1,6 +1,6 @@
 #pragma once
 
-#include "plugin_utils.h"
+#include "../../plugin_utils.h"
 
 #pragma pack(push, 8)
 

@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <plugin_sdk/plugin_utils.h>
 
+#include "../../plugin_utils.h"
 #include "window_interface_window_event.h"
 
 #define WINDOW_INTERFACE_MAX_WINDOW_NAME_LEN 256

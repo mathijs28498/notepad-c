@@ -5,6 +5,8 @@ from typing import Any
 import sys
 
 from plugin_sdk_core.datatypes import PluginManifest, PluginDependency, PluginLifetime
+from plugin_sdk_core.utils import read_toml
+from plugin_sdk_core.parsers.manifest_parse import parse_plugin_manifest
 from internal_core.datatypes import PluginRegistryInterface
 
 # TODO: Check if this properly works for older versions
@@ -32,8 +34,6 @@ from internal_core.datatypes import (
     PluginRegistry,
     AppConfig,
     RequestedPlugin,
-    PluginProvider,
-    PluginProviderDependency,
 )
 from typing import Optional
 
@@ -100,68 +100,6 @@ def parse_plugin_registry(
     )
 
 
-# TODO: Add more sane defaults if necessary
-def parse_plugin_manifest(
-    manifest_dict: dict[str, Any], manifest_dir_path: Path
-) -> PluginManifest:
-
-    interface_name: str = manifest_dict["interface_name"]
-    plugin_name: str = manifest_dict["plugin_name"]
-    target_name: str = f"{interface_name}_{plugin_name}"
-
-    source_path_str: Optional[str] = manifest_dict.get("source_path")
-    module_path_str: Optional[str] = manifest_dict.get("module_path")
-
-    supported_lifetimes = [
-        PluginLifetime(lifetime) for lifetime in manifest_dict["supported_lifetimes"]
-    ]
-    preferred_lifetime: PluginLifetime = manifest_dict.get(
-        "preferred_lifetime", PluginLifetime.UNKNOWN
-    )
-
-    has_init: bool = manifest_dict.get("init", False)
-    has_shutdown: bool = manifest_dict.get("shutdown", False)
-
-    dependencies: dict[str, PluginDependency] = {}
-    for dependency_interface_name, dependency_config_dict in manifest_dict.get(
-        "dependencies", {}
-    ).items():
-        if dependency_config_dict is None:
-            dependency_config_dict = {}
-
-        dependency_variable_name = dependency_config_dict.get(
-            "variable_name", dependency_interface_name
-        )
-        dependency_is_deferred = dependency_config_dict.get("deferred", False)
-        if not has_init:
-            dependency_is_deferred = True
-
-        dependencies[dependency_interface_name] = PluginDependency(
-            variable_name=dependency_variable_name,
-            is_deferred=dependency_is_deferred,
-        )
-
-    source_path: Path = Path(source_path_str) if source_path_str else manifest_dir_path
-    # TODO: Add default module path maybe
-    module_path: Path = (
-        Path(module_path_str) if module_path_str else Path("Add default here")
-    )
-
-    return PluginManifest(
-        target_name=target_name,
-        interface_name=interface_name,
-        plugin_name=plugin_name,
-        supported_lifetimes=supported_lifetimes,
-        preferred_lifetime=preferred_lifetime,
-        has_init=has_init,
-        has_shutdown=has_shutdown,
-        dependencies=dependencies,
-        manifest_path=manifest_dir_path / "manifest.toml",
-        source_path=source_path,
-        module_path=module_path,
-    )
-
-
 def parse_app_dict(
     requested_plugins_dict: dict[str, Any],
 ) -> AppConfig:
@@ -201,46 +139,41 @@ def parse_statically_resolved_plugin_manifests(
     plugin_manifest_dicts: list[dict[str, Any]],
 ) -> Iterator[PluginManifest]:
     for plugin_manifest_dict in plugin_manifest_dicts:
-        supported_lifetimes = [
-            parse_lifetime(lifetime)
-            for lifetime in plugin_manifest_dict["supported_lifetimes"]
-        ]
+        try:
+            supported_lifetimes = [
+                parse_lifetime(lifetime)
+                for lifetime in plugin_manifest_dict["supported_lifetimes"]
+            ]
 
-        dependencies = {
-            dependency_interface_name: PluginDependency(**dependency)
-            for dependency_interface_name, dependency in plugin_manifest_dict[
-                "dependencies"
-            ].items()
-        }
+            dependencies = {
+                dependency_interface_name: PluginDependency(**dependency)
+                for dependency_interface_name, dependency in plugin_manifest_dict[
+                    "dependencies"
+                ].items()
+            }
 
-        manifest_path = Path(plugin_manifest_dict["manifest_path"])
-        source_path = Path(plugin_manifest_dict["source_path"])
-        module_path = Path(plugin_manifest_dict["module_path"])
+            manifest_path = Path(plugin_manifest_dict["manifest_path"])
+            source_path = Path(plugin_manifest_dict["source_path"])
+            module_path = Path(plugin_manifest_dict["module_path"])
+            
 
-        yield PluginManifest(
-            target_name=plugin_manifest_dict["target_name"],
-            interface_name=plugin_manifest_dict["interface_name"],
-            plugin_name=plugin_manifest_dict["plugin_name"],
-            supported_lifetimes=supported_lifetimes,
-            preferred_lifetime=parse_lifetime(
-                plugin_manifest_dict["preferred_lifetime"]
-            ),
-            has_init=plugin_manifest_dict["has_init"],
-            has_shutdown=plugin_manifest_dict["has_shutdown"],
-            dependencies=dependencies,
-            manifest_path=manifest_path,
-            source_path=source_path,
-            module_path=module_path,
-        )
+            plugin_manifest = PluginManifest(
+                target_name=plugin_manifest_dict["target_name"],
+                interface_name=plugin_manifest_dict["interface_name"],
+                interface_version=plugin_manifest_dict["interface_version"],
+                plugin_name=plugin_manifest_dict["plugin_name"],
+                supported_lifetimes=supported_lifetimes,
+                preferred_lifetime=parse_lifetime(
+                    plugin_manifest_dict["preferred_lifetime"]
+                ),
+                has_init=plugin_manifest_dict["has_init"],
+                has_shutdown=plugin_manifest_dict["has_shutdown"],
+                dependencies=dependencies,
+                manifest_path=manifest_path,
+                source_path=source_path,
+                module_path=module_path,
+            )
+        except KeyError: 
+            raise KeyError(f"Something went wrong parsing plugin manifest at: {plugin_manifest_dict}")
+        yield plugin_manifest
 
-
-def read_json(source_path: Path):
-    print(f"-- Reading: {source_path}")
-    with open(source_path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def read_toml(source_path: Path):
-    print(f"-- Reading: {source_path}")
-    with open(source_path, "rb") as f:
-        return tomllib.load(f)

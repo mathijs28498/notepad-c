@@ -6,9 +6,9 @@
 #include <assert.h>
 #include <string.h>
 
-#include <plugin_sdk/plugin_sdk_types.h>
-#include <plugin_sdk/plugin_manager_interface.h>
-#include <plugin_sdk/plugin_manager_pm_interface.h>
+#include <plugin_sdk/plugin_sdk_types/v1/plugin_sdk_types.h>
+#include <plugin_sdk/plugin_manager/v1/plugin_manager_interface.h>
+#include <plugin_sdk/plugin_manager/v1/plugin_manager_pm_interface.h>
 #include <dynamic_metadata_resolver.h>
 
 #include "plugin_manager_bootloader_generated.h"

@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "plugin_utils.h"
+#include "../../plugin_utils.h"
 
 #pragma pack(push, 8)
 

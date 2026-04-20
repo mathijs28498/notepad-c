@@ -49,6 +49,7 @@
 - [ ] Fix all todos
 
 ### 2
+- [ ] Add ${registry_dir} and ${build_dir} anchors for manifest paths
 - [ ] Automatic python dependency tracking: https://www.perplexity.ai/search/i-have-this-cmake-code-message-s.fOhSFMS_Ssx0ouZ9YzjQ?sm=d
   - [ ] custom commands create their own dependency .d depfile
   - [ ] configure needs to add the cmake
@@ -147,6 +148,6 @@ interface inline regex creator:
 
 calculate lines of code:
 Get-ChildItem -Path . -Recurse -File | Where-Object {
-($_.Extension -in @('.c', '.h', '.txt', '.cmake', '.py')) -and
+($_.Extension -in @('.md', '.c', '.h', '.txt', '.cmake', '.py')) -and
 ($_.FullName -notmatch '\\lib\\' -or $_.FullName -match '\\lib\\plugin_manager_bootloader\\' -or $_.FullName -match '\\lib\\static_alloc\\')
 } | Get-Content | Measure-Object -Line

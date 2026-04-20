@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
-#include "plugin_utils.h"
+#include "../../plugin_utils.h"
 
 struct PluginManagerContext;
 struct PluginScope;

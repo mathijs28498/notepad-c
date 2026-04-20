@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <plugin_sdk/plugin_utils.h>
-#include <plugin_sdk/window_interface_window_event_enums.h>
+#include <plugin_sdk/window/v1/window_interface_window_event_enums.h>
 
 #include "plugin_dependencies.h"
 

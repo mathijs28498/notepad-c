@@ -54,7 +54,7 @@ function(plugin_generate_register_inc TARGET_NAME)
         "${PLUGIN_SDK_CORE_DIR_PATH}/parsers/__init__.py"
         "${PLUGIN_SDK_CORE_DIR_PATH}/parsers/manifest_parse.py"
         "${PLUGIN_SDK_CORE_DIR_PATH}/generators/__init__.py"
-        "${PLUGIN_SDK_CORE_DIR_PATH}/generators/plugin_sdk_templates.py"
+        "${PLUGIN_SDK_CORE_DIR_PATH}/generators/generate_sdk_files.py"
 
         COMMENT "Generating register inc header"
         VERBATIM

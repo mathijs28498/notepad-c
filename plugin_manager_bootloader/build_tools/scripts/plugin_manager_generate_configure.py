@@ -16,13 +16,6 @@ from plugin_sdk_core.datatypes import PluginManifest
 
 from pathlib import Path
 from dataclasses import dataclass
-
-# from plugin_manager_plugin_resolver import (
-#     resolve_requested_plugin_providers,
-#     check_resolved_requested_plugin_providers,
-#     sort_plugin_providers,
-# )
-
 import argparse
 
 
@@ -135,12 +128,9 @@ def main():
     if not arguments.build_dynamic_plugins:
         app_dict = read_toml(arguments.app_toml)
         app_config = parse_app_dict(app_dict)
-
         plugin_manifests = resolve_compile_time_plugins(app_config, plugin_registry)
-        print([pm.interface_name for pm in plugin_manifests])
 
     plugin_manifests = sort_plugin_manifests(plugin_manifests)
-    print([pm.interface_name for pm in plugin_manifests])
 
     generate_statically_resolved_plugin_manifests_json(
         arguments.generated_statically_resolved_plugin_manifests_json, plugin_manifests

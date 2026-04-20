@@ -6,8 +6,8 @@
 #include <stdbool.h>
 
 #include <plugin_sdk/plugin_utils.h>
-#include <plugin_sdk/plugin_sdk_types.h>
-#include <plugin_sdk/plugin_manager_pm_interface.h>
+#include <plugin_sdk/plugin_sdk_types/v1/plugin_sdk_types.h>
+#include <plugin_sdk/plugin_manager/v1/plugin_manager_pm_interface.h>
 
 @PLUGIN_DEPENDENCIES_TEXT@
 
@@ -44,7 +44,7 @@ int32_t get_bootloader_plugin_metadatas(
     const PluginMetadata ** out_plugin_manager_metadata)
 {
     (void) unused_plugin_registry;
-    
+
     *out_plugin_metadatas = plugin_metadatas_.arr;
     *out_plugin_manager_metadata = @PLUGIN_MANAGER_METADATA_TEXT@;
 

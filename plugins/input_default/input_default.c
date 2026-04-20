@@ -1,6 +1,6 @@
 #include "input_default.h"
 
-#include <plugin_sdk/window_interface_window_event.h>
+#include <plugin_sdk/window/v1/window_interface_window_event.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>

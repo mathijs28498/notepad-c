@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <math.h>
 
-#include <plugin_sdk/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_render, LOG_LEVEL_DEBUG)
 
 #include "renderer_vulkan_utils.h"

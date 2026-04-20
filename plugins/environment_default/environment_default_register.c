@@ -1,7 +1,7 @@
 #include "environment_default_register.h"
 
-#include <plugin_sdk/environment_interface.h>
-#include <plugin_sdk/environment_pm_interface.h>
+#include <plugin_sdk/environment/v1/environment_interface.h>
+#include <plugin_sdk/environment/v1/environment_pm_interface.h>
 
 #include "environment_default.h"
 
