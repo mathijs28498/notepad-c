@@ -44,6 +44,14 @@
 - [x] Figure out if exported declarations can also be supported dynamically where they are using dllexport so the framework can use them dynamically or if theyre purely for plugin_manager
 - [x] Figure out how to handle capacity in dynamic plugin resolution
 - [x] Implement scope shutdown
+- [x] Make dependencies a union created called PluginDependencies and add it like "PluginDependencies dep;"
+- [x] Make static plugins work again
+- [x] Determine if logger macro should take the logger argument or not
+- [x] Figure out singleton and scoped and transient 
+- [x] Make plugin_manager work static and dynamic (or always static)
+- [x] Look into singleton vs scoped vs transient
+  - [x] This can now be described in the toml with different allocation methods for singleton vs the others possibly
+- [x] figure out how to properly structure the code to be used outside this repo
 
 ### 1
 - [ ] Fix all todos
@@ -56,7 +64,6 @@
     - [ ] 2 stage configure where the first stage creates the cmake file dependencies for the second stage
 - [ ] Create depfile for python dependencies dynamically
 - [ ] Make get in app fail if it is not explicitly requested plugin
-- [ ] Make dependencies a struct created called PluginDependencies and add it like "PluginDependencies dep;"
 - [ ] Change to glsl
 - [ ] Link vulkan indirectly for faster performance: https://docs.vulkan.org/guide/latest/loader.html#loader
 - [ ] Add project wide debug level
@@ -72,20 +79,14 @@
     - [ ] Add memory allcoation tracker
   - [ ] Check for other allocation strategies that might be necessary
 - [ ] Figure out valgrind
-- [ ] Put dependencies into own struct called PluginDependencies created by the header and add this to the context struct with a small name
 - [ ] Add a way to get custom text inserted in log statements for error codes in plugin_utils
 - [ ] Add a composite Graphics/GPU interface that does the GPU initialization like vulkan. Then the renderer/ gpu_compute interface plugins can depend on this somehow. They need to depend specifically on the vulkan version however. This way you can specify a renderer and the composite one gets added right away.
 - [ ] Add more robust checks for user facing plugins (like checking if context != NULL)
-- [ ] Make static plugins work again
 - [ ] Rename whole project to something acidy from framework
-- [ ] Determine if logger macro should take the logger argument or not
 - [ ] Make it so that plugins have access to the plugin_manager for scoped plugins for example (allow for scoped plugin dependencies)
 - [ ] Change calloc for context to use a static allocator
   - [ ] Also make it work with scopes
-- [ ] Figure out singleton and scoped and transient 
-  - [ ] Create a macro for a scope that automatically destroys the scope (using the macro forloop trick)
 - [ ] Create logger fallback for initial plugin_manager dependency resolver
-- [ ] Make plugin_manager work static and dynamic (or always static)
 - [ ] Add attachments that are defined in .toml
   - [ ] attachments are just interfaces
   - [ ] if attachment wants to be callable it has to have own interface and needs to embed the attachment interface
@@ -100,7 +101,7 @@
 - [ ] Change plugin_name meaning to be the entire plugin_name (eg. renderer_vulkan)
   - [ ] Think of a new term for the former plugin_name (variant)
 - [ ] Create different cmake target that houses the pm_interface headers and remove these from the general include
-  - [ ] Think if the include target has the correct name
+  - [x] Think if the include target has the correct name
 - [ ] Implement hash function for interface_name
 
 ### 3
@@ -115,10 +116,7 @@
   - [ ] Add a job interface, this interface hides the type of system like pthreads vs fibers vs ...
   - [ ] Make singleton plugins either thread safe or not
   - [ ] If not thread safe singleton, error on grabbibng form other thread than creatred
-- [ ] Look into singleton vs scoped vs transient
-    - [ ] This can now be described in the toml with different allocation methods for singleton vs the others possibly
 - [ ] Create memory management plugins/interfaces
-- [ ] figure out how to properly structure the code to be used outside this repo
 - [ ] Add docker
 - [ ] Add ecs
 - [ ] Add game objects scene logic
