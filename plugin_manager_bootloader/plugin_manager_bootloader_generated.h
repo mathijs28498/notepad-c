@@ -9,14 +9,9 @@ struct PluginRegistry;
 const struct PluginRegistry *get_plugin_registry(void);
 
 struct PluginMetadata;
-
-typedef struct BootloaderPluginMetadatas
-{
-    const struct PluginMetadata *const *plugin_metadatas;
-    const struct PluginMetadata *plugin_manager_metadata;
-} BootloaderPluginMetadatas;
-
-const BootloaderPluginMetadatas *get_bootloader_plugin_metadatas(void);
+void get_bootloader_plugin_metadatas(
+    const struct PluginMetadata *const **out_plugin_metadatas,
+    const struct PluginMetadata ** out_plugin_manager_metadata);
 
 struct RequestedPlugin;
 

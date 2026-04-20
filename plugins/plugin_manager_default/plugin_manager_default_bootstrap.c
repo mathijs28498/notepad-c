@@ -128,24 +128,28 @@ int32_t get_metadata_from_plugin_definition(const LoggerInterface *logger,
                                             const PluginMetadata **out_plugin_metadata)
 {
     assert(plugin_definition != NULL);
-    assert(static_plugin_metadatas != NULL);
     assert(out_plugin_metadata != NULL);
 
     int32_t ret;
 
-    for (size_t j = 0; j < GET_ARRAY_LENGTH(static_plugin_metadatas); j++)
+    // Resolve statically loaded plugin metadatas
+    if (static_plugin_metadatas != NULL)
     {
-        const PluginMetadata *static_plugin_metadata = static_plugin_metadatas[j];
-        TODO("Do I need to do a plugin comparison too?");
-        if (strcmp(plugin_definition->interface_name, static_plugin_metadata->interface_name) == 0)
+        for (size_t j = 0; j < GET_ARRAY_LENGTH(static_plugin_metadatas); j++)
         {
-            *out_plugin_metadata = static_plugin_metadata;
-            if (logger != NULL)
-                LOG_DBG(logger, "Static plugin metadata for plugin '%s' added", plugin_definition->target_name);
-            return 0;
+            const PluginMetadata *static_plugin_metadata = static_plugin_metadatas[j];
+            TODO("Do I need to do a plugin comparison too?");
+            if (strcmp(plugin_definition->interface_name, static_plugin_metadata->interface_name) == 0)
+            {
+                *out_plugin_metadata = static_plugin_metadata;
+                if (logger != NULL)
+                    LOG_DBG(logger, "Static plugin metadata for plugin '%s' added", plugin_definition->target_name);
+                return 0;
+            }
         }
     }
 
+    // Plugin does not have static plugin metadata, load it in dynamically
     TODO("Save the module and shut it down when not needed anymore")
     PluginGetMetadata_Fn get_metadata_fn = NULL;
     ret = resolve_get_metadata_fn_dynamic(logger, plugin_definition->module_path, plugin_definition->target_name, &get_metadata_fn);
@@ -175,7 +179,6 @@ int32_t resolve_plugin_metadatas(const LoggerInterface *logger,
                                  RegisteredPlugin *out_registered_plugins)
 {
     assert(plugin_definitions != NULL);
-    assert(static_plugin_metadatas != NULL);
     assert(out_registered_plugins != NULL);
 
     int32_t ret;
@@ -287,7 +290,6 @@ int32_t load_requested_plugins(const LoggerInterface *logger,
 {
     ;
     assert(plugin_registry != NULL);
-    assert(static_plugin_metadatas != NULL);
     assert(requested_plugins != NULL);
     assert(out_registered_plugins != NULL);
 
@@ -448,7 +450,6 @@ int32_t initialize_plugin_manager_dependencies(
     assert(context != NULL);
     assert(plugin_manager_metadata != NULL);
     assert(plugin_registry != NULL);
-    assert(static_plugin_metadatas != NULL);
 
     int32_t ret;
     CREATE_ARRAY(RequestedPlugin, requested_plugins, MAX_REGISTERED_PLUGINS_LEN);
@@ -667,7 +668,6 @@ int32_t plugin_manager_default_bootstrap(
     assert(context != NULL);
     assert(plugin_manager_metadata != NULL);
     assert(plugin_registry != NULL);
-    assert(static_plugin_metadatas != NULL);
     assert(requested_plugins_explicit != NULL);
 
     int32_t ret;

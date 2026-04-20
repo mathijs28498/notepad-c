@@ -38,14 +38,12 @@ CREATE_INITIALIZED_ARRAY_WITH_DECL(
 {@PLUGIN_METADATAS_TEXT@}
     );
 
-TODO("Check how to do plugin_metadatas initialzied by exposing extern structs rather than get_metadata methods")
-const BootloaderPluginMetadatas* get_bootloader_plugin_metadatas(void)
+void get_bootloader_plugin_metadatas(
+    const PluginMetadata *const **out_plugin_metadatas,
+    const PluginMetadata ** out_plugin_manager_metadata)
 {
-    static const BootloaderPluginMetadatas bootloader_plugin_metadatas = {
-        .plugin_metadatas = plugin_metadatas_.arr,
-        .plugin_manager_metadata = @PLUGIN_MANAGER_METADATA_TEXT@,
-    };
-    return &bootloader_plugin_metadatas;
+    *out_plugin_metadatas = plugin_metadatas_.arr;
+    *out_plugin_manager_metadata = @PLUGIN_MANAGER_METADATA_TEXT@;
 }
 
 #endif // #if !PLUGIN_BUILD_SHARED
