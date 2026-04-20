@@ -81,7 +81,6 @@ def generate_register_inc(
             textwrap.indent("\n".join(plugin_dependency_text_list), indent_prefix),
         )
 
-    # TODO: Make this work with dependencies
     plugin_dependencies_len = len(plugin_manifest.dependencies)
     plugin_dependencies_variable_text = (
         "plugin_dependencies" if plugin_manifest.dependencies else "NULL"
@@ -124,7 +123,7 @@ def generate_register_inc(
     configure_file(source_path, destination_path, replacements, False)
 
 
-def generate_plugin_dependencies(
+def generate_plugin_dependencies_header(
     source_path: Path,
     destination_path: Path,
     plugin_manifest: PluginManifest,

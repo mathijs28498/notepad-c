@@ -23,7 +23,6 @@ typedef struct PluginProvider
     PluginDestroyContext_Fn destroy_context;
 } PluginProvider;
 
-TODO("If this every changes from just being a string, check usage of it")
 typedef struct PluginDependency
 {
     const char *interface_name;
@@ -43,12 +42,10 @@ typedef struct PluginMetadata
     const char *interface_name;
     const char *plugin_name;
 
-    TODO("Check if this needs dependencies, as PluginDefintion already has those")
     TODO("Check how to add capacity and stuff here")
     const PluginDependency *dependencies;
     size_t dependencies_len;
 
-    TODO("Check if this needs to be here or needs to PluginDefinition")
     TODO("Check how to add capacity and stuff here")
     const PluginLifetime *supported_lifetimes;
     size_t supported_lifetimes_len;

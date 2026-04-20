@@ -16,7 +16,6 @@ typedef struct WindowInterfaceCreateWindowOptions
     const char window_name[WINDOW_INTERFACE_MAX_WINDOW_NAME_LEN];
 } WindowInterfaceCreateWindowOptions;
 
-TODO("See if this should be a separate WindowRendererVtable that extends the WindowVtable")
 TODO("Allow for multiple windows")
 typedef struct WindowInterfaceOSHandles
 {

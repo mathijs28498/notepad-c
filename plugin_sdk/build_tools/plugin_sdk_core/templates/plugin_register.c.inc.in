@@ -52,11 +52,3 @@ __declspec(dllexport) const PluginMetadata *@TARGET_NAME@_get_plugin_metadata(vo
     return &@TARGET_NAME@_plugin_metadata;
 };
 #endif // #if defined(PLUGIN_BUILD_SHARED)
-
-// #if defined(WIN32) && defined(PLUGIN_BUILD_SHARED)
-// #define PLUGIN_FUNCTION_PREFIX __declspec(dllexport)
-// #elif defined(WIN32) && defined(PLUGIN_USE_SHARED)
-// #define PLUGIN_FUNCTION_PREFIX __declspec(dllimport)
-// #else
-// #define PLUGIN_FUNCTION_PREFIX
-// #endif // defined(WIN32) && defined(PLUGIN_BUILD_SHARED)

@@ -8,7 +8,6 @@
 
 struct RendererContext;
 
-TODO("Figure out what variables config needs to have")
 typedef struct RendererWindowConfig
 {
     void *window_handle;
@@ -21,7 +20,6 @@ typedef struct RendererWindowConfig
 
 typedef struct RendererVtable
 {
-    // int32_t (*create_swapchain)(struct RendererContext *context, RendererWindowConfig *window_config);
     int32_t (*start)(struct RendererContext *context);
     int32_t (*render)(struct RendererContext *context);
     void (*on_window_resize)(struct RendererContext *context, uint32_t width, uint32_t height);

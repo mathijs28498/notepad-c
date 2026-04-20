@@ -38,7 +38,6 @@ def read_toml(source_path: Path):
         return tomllib.load(f)
 
 
-# TODO: Do this in a shared tools python file
 def create_and_write_to_file(
     destination_path: Path,
     content: str,
@@ -58,7 +57,6 @@ def create_and_write_to_file(
         f.write(content)
 
 
-# TODO: Do this in a shared tools python file
 def configure_file(
     source_path: Path,
     destination_path: Path,

@@ -22,7 +22,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     TODO("Figure out where to do this, if this is part of plugin_manager interface, plugin_manager_bootloader, or here in the main/ in the other main function")
     hr = CoInitialize(NULL);
 
-    TODO("Make sure the windows places that use it know how the struct looks like, maybe define this inside of environment_interface.h");
     static struct
     {
         void *hInstance;

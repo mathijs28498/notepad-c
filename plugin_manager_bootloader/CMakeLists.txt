@@ -39,8 +39,6 @@ target_link_libraries(plugin_manager_bootloader
     dynamic_metadata_resolver
 )
 
-message("TODO: Check if this has to go inside the plugin_manager_setup")
-
 if(BUILD_SHARED_LIBS)
     target_compile_definitions(plugin_manager_bootloader PRIVATE PLUGIN_BUILD_SHARED)
 endif()

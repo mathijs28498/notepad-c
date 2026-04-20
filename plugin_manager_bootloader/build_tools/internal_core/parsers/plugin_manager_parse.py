@@ -116,7 +116,6 @@ def parse_app_dict(
     requested_plugins_dict: dict[str, Any],
 ) -> AppConfig:
     # TODO: Add error handling
-    # TODO: Check if plugin name works properly here if not wanting default
     requested_plugins = [
         RequestedPlugin(
             interface_name=requested_plugin_interface_name,

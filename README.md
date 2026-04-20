@@ -52,12 +52,12 @@
 - [x] Look into singleton vs scoped vs transient
   - [x] This can now be described in the toml with different allocation methods for singleton vs the others possibly
 - [x] figure out how to properly structure the code to be used outside this repo
+- [x] Add ${registry_dir} and ${build_dir} anchors for manifest paths
 
 ### 1
 - [ ] Fix all todos
 
 ### 2
-- [ ] Add ${registry_dir} and ${build_dir} anchors for manifest paths
 - [ ] Automatic python dependency tracking: https://www.perplexity.ai/search/i-have-this-cmake-code-message-s.fOhSFMS_Ssx0ouZ9YzjQ?sm=d
   - [ ] custom commands create their own dependency .d depfile
   - [ ] configure needs to add the cmake

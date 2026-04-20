@@ -21,7 +21,6 @@ typedef struct PluginDefinition
     const char *plugin_name;
     const PluginDependencyDefinition *dependencies;
     const size_t dependencies_len;
-    TODO("Check if has_ functions are necessary as metadata has NULL for these functions in that case")
     const bool has_init;
     const bool has_shutdown;
     const char *module_path;

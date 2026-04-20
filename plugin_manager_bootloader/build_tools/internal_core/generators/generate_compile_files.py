@@ -12,7 +12,6 @@ import textwrap
 def create_plugin_metadata_replacements(
     plugin_manifests: list[PluginManifest],
 ) -> list[tuple[str, str]]:
-    # TODO: figure out what the argument should hold
     get_plugin_metadata_forward_declarations = "\n".join(
         f"extern const PluginMetadata {plugin_manifest.target_name}_plugin_metadata;"
         for plugin_manifest in plugin_manifests

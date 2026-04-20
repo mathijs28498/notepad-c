@@ -1,6 +1,6 @@
 from plugin_sdk_core.generators.generate_sdk_files import (
     generate_register_inc,
-    generate_plugin_dependencies,
+    generate_plugin_dependencies_header,
 )
 
 from plugin_sdk_core.parsers.manifest_parse import parse_plugin_manifest
@@ -81,8 +81,7 @@ def main():
         plugin_manifest_dict, arguments.manifest_toml
     )
 
-    # TODO: Change names to have header in the naming
-    generate_plugin_dependencies(
+    generate_plugin_dependencies_header(
         arguments.source_plugin_dependencies,
         arguments.generated_plugin_dependencies,
         plugin_manifest,
