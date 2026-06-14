@@ -7,6 +7,7 @@
 #include <cglm/types.h>
 
 #include <plugin_sdk/renderer/v1/renderer_types.h>
+#include <plugin_sdk/allocator/v1/allocator_types.h>
 
 #pragma pack(push, 8)
 
@@ -42,6 +43,12 @@ typedef struct GPUMeshBuffers
     uint32_t indices_len;
 } GPUMeshBuffers;
 
+typedef struct DrawResource
+{
+    const char *name;
+    RendererImageHandle resource_handle;
+} DrawResource;
+
 typedef struct DrawContext
 {
     PluginDependencies deps;
@@ -56,10 +63,14 @@ typedef struct DrawContext
     RendererPipelineLayoutHandle triangle_mesh_pipeline_layout_handle;
     RendererGraphicsPipelineHandle triangle_mesh_pipeline_handle;
 
-    RendererImageHandle draw_image_handle;
     RendererExtent2D draw_extent;
 
     GPUMeshBuffers rect_mesh_buffers;
+
+    DrawResource *resources_a;
+
+    AllocatorAllocationHandle allocation_handle;
+
 } DrawContext;
 
 #pragma pack(pop)

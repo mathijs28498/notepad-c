@@ -13,6 +13,7 @@ LOGGER_INTERFACE_REGISTER(draw_default_start, LOG_LEVEL_DEBUG)
 #include "shader_colored_triangle_fragment.h"
 
 #include "draw_default_register.h"
+#include "draw_default_render_frame.h"
 
 typedef struct DD_Shaders
 {
@@ -89,9 +90,10 @@ int32_t create_resource_set_layouts(DrawContext *context)
     return 0;
 }
 
-int32_t draw_default_create_draw_image(DrawContext *context)
+int32_t draw_default_create_draw_image(DrawContext *context, RendererImageHandle *out_image_handle)
 {
     assert(context != NULL);
+    assert(out_image_handle != NULL);
 
     int32_t ret;
     LoggerInterface *logger = context->deps.logger;
@@ -112,7 +114,7 @@ int32_t draw_default_create_draw_image(DrawContext *context)
         .memory_usage = RENDERER_MEMORY_USAGE_GPU_ONLY,
     };
 
-    RETURN_IF_ERROR(logger, ret, renderer_create_image(renderer, &renderer_image_create_info, &context->draw_image_handle),
+    RETURN_IF_ERROR(logger, ret, renderer_create_image(renderer, &renderer_image_create_info, out_image_handle),
                     "Failed to create draw image: %d", ret);
 
     context->draw_extent.width = render_image_properties.extent.width;
@@ -133,8 +135,11 @@ int32_t create_triangle_pipeline(DrawContext *context, DD_Shaders *shaders)
     RETURN_IF_ERROR(logger, ret, renderer_create_pipeline_layout(renderer, &pipeline_layout_create_info, &context->triangle_pipeline_layout_handle),
                     "Failed to create triangle pipeline layout: %d", ret);
 
+    DrawResource *draw_image_resource;
+    RETURN_IF_ERROR(logger, ret, draw_get_resource_handle_by_name(context, "draw_image", &draw_image_resource),
+                    "Failed to get draw image resource: %d", ret);
     RendererImageProperties draw_image_properties;
-    RETURN_IF_ERROR(logger, ret, renderer_get_image_properties(renderer, context->draw_image_handle, &draw_image_properties),
+    RETURN_IF_ERROR(logger, ret, renderer_get_image_properties(renderer, draw_image_resource->resource_handle, &draw_image_properties),
                     "Failed to get draw image properties: %d", ret);
 
     RendererGraphicsPipelineCreateInfo pipeline_create_info = {
@@ -181,8 +186,12 @@ int32_t create_triangle_mesh_pipeline(DrawContext *context, DD_Shaders *shaders)
     RETURN_IF_ERROR(logger, ret, renderer_create_pipeline_layout(renderer, &pipeline_layout_create_info, &context->triangle_mesh_pipeline_layout_handle),
                     "Failed to create triangle mesh pipeline layout: %d", ret);
 
+    DrawResource *draw_image_resource;
+    RETURN_IF_ERROR(logger, ret, draw_get_resource_handle_by_name(context, "draw_image", &draw_image_resource),
+                    "Failed to get draw image resource: %d", ret);
+
     RendererImageProperties draw_image_properties;
-    RETURN_IF_ERROR(logger, ret, renderer_get_image_properties(renderer, context->draw_image_handle, &draw_image_properties),
+    RETURN_IF_ERROR(logger, ret, renderer_get_image_properties(renderer, draw_image_resource->resource_handle, &draw_image_properties),
                     "Failed to get draw image properties: %d", ret);
 
     RendererGraphicsPipelineCreateInfo pipeline_create_info = {
@@ -281,21 +290,20 @@ int32_t create_mesh_buffers(DrawContext *context)
     RendererInterface *renderer = context->deps.renderer;
 
     CREATE_INITIALIZED_ARRAY(
-    Vertex, main_mesh_vertices_a,
-    {
-        (Vertex){ .position = { 0.0000f,  -0.5000f, 0.0f }, .color = { 0.051f, 0.463f, 0.878f, 1.0f } }, // top tip
-        (Vertex){ .position = { 0.1123f,  -0.1545f, 0.0f }, .color = { 1.00f, 0.62f, 0.18f, 1.0f } },
-        (Vertex){ .position = { 0.4755f,  -0.1545f, 0.0f }, .color = { 1.00f, 0.82f, 0.10f, 1.0f } },
-        (Vertex){ .position = { 0.1816f, 0.0590f, 0.0f }, .color = { 0.95f, 0.42f, 0.22f, 1.0f } },
-        (Vertex){ .position = { 0.2939f, 0.4045f, 0.0f }, .color = { 1.00f, 0.72f, 0.08f, 1.0f } },
-        (Vertex){ .position = { 0.0000f, 0.1910f, 0.0f }, .color = { 0.90f, 0.28f, 0.35f, 1.0f } },
-        (Vertex){ .position = {-0.2939f, 0.4045f, 0.0f }, .color = { 1.00f, 0.76f, 0.12f, 1.0f } },
-        (Vertex){ .position = {-0.1816f, 0.0590f, 0.0f }, .color = { 0.98f, 0.48f, 0.20f, 1.0f } },
-        (Vertex){ .position = {-0.4755f,  -0.1545f, 0.0f }, .color = { 1.00f, 0.84f, 0.14f, 1.0f } },
-        (Vertex){ .position = {-0.1123f,  -0.1545f, 0.0f }, .color = { 1.00f, 0.58f, 0.24f, 1.0f } },
-        (Vertex){ .position = { 0.0000f,  -0.0000f, 0.0f }, .color = { 0.82f, 0.22f, 0.58f, 1.0f } },
-    });
-   
+        Vertex, main_mesh_vertices_a,
+        {
+            (Vertex){.position = {0.0000f, -0.5000f, 0.0f}, .color = {0.051f, 0.463f, 0.878f, 1.0f}}, // top tip
+            (Vertex){.position = {0.1123f, -0.1545f, 0.0f}, .color = {1.00f, 0.62f, 0.18f, 1.0f}},
+            (Vertex){.position = {0.4755f, -0.1545f, 0.0f}, .color = {1.00f, 0.82f, 0.10f, 1.0f}},
+            (Vertex){.position = {0.1816f, 0.0590f, 0.0f}, .color = {0.95f, 0.42f, 0.22f, 1.0f}},
+            (Vertex){.position = {0.2939f, 0.4045f, 0.0f}, .color = {1.00f, 0.72f, 0.08f, 1.0f}},
+            (Vertex){.position = {0.0000f, 0.1910f, 0.0f}, .color = {0.90f, 0.28f, 0.35f, 1.0f}},
+            (Vertex){.position = {-0.2939f, 0.4045f, 0.0f}, .color = {1.00f, 0.76f, 0.12f, 1.0f}},
+            (Vertex){.position = {-0.1816f, 0.0590f, 0.0f}, .color = {0.98f, 0.48f, 0.20f, 1.0f}},
+            (Vertex){.position = {-0.4755f, -0.1545f, 0.0f}, .color = {1.00f, 0.84f, 0.14f, 1.0f}},
+            (Vertex){.position = {-0.1123f, -0.1545f, 0.0f}, .color = {1.00f, 0.58f, 0.24f, 1.0f}},
+            (Vertex){.position = {0.0000f, -0.0000f, 0.0f}, .color = {0.82f, 0.22f, 0.58f, 1.0f}},
+        });
 
     CREATE_INITIALIZED_ARRAY(
         uint32_t,
@@ -400,7 +408,11 @@ int32_t draw_default_start(DrawContext *context)
     RETURN_IF_ERROR(logger, ret, renderer_start(renderer),
                     "Error initializing renderer: %d", ret);
 
-    RETURN_IF_ERROR(logger, ret, draw_default_create_draw_image(context), "Failed to create draw image: %d", ret);
+    DrawResource draw_image_resource = {
+        .name = "draw_image",
+    };
+    RETURN_IF_ERROR(logger, ret, draw_default_create_draw_image(context, &draw_image_resource.resource_handle), "Failed to create draw image: %d", ret);
+    ARRAY_PUSH_CHECKED_DEFAULT_RETURN(logger, context->resources_a, draw_image_resource);
 
     RETURN_IF_ERROR(logger, ret, create_resource_set_layouts(context),
                     "Failed to create resource set layouts: %d", ret);
@@ -481,9 +493,20 @@ void draw_default_cleanup(DrawContext *context)
     {
         LOG_WRN_TRACE(logger, "Failed to destroy resource_set_layout: %d", ret);
     }
-    ret = renderer_destroy_image(renderer, context->draw_image_handle);
-    if (ret < 0)
+
+    TODO("Handle this in render graph");
+    DrawResource *draw_image_resource;
+    ret = draw_get_resource_handle_by_name(context, "draw_image", &draw_image_resource);
+    if (ret >= 0)
     {
-        LOG_WRN_TRACE(logger, "Failed to destroy image: %d", ret);
+        ret = renderer_destroy_image(renderer, draw_image_resource->resource_handle);
+        if (ret < 0)
+        {
+            LOG_WRN_TRACE(logger, "Failed to destroy image: %d", ret);
+        }
+    }
+    else
+    {
+        LOG_WRN_TRACE(logger, "Unable to find draw image resouce");
     }
 }
