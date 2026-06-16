@@ -12,33 +12,33 @@ LOGGER_INTERFACE_REGISTER(draw_default_gemm_learn, LOG_LEVEL_DEBUG)
 
 #include "draw_default_register.h"
 
-typedef struct BasicTransferData
+typedef struct SimpleCopyExampleData
 {
     LoggerInterface *logger;
     RendererInterface *renderer;
     RendererUploadBufferDataInfo *upload_data_info;
     RendererCopyBufferDataInfo *copy_data_info;
-} BasicTransferData;
+} SimpleCopyExampleData;
 
-int32_t basic_transfer_callback(RendererCommandList *command_list, void *user_data)
+int32_t simple_copy_example_callback(RendererCommandList *command_list, void *user_data)
 {
     assert(command_list != NULL);
     assert(user_data != NULL);
 
-    BasicTransferData *basic_transfer_data = (BasicTransferData *)user_data;
+    SimpleCopyExampleData *simple_copy_example_data = (SimpleCopyExampleData *)user_data;
 
-    LoggerInterface *logger = basic_transfer_data->logger;
-    RendererInterface *renderer = basic_transfer_data->renderer;
+    LoggerInterface *logger = simple_copy_example_data->logger;
+    RendererInterface *renderer = simple_copy_example_data->renderer;
 
     uint32_t ret;
 
-    RETURN_IF_ERROR(logger, ret, renderer_upload_buffer_data(renderer, command_list, basic_transfer_data->upload_data_info),
+    RETURN_IF_ERROR(logger, ret, renderer_upload_buffer_data(renderer, command_list, simple_copy_example_data->upload_data_info),
                     "Failed to upload buffer data: %s", ret);
 
     RendererBufferMemoryBarrier copy_memory_barrier = {
         .src_access_mask = RENDERER_ACCESS_TRANSFER_WRITE_BIT,
         .dst_access_mask = RENDERER_ACCESS_TRANSFER_READ_BIT,
-        .buffer = basic_transfer_data->copy_data_info->source_buffer_handle,
+        .buffer = simple_copy_example_data->copy_data_info->source_buffer_handle,
         .offset = 0,
         .size = RENDERER_WHOLE_SIZE,
     };
@@ -53,13 +53,13 @@ int32_t basic_transfer_callback(RendererCommandList *command_list, void *user_da
     RETURN_IF_ERROR(logger, ret, renderer_cmd_barrier(renderer, command_list, &copy_barrier_info),
                     "Failed to set copy barrier: %d", ret);
 
-    RETURN_IF_ERROR(logger, ret, renderer_copy_buffer_data(renderer, command_list, basic_transfer_data->copy_data_info),
+    RETURN_IF_ERROR(logger, ret, renderer_copy_buffer_data(renderer, command_list, simple_copy_example_data->copy_data_info),
                     "Failed to copy buffer data: %s", ret);
 
     RendererBufferMemoryBarrier host_memory_barrier = {
         .src_access_mask = RENDERER_ACCESS_TRANSFER_WRITE_BIT,
         .dst_access_mask = RENDERER_ACCESS_HOST_READ_BIT,
-        .buffer = basic_transfer_data->copy_data_info->destination_buffer_handle,
+        .buffer = simple_copy_example_data->copy_data_info->destination_buffer_handle,
         .offset = 0,
         .size = RENDERER_WHOLE_SIZE,
     };
@@ -77,7 +77,7 @@ int32_t basic_transfer_callback(RendererCommandList *command_list, void *user_da
     return 0;
 }
 
-int32_t draw_default_gemm_execute(DrawContext *context)
+int32_t simple_copy_example(DrawContext *context)
 {
     assert(context != NULL);
 
@@ -131,15 +131,15 @@ int32_t draw_default_gemm_execute(DrawContext *context)
         .size = buffer_data_size_bytes,
     };
 
-    BasicTransferData basic_transfer_data = {
+    SimpleCopyExampleData simple_copy_example_data = {
         .logger = logger,
         .renderer = renderer,
         .upload_data_info = &upload_data_info,
         .copy_data_info = &copy_data_info,
     };
 
-    RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, basic_transfer_callback, &basic_transfer_data),
-                    "Failed to transfer basic: %s", ret);
+    RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, simple_copy_example_callback, &simple_copy_example_data),
+                    "Failed to simple copy example execute: %s", ret);
 
     RETURN_IF_ERROR(logger, ret, renderer_immediate_flush(renderer),
                     "Failed to flush immediate execution: %s", ret);
@@ -164,6 +164,19 @@ int32_t draw_default_gemm_execute(DrawContext *context)
 
     RETURN_IF_ERROR(logger, ret, renderer_destroy_buffer(renderer, buffer_handle),
                     "Unable to destroy buffer: %s", ret);
+
+    return 0;
+}
+
+int32_t draw_default_gemm_execute(DrawContext *context)
+{
+    assert(context != NULL);
+
+    LoggerInterface *logger = context->deps.logger;
+    int32_t ret;
+
+    RETURN_IF_ERROR(logger, ret, simple_copy_example(context),
+                    "Failed simple copy example: %d", ret);
 
     return 0;
 }
