@@ -90,7 +90,34 @@ typedef struct RendererUploadBufferDataInfo
     RendererBufferHandle destination_buffer_handle;
 } RendererUploadBufferDataInfo;
 
-typedef enum RendererBufferUsageBits
+typedef struct RendererCopyBufferDataInfo
+{
+    uint64_t size;
+    uint64_t source_offset;
+    RendererBufferHandle source_buffer_handle;
+    uint64_t destination_offset;
+    RendererBufferHandle destination_buffer_handle;
+} RendererCopyBufferDataInfo;
+
+typedef struct RendererReadCPUBufferDataInfo
+{
+    uint64_t size;
+    uint64_t source_offset;
+    RendererBufferHandle source_buffer_handle;
+    void *destination_buffer;
+} RendererReadCPUBufferDataInfo;
+
+typedef enum RendererMemoryFlagBits
+{
+    RENDERER_MEMORY_NONE = 0x00000001,
+    RENDERER_MEMORY_ALLOCATION_MAPPED_BIT = 0x00000002,
+    RENDERER_MEMORY_ALLOCATION_HOST_ACCESS_SEQUENTIAL_WRITE_BIT = 0x00000004,
+    RENDERER_MEMORY_ALLOCATION_HOST_ACCESS_RANDOM_BIT = 0x00000008,
+    RENDERER_MEMORY_ALLOCATION_DEDICATED_MEMORY_BIT = 0x0000000A,
+} RendererMemoryFlagBits;
+typedef uint32_t RendererMemoryAllocationFlags;
+
+typedef enum RendererBufferUsageFlagBits
 {
     RENDERER_BUFFER_USAGE_TRANSFER_SRC_BIT = 0x00000001,
     RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT = 0x00000002,
@@ -110,6 +137,7 @@ typedef struct RendererBufferCreateInfo
     uint64_t size;
     RendererBufferUsageFlags usage_flags;
     RendererMemoryUsage memory_usage;
+    RendererMemoryAllocationFlags memory_allocation_flags;
 } RendererBufferCreateInfo;
 
 typedef enum RendererPipelineType
@@ -314,6 +342,47 @@ typedef struct RendererBeginRenderingInfo
     RendererAttachmentInfo *depth_attachment_info;
 } RendererBeginRenderingInfo;
 
+#define RENDERER_WHOLE_SIZE (~0ULL)
+
+typedef enum RendererPipelineStageFlagBits
+{
+    RENDERER_PIPELINE_STAGE_TOP_OF_PIPE_BIT = 0x00000001,
+    RENDERER_PIPELINE_STAGE_COMPUTE_SHADER_BIT = 0x00000800,
+    RENDERER_PIPELINE_STAGE_TRANSFER_BIT = 0x00001000,
+    RENDERER_PIPELINE_STAGE_HOST_BIT = 0x00004000,
+    RENDERER_PIPELINE_STAGE_ALL_COMMANDS_BIT = 0x00010000,
+} RendererPipelineStageFlagBits;
+typedef uint32_t RendererPipelineStageFlags;
+
+typedef enum RendererAccessFlagBits
+{
+    RENDERER_ACCESS_SHADER_READ_BIT = 0x00000020,
+    RENDERER_ACCESS_SHADER_WRITE_BIT = 0x00000040,
+    RENDERER_ACCESS_TRANSFER_READ_BIT = 0x00000800,
+    RENDERER_ACCESS_TRANSFER_WRITE_BIT = 0x00001000,
+    RENDERER_ACCESS_HOST_READ_BIT = 0x00002000,
+    RENDERER_ACCESS_HOST_WRITE_BIT = 0x00004000,
+} RendererAccessFlagBits;
+typedef uint32_t RendererAccessFlags;
+
+typedef struct RendererBufferMemoryBarrier
+{
+    RendererAccessFlags src_access_mask;
+    RendererAccessFlags dst_access_mask;
+    RendererBufferHandle buffer;
+    uint64_t offset;
+    uint64_t size;
+} RendererBufferMemoryBarrier;
+
+TODO("Add image barriers")
+typedef struct RendererBarrierInfo
+{
+    RendererPipelineStageFlags src_stage_mask;
+    RendererPipelineStageFlags dst_stage_mask;
+    uint32_t buffer_memory_barrier_len;
+    const RendererBufferMemoryBarrier *buffer_memory_barriers;
+} RendererBarrierInfo;
+
 typedef struct RendererVtable
 {
     int32_t (*start)(RendererContext *context);
@@ -323,6 +392,7 @@ typedef struct RendererVtable
     bool (*consume_has_resized)(RendererContext *context);
 
     int32_t (*immediate_execute)(RendererContext *context, ImmediateExecute_Fn immediate_execute_fn, void *user_data);
+    int32_t (*immediate_flush)(RendererContext *context);
 
     RendererImageHandle (*get_render_image_handle)(RendererContext *context);
     int32_t (*get_image_properties)(RendererContext *context, RendererImageHandle image_handle, RendererImageProperties *out_image_properties);
@@ -333,6 +403,8 @@ typedef struct RendererVtable
     int32_t (*create_buffer)(RendererContext *context, RendererBufferCreateInfo *renderer_buffer_create_info, RendererBufferHandle *out_buffer_handle);
     int32_t (*destroy_buffer)(RendererContext *context, RendererBufferHandle buffer_handle);
     int32_t (*upload_buffer_data)(RendererContext *context, RendererCommandList *command_list, RendererUploadBufferDataInfo *upload_buffer_data_info);
+    int32_t (*copy_buffer_data)(RendererContext *context, RendererCommandList *command_list, RendererCopyBufferDataInfo *upload_buffer_data_info);
+    int32_t (*read_cpu_buffer_data)(RendererContext *context, RendererReadCPUBufferDataInfo *upload_buffer_data_info);
     int32_t (*get_buffer_device_address)(RendererContext *context, RendererBufferHandle buffer_handle, RendererBufferDeviceAddress *out_device_address);
 
     int32_t (*create_image)(RendererContext *context, RendererImageCreateInfo *renderer_image_create_info, RendererImageHandle *out_image_handle);
@@ -369,6 +441,12 @@ typedef struct RendererVtable
 
     void (*cmd_transition_image)(RendererContext *context, RendererCommandList *command_list, RendererImageHandle image_handle, RendererImageLayout renderer_current_layout, RendererImageLayout renderer_new_layout);
     void (*cmd_blit_image_to_image)(RendererContext *context, RendererCommandList *command_list, RendererImageHandle image_handle_source, RendererImageHandle image_handle_destination, RendererExtent2D extent_source, RendererExtent2D extent_destination);
+
+    int32_t (*cmd_barrier)(RendererContext *context, RendererCommandList *command_list, const RendererBarrierInfo *renderer_pipeline_barrier_info);
+
+    void (*debug_start_capture)(RendererContext *context);
+    void (*debug_end_capture)(RendererContext *context);
+    int32_t (*debug_rename_buffer)(RendererContext *context, RendererBufferHandle buffer_handle, const char *name);
 } RendererVtable;
 
 typedef struct RendererInterface
@@ -395,6 +473,11 @@ static inline int32_t renderer_end_frame(RendererInterface *iface)
 static inline int32_t renderer_immediate_execute(RendererInterface *iface, ImmediateExecute_Fn immediate_execute_fn, void *user_data)
 {
     return VTABLE_METHOD_CALL(iface, immediate_execute, immediate_execute_fn, user_data);
+}
+
+static inline int32_t renderer_immediate_flush(RendererInterface *iface)
+{
+    return VTABLE_METHOD_CALL_NO_ARGS(iface, immediate_flush);
 }
 
 static inline RendererImageHandle renderer_get_render_image_handle(RendererInterface *iface)
@@ -440,6 +523,16 @@ static inline int32_t renderer_destroy_buffer(RendererInterface *iface, Renderer
 static inline int32_t renderer_upload_buffer_data(RendererInterface *iface, RendererCommandList *command_list, RendererUploadBufferDataInfo *upload_buffer_data_info)
 {
     return VTABLE_METHOD_CALL(iface, upload_buffer_data, command_list, upload_buffer_data_info);
+}
+
+static inline int32_t renderer_copy_buffer_data(RendererInterface *iface, RendererCommandList *command_list, RendererCopyBufferDataInfo *copy_buffer_data_info)
+{
+    return VTABLE_METHOD_CALL(iface, copy_buffer_data, command_list, copy_buffer_data_info);
+}
+
+static inline int32_t renderer_read_cpu_buffer_data(RendererInterface *iface, RendererReadCPUBufferDataInfo *read_cpu_buffer_data_info)
+{
+    return VTABLE_METHOD_CALL(iface, read_cpu_buffer_data, read_cpu_buffer_data_info);
 }
 
 static inline int32_t renderer_get_buffer_device_address(RendererInterface *iface, RendererBufferHandle buffer_handle, RendererBufferDeviceAddress *out_device_address)
@@ -575,6 +668,26 @@ static inline void renderer_cmd_transition_image(RendererInterface *iface, Rende
 static inline void renderer_cmd_blit_image_to_image(RendererInterface *iface, RendererCommandList *command_list, RendererImageHandle image_handle_source, RendererImageHandle image_handle_destination, RendererExtent2D extent_source, RendererExtent2D extent_destination)
 {
     VTABLE_METHOD_CALL(iface, cmd_blit_image_to_image, command_list, image_handle_source, image_handle_destination, extent_source, extent_destination);
+}
+
+static inline int32_t renderer_cmd_barrier(RendererInterface *iface, RendererCommandList *command_list, const RendererBarrierInfo *renderer_pipeline_barrier_info)
+{
+    return VTABLE_METHOD_CALL(iface, cmd_barrier, command_list, renderer_pipeline_barrier_info);
+}
+
+static inline void renderer_debug_start_capture(RendererInterface *iface)
+{
+    VTABLE_METHOD_CALL_NO_ARGS(iface, debug_start_capture);
+}
+
+static inline void renderer_debug_end_capture(RendererInterface *iface)
+{
+    VTABLE_METHOD_CALL_NO_ARGS(iface, debug_end_capture);
+}
+
+static inline int32_t renderer_debug_rename_buffer(RendererInterface *iface, RendererBufferHandle buffer_handle, const char *name)
+{
+    return VTABLE_METHOD_CALL(iface, debug_rename_buffer, buffer_handle, name);
 }
 
 #pragma pack(pop)

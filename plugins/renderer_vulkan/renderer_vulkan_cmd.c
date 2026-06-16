@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <vulkan/vulkan.h>
 #include <assert.h>
+#include <bump_arena.h>
 
 #include <plugin_sdk/renderer/v1/renderer_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
@@ -266,4 +267,102 @@ void renderer_vulkan_cmd_set_scissor(RendererContext *context, RendererCommandLi
     };
 
     vkCmdSetScissor(command_list->command_buffer, 0, 1, &scissor);
+}
+
+VkPipelineStageFlags rv_pipeline_stage_flags_to_vk_pipeline_stage_flags(RendererPipelineStageFlags flags)
+{
+    VkPipelineStageFlags vk_flags = 0;
+    if (flags & RENDERER_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+        vk_flags |= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    if (flags & RENDERER_PIPELINE_STAGE_COMPUTE_SHADER_BIT)
+        vk_flags |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+    if (flags & RENDERER_PIPELINE_STAGE_TRANSFER_BIT)
+        vk_flags |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+    if (flags & RENDERER_PIPELINE_STAGE_HOST_BIT)
+        vk_flags |= VK_PIPELINE_STAGE_HOST_BIT;
+    if (flags & RENDERER_PIPELINE_STAGE_ALL_COMMANDS_BIT)
+        vk_flags |= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    return vk_flags;
+}
+
+VkAccessFlags rv_access_flags_to_vk_access_flags(RendererAccessFlags flags)
+{
+    VkAccessFlags vk_flags = 0;
+    if (flags & RENDERER_ACCESS_SHADER_READ_BIT)
+        vk_flags |= VK_ACCESS_SHADER_READ_BIT;
+    if (flags & RENDERER_ACCESS_SHADER_WRITE_BIT)
+        vk_flags |= VK_ACCESS_SHADER_WRITE_BIT;
+    if (flags & RENDERER_ACCESS_TRANSFER_READ_BIT)
+        vk_flags |= VK_ACCESS_TRANSFER_READ_BIT;
+    if (flags & RENDERER_ACCESS_TRANSFER_WRITE_BIT)
+        vk_flags |= VK_ACCESS_TRANSFER_WRITE_BIT;
+    if (flags & RENDERER_ACCESS_HOST_READ_BIT)
+        vk_flags |= VK_ACCESS_HOST_READ_BIT;
+    if (flags & RENDERER_ACCESS_HOST_WRITE_BIT)
+        vk_flags |= VK_ACCESS_HOST_WRITE_BIT;
+    return vk_flags;
+}
+
+TODO("Turn this into barrier2")
+static inline int32_t inl_cmd_barrier(RendererContext *context, RendererCommandList *command_list, const RendererBarrierInfo *renderer_pipeline_barrier_info)
+{
+    int32_t ret;
+
+    VkBufferMemoryBarrier *vk_buffer_barriers = NULL;
+    if (renderer_pipeline_barrier_info->buffer_memory_barrier_len > 0)
+    {
+        RETURN_IF_ERROR(context->deps.logger, ret,
+                        BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkBufferMemoryBarrier, renderer_pipeline_barrier_info->buffer_memory_barrier_len, &vk_buffer_barriers),
+                        "Failed to allocate from bump arena: %d", ret);
+    }
+
+    for (uint32_t i = 0; i < renderer_pipeline_barrier_info->buffer_memory_barrier_len; ++i)
+    {
+        const RendererBufferMemoryBarrier *rb = &renderer_pipeline_barrier_info->buffer_memory_barriers[i];
+
+        RV_AllocatedBuffer allocated_buffer = {0};
+        RV_RES_RENDERER_HANDLE_GET_OR_RETURN(
+            context->deps.logger,
+            context->allocated_buffer_generations_a,
+            context->allocated_buffers_a,
+            rb->buffer,
+            allocated_buffer);
+
+        vk_buffer_barriers[i] = (VkBufferMemoryBarrier){
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+            .srcAccessMask = rv_access_flags_to_vk_access_flags(rb->src_access_mask),
+            .dstAccessMask = rv_access_flags_to_vk_access_flags(rb->dst_access_mask),
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = allocated_buffer.buffer,
+            .offset = rb->offset,
+            .size = (rb->size == RENDERER_WHOLE_SIZE) ? VK_WHOLE_SIZE : rb->size,
+        };
+    }
+
+    vkCmdPipelineBarrier(
+        command_list->command_buffer,
+        rv_pipeline_stage_flags_to_vk_pipeline_stage_flags(renderer_pipeline_barrier_info->src_stage_mask),
+        rv_pipeline_stage_flags_to_vk_pipeline_stage_flags(renderer_pipeline_barrier_info->dst_stage_mask),
+        0,       // Dependency flags (e.g., VK_DEPENDENCY_BY_REGION_BIT)
+        0, NULL, // Global memory barriers
+        renderer_pipeline_barrier_info->buffer_memory_barrier_len,
+        renderer_pipeline_barrier_info->buffer_memory_barrier_len > 0 ? vk_buffer_barriers : NULL,
+        0, NULL // Image memory barriers
+    );
+
+    return 0;
+}
+
+int32_t renderer_vulkan_cmd_barrier(RendererContext *context, RendererCommandList *command_list, const RendererBarrierInfo *barrier_info)
+{
+    assert(context != NULL);
+    assert(command_list != NULL);
+    assert(barrier_info != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_cmd_barrier(context, command_list, barrier_info);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
 }

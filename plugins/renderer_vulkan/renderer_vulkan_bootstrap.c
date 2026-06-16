@@ -26,7 +26,9 @@ TODO("Change this array based on target (eg when using 1.1 for mobile, remove 1.
 TODO("Or make them optional if theyre not there and propagate the options")
 CREATE_INITIALIZED_ARRAY_WITH_DECL(
     static, const char *, plugin_required_extensions_a,
-    {VK_EXT_DEBUG_UTILS_EXTENSION_NAME});
+    {
+        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+    });
 
 CREATE_INITIALIZED_ARRAY_WITH_DECL(
     static, const char *, required_physical_device_extensions_a,
@@ -193,13 +195,13 @@ int32_t setup_debug_messenger(RendererContext *context)
     PFN_vkCreateDebugUtilsMessengerEXT create_func;
     RETURN_IF_ERROR(
         context->deps.logger, ret,
-        vk_get_instance_proc(context->deps.logger, context->instance, "vkCreateDebugUtilsMessengerEXT", (vk_func_void_void *)&create_func),
+        rv_get_instance_proc(context->deps.logger, context->instance, "vkCreateDebugUtilsMessengerEXT", (void **)&create_func),
         "Could not get instance proc: %d", ret);
 
     create_func(context->instance, &debug_messenger_create_info, NULL, &context->debug_messenger);
 
     PFN_vkDestroyDebugUtilsMessengerEXT destroy_func;
-    ret = vk_get_instance_proc(context->deps.logger, context->instance, "vkDestroyDebugUtilsMessengerEXT", (vk_func_void_void *)&destroy_func);
+    ret = rv_get_instance_proc(context->deps.logger, context->instance, "vkDestroyDebugUtilsMessengerEXT", (void **)&destroy_func);
     if (ret < 0)
     {
         LOG_ERR_TRACE(context->deps.logger, "Could not get instance proc: %d", ret);

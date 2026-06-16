@@ -17,7 +17,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_utils, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_conversion.h"
 #include "renderer_vulkan.h"
 
-int32_t vk_get_instance_proc(LoggerInterface *logger, VkInstance instance, const char *proc_name, vk_func_void_void *out_func)
+int32_t rv_get_instance_proc(LoggerInterface *logger, VkInstance instance, const char *proc_name, void **out_func)
 {
     assert(logger != NULL);
     assert(instance != NULL);
@@ -26,7 +26,7 @@ int32_t vk_get_instance_proc(LoggerInterface *logger, VkInstance instance, const
 
     RETURN_IF_ERROR_CONDITION_RET_VALUE(
         logger, *out_func, *out_func == NULL,
-        (vk_func_void_void)vkGetInstanceProcAddr(instance, proc_name),
+        (void *)vkGetInstanceProcAddr(instance, proc_name),
         (int32_t)VK_ERROR_EXTENSION_NOT_PRESENT,
         "Unable to find vk instance proc function '%s'", proc_name);
 

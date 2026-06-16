@@ -42,6 +42,8 @@ typedef uint32_t RendererImageUsageFlags;
 typedef uint32_t VkMemoryPropertyFlags;
 typedef uint32_t RendererCullModeFlagBits;
 typedef uint32_t VkCullModeFlagBits;
+typedef uint32_t RendererMemoryAllocationFlags;
+typedef uint32_t VmaAllocationCreateFlags;
 
 enum RendererPipelineType;
 enum VkPipelineBindPoint;
@@ -85,6 +87,7 @@ enum VkImageLayout rv_image_layout_to_vk_image_layout(enum RendererImageLayout i
 enum VkFormat rv_image_format_to_vk_format(enum RendererImageFormat format);
 VkImageUsageFlags rv_image_usage_to_vk_image_usage(RendererImageUsageFlags flags);
 VkBufferUsageFlags rv_buffer_usage_to_vk_buffer_usage(RendererBufferUsageFlags renderer_flags);
+VmaAllocationCreateFlags rv_memory_allocation_flags_to_vma_allocation_flags(RendererMemoryAllocationFlags renderer_flags);
 enum VmaMemoryUsage rv_memory_usage_to_vma_memory_usage(enum RendererMemoryUsage renderer_memory_usage);
 VkImageAspectFlags rv_vk_format_to_image_aspect(enum VkFormat format);
 VkMemoryPropertyFlags rv_image_memory_usage_to_vk_memory_usage(enum RendererMemoryUsage memory_usage);

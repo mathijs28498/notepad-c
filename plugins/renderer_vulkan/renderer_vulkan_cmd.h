@@ -20,6 +20,7 @@ enum RendererPipelineType;
 struct RendererExtent2D;
 enum RendererImageLayout;
 struct RendererBeginRenderingInfo;
+struct RendererBarrierInfo;
 
 void renderer_vulkan_cmd_begin_render_pass(struct RendererContext *context, struct RendererCommandList *command_list);
 void renderer_vulkan_cmd_bind_graphics_pipeline(struct RendererContext *context, struct RendererCommandList *command_list, RendererGraphicsPipelineHandle pipeline_handle);
@@ -42,3 +43,5 @@ void renderer_vulkan_cmd_begin_rendering(struct RendererContext *context, struct
 void renderer_vulkan_cmd_end_rendering(struct RendererContext *context, struct RendererCommandList *command_list);
 void renderer_vulkan_cmd_set_viewport(struct RendererContext *context, struct RendererCommandList *command_list, struct RendererExtent2D extent);
 void renderer_vulkan_cmd_set_scissor(struct RendererContext *context, struct RendererCommandList *command_list, struct RendererExtent2D extent);
+
+int32_t renderer_vulkan_cmd_barrier(struct RendererContext *context, struct RendererCommandList *command_list, const struct RendererBarrierInfo *barrier_info);

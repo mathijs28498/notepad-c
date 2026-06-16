@@ -8,6 +8,7 @@ target_sources(draw_default
     draw_default_register.c
     draw_default_start.c
     draw_default_render_frame.c
+    draw_default_gemm_learn.c
 
     PUBLIC
     FILE_SET HEADERS
@@ -28,6 +29,12 @@ plugin_generate_register_inc(draw_default
 
 
 include("RendererShaderGenerator")
+target_embed_shader(draw_default
+    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/gemm_naive.comp"
+    SHADER_STAGE "compute"
+)
+
 target_embed_shader(draw_default
     GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
     SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/background.comp"

@@ -14,6 +14,7 @@ LOGGER_INTERFACE_REGISTER(draw_default_start, LOG_LEVEL_DEBUG)
 
 #include "draw_default_register.h"
 #include "draw_default_render_frame.h"
+#include "draw_default_gemm_learn.h"
 
 typedef struct DD_Shaders
 {
@@ -434,6 +435,9 @@ int32_t draw_default_start(DrawContext *context)
 
     RETURN_IF_ERROR(logger, ret, create_mesh_buffers(context),
                     "Failed to create mesh buffer: %d", ret);
+
+    RETURN_IF_ERROR(logger, ret, draw_default_gemm_execute(context),
+                    "Failed to execute gemm learn");
 
     return 0;
 }

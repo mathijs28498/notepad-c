@@ -35,6 +35,9 @@ int32_t renderer_vulkan_immediate_execute(RendererContext *context, ImmediateExe
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     };
 
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandPool(context->device, context->immediate_command_pool, 0),
+                       -1, "Failed to reset frame command pool: %d", result);
+
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkBeginCommandBuffer(context->immediate_command_buffer, &command_buffer_begin_info),
                        -1, "Failed to begin immediate command buffer: %d", -1);
 
@@ -59,4 +62,16 @@ int32_t renderer_vulkan_immediate_execute(RendererContext *context, ImmediateExe
                        -1, "Failed to submit immediate command buffer to queue: %d", result);
 
     return ret;
+}
+
+int32_t renderer_vulkan_immediate_flush(RendererContext *context)
+{
+    assert(context != NULL);
+
+    VkResult result;
+
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkWaitForFences(context->device, 1, &context->immediate_fence, VK_TRUE, IMMEDIATE_FENCE_WAIT_TIMEOUT_NS),
+                       -1, "Failed to wait for immediate fence: %d", result);
+
+    return 0;
 }

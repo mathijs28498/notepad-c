@@ -100,6 +100,7 @@ typedef struct
 #define GET_ARRAY_HEADER(arr_ptr) ((ArrayHeader_ *)(arr_ptr) - 1)
 #define GET_ARRAY_CAPACITY(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->capacity)
 #define GET_ARRAY_LENGTH(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->length)
+#define GET_ARRAY_LENGTH_BYTES(arr_ptr) (GET_ARRAY_LENGTH(arr_ptr) * sizeof((arr_ptr)[0]))
 #define SET_ARRAY_FIELD_CAPACITY(arr) GET_ARRAY_CAPACITY(arr) = ARRAY_SIZE(arr)
 
 #define ARRAY_FOR(arr_ptr, index_name) \

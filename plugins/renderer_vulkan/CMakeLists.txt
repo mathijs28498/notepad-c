@@ -20,6 +20,7 @@ target_sources(renderer_vulkan
     renderer_vulkan_conversion.c
     renderer_vulkan_immediate.c
     renderer_vulkan_buffer.c
+    renderer_vulkan_debug.c
 
     PUBLIC
     FILE_SET HEADERS

@@ -111,11 +111,22 @@ typedef struct ActiveFrameState
     bool is_active;
 } ActiveFrameState;
 
+struct RENDERDOC_API_1_7_0;
+
+typedef struct RendererDebugContext
+{
+    struct RENDERDOC_API_1_7_0 *renderdoc_api;
+
+    void *set_object_name_fn;
+} RendererDebugContext;
+
 TODO("Maybe split up the struct into smaller structs, like a queue/logical device struct")
 TODO("The smaller struct could also be one for the bootstrap and one for runtime")
 typedef struct RendererContext
 {
     PluginDependencies deps;
+
+    RendererDebugContext debug_context;
 
     VkInstance instance;
     VkDebugUtilsMessengerEXT debug_messenger;

@@ -36,7 +36,7 @@ typedef struct VkInstance_T *VkInstance;
 
 typedef void (*vk_func_void_void)(void);
 
-int32_t vk_get_instance_proc(struct LoggerInterface *logger, VkInstance instance, const char *proc_name, vk_func_void_void *out_func);
+int32_t rv_get_instance_proc(struct LoggerInterface *logger, VkInstance instance, const char *proc_name, void **out_func);
 
 struct RV_CallRecord;
 

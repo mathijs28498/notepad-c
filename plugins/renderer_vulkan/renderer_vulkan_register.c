@@ -11,6 +11,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/plugin_utils.h>
 
 #include "renderer_vulkan.h"
+#include "renderer_vulkan_debug.h"
 #include "renderer_vulkan_immediate.h"
 #include "renderer_vulkan_image.h"
 #include "renderer_vulkan_start.h"
@@ -28,6 +29,7 @@ static const RendererVtable plugin_vtable = {
     .consume_has_resized = renderer_vulkan_consume_has_resized,
 
     .immediate_execute = renderer_vulkan_immediate_execute,
+    .immediate_flush = renderer_vulkan_immediate_flush,
 
     .get_render_image_handle = renderer_vulkan_get_render_image_handle,
     .get_image_properties = renderer_vulkan_get_image_properties,
@@ -38,6 +40,8 @@ static const RendererVtable plugin_vtable = {
     .create_buffer = renderer_vulkan_create_buffer,
     .destroy_buffer = renderer_vulkan_destroy_buffer,
     .upload_buffer_data = renderer_vulkan_upload_buffer_data,
+    .copy_buffer_data = renderer_vulkan_copy_buffer_data,
+    .read_cpu_buffer_data = renderer_vulkan_read_cpu_buffer_data,
     .get_buffer_device_address = renderer_vulkan_get_buffer_device_address,
 
     .create_image = renderer_vulkan_create_image,
@@ -73,6 +77,12 @@ static const RendererVtable plugin_vtable = {
 
     .cmd_transition_image = renderer_vulkan_cmd_transition_image,
     .cmd_blit_image_to_image = renderer_vulkan_cmd_blit_image_to_image,
+
+    .cmd_barrier = renderer_vulkan_cmd_barrier,
+
+    .debug_start_capture = renderer_vulkan_debug_start_capture,
+    .debug_end_capture = renderer_vulkan_debug_end_capture,
+    .debug_rename_buffer = renderer_vulkan_debug_rename_buffer,
 };
 
 TODO("Figure out what these sizes should be");

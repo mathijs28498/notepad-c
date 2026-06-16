@@ -22,6 +22,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
 #include "renderer_vulkan_pipeline.h"
 #include "renderer_vulkan_image.h"
 #include "renderer_vulkan_buffer.h"
+#include "renderer_vulkan_debug.h"
 #include "renderer_vulkan.h"
 
 #define START_DESTROY_QUEUE_CAPACITY 64
@@ -198,6 +199,9 @@ int32_t renderer_vulkan_start_internal(RendererContext *context)
 
     RV_TRY_INIT(context->deps.logger, ret, renderer_vulkan_bootstrap(context), context->global_destroy_queue_a,
                 "Failed to bootstrap vulkan: %d", ret);
+
+    RV_TRY_INIT(context->deps.logger, ret, renderer_vulkan_debug_init(context), context->global_destroy_queue_a,
+                "Failed to init renderdoc: %d", ret);
 
     RV_TRY_INIT(context->deps.logger, ret, create_command_buffers(context), context->global_destroy_queue_a,
                 "Failed to init commands: %d", ret);
