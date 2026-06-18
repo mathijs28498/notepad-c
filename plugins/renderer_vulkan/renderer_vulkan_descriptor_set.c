@@ -161,7 +161,7 @@ int32_t rv_create_descriptor_pools(RendererContext *context)
     for (size_t i = 0; i < ARRAY_SIZE(context->frames); i++)
     {
         TODO("Make this a configuration")
-        RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_pool(context, 100, descriptor_pool_sizes, &context->frames[i].transient_descriptor_pool),
+        RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_pool(context, 200, descriptor_pool_sizes, &context->frames[i].transient_descriptor_pool),
                         "Failed to create transient descriptor pool: %d", ret);
     }
 

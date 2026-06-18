@@ -12,6 +12,7 @@
 LOGGER_INTERFACE_REGISTER_URGENCY(draw_default_gemm_learn, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/renderer/v1/renderer_interface.h>
 #include <plugin_sdk/allocator/v1/allocator_interface.h>
+#include <plugin_sdk/time/v1/time_interface.h>
 #include <plugin_sdk/plugin_utils.h>
 
 #include "draw_default_register.h"
@@ -205,6 +206,8 @@ typedef struct GemmComputeData
 
 } GemmComputeData;
 
+#define GEMM_ITERATIONS 40
+
 #define MATRIX_WIDTH 1024
 #define MATRIX_BUFFER_SIZE MATRIX_WIDTH *MATRIX_WIDTH
 #define MATRIX_BUFFER_BYTE_SIZE MATRIX_BUFFER_SIZE * sizeof(float)
@@ -213,9 +216,9 @@ typedef struct GemmComputeData
 static float buffer_a_data[MATRIX_BUFFER_SIZE] = {0};
 static float buffer_b_data[MATRIX_BUFFER_SIZE] = {0};
 static float buffer_c_data[MATRIX_BUFFER_SIZE] = {0};
-// static float *buffer_a_data = {0};
-// static float *buffer_b_data = {0};
-// static float *buffer_c_data = {0};
+
+static uint64_t *current_timer_begin = NULL;
+static uint64_t *current_timer_end = NULL;
 
 // https://matrixcalc.org/#%7B%7B51,451,81,145%7D,%7B71,5,145,1%7D,%7B41,41,1,41%7D,%7B1556,1,111,1%7D%7D*%7B%7B0,10,20,30%7D,%7B40,50,60,70%7D,%7B80,90,100,110%7D,%7B120,130,140,150%7D%7D
 int32_t fill_gemm_buffers_callback(RendererCommandList *command_list, void *user_data)
@@ -737,10 +740,19 @@ int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)
 
     if (ret >= 0)
     {
+        // Do it once to avoid cold start penalty
         RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, gemm_compute_callback, &naive_gemm_data),
                         "Failed to execute naive gemm immediate execute: %d", ret);
+        *current_timer_begin = time_get_nanoseconds(context->deps.time);
+        for (uint32_t i = 0; i < GEMM_ITERATIONS; i++)
+        {
+            RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, gemm_compute_callback, &naive_gemm_data),
+                            "Failed to execute naive gemm immediate execute: %d", ret);
+        }
+
         RETURN_IF_ERROR(logger, ret, renderer_immediate_flush(renderer),
                         "Failed to flush immediate execute: %d", ret);
+        *current_timer_end = time_get_nanoseconds(context->deps.time);
 
         RendererReadCPUBufferDataInfo read_cpu_buffer_data_info = {
             .source_buffer_handle = gemm_buffers.read_staging_handle,
@@ -750,38 +762,58 @@ int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)
         };
         RETURN_IF_ERROR(logger, ret, renderer_read_cpu_buffer_data(renderer, &read_cpu_buffer_data_info),
                         "Failed to read cpu buffer data: %d", ret);
-    }
-    renderer_debug_end_capture(renderer);
 
-    if (test_matrix_result(context))
-    {
-        LOG_INF(logger, "Correct calculation!!!");
+        if (test_matrix_result(context))
+        {
+            LOG_INF(logger, "Correct calculation!!!");
+        }
+        else
+        {
+            LOG_ERR(logger, "Calculation is wrong and you should feel bad!");
+        }
     }
-    else
-    {
-        LOG_ERR(logger, "Calculation is wrong and you should feel bad!");
-    }
+
+    renderer_debug_end_capture(renderer);
 
     gemm_teardown(context, &naive_gemm_data);
 
     return 0;
 }
 
+TODO("Make a method to empty queues in renderer")
 int32_t draw_default_gemm_execute(DrawContext *context)
 {
     assert(context != NULL);
 
     LoggerInterface *logger = context->deps.logger;
+    TimeInterface *time = context->deps.time;
     int32_t ret;
 
     // RETURN_IF_ERROR(logger, ret, simple_copy_example(context),
     //                 "Failed simple copy example: %d", ret);
 
+    uint64_t naive_gemm_begin = 0;
+    uint64_t naive_gemm_end = 0;
+    uint64_t shared_gemm_begin = 0;
+    uint64_t shared_gemm_end = 0;
+
+    LOG_DBG(logger, "Doing shared gemm");
+    current_timer_begin = &shared_gemm_begin;
+    current_timer_end = &shared_gemm_end;
+    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_shared_gemm_pipeline),
+                    "Failed shared gemm example: %d", ret);
+
+    LOG_DBG(logger, "Doing naive gemm");
+    current_timer_begin = &naive_gemm_begin;
+    current_timer_end = &naive_gemm_end;
     RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline),
                     "Failed naive gemm example: %d", ret);
 
-    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_shared_gemm_pipeline),
-                    "Failed shared gemm example: %d", ret);
+    double naive_elapsed = time_get_elapsed_ms(time, naive_gemm_begin, naive_gemm_end);
+    double shared_elapsed = time_get_elapsed_ms(time, shared_gemm_begin, shared_gemm_end);
+
+    LOG_INF(logger, "Naive solution:  %.3lfms, iter: %d, per iteration: %.3lfms", naive_elapsed, GEMM_ITERATIONS, naive_elapsed / GEMM_ITERATIONS);
+    LOG_INF(logger, "Shared solution: %.3lfms, iter: %d, per iteration: %.3lfms", shared_elapsed, GEMM_ITERATIONS, shared_elapsed / GEMM_ITERATIONS);
 
     return 0;
 }

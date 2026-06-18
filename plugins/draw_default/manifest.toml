@@ -11,3 +11,4 @@ logger = {}
 renderer = {}
 render_graph = {}
 allocator = {}
+time = {}
