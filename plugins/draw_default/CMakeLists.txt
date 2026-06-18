@@ -37,6 +37,12 @@ target_embed_shader(draw_default
 
 target_embed_shader(draw_default
     GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/gemm_shared.comp"
+    SHADER_STAGE "compute"
+)
+
+target_embed_shader(draw_default
+    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
     SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/background.comp"
     SHADER_STAGE "compute"
 )

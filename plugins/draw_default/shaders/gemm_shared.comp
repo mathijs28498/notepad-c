@@ -18,8 +18,6 @@ layout(set = 0, binding = 2, std430) buffer MatrixC {
 float C[];
 };
 
-#define MATRIX_WIDTH 4
-
 uint calc_index(uvec2 index_xy) {
 return index_xy.y * matrix_width + index_xy.x;
 }

@@ -1,5 +1,6 @@
 #include "draw_default_gemm_learn.h"
 
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <assert.h>
@@ -8,13 +9,15 @@
 
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
-LOGGER_INTERFACE_REGISTER(draw_default_gemm_learn, LOG_LEVEL_DEBUG)
+LOGGER_INTERFACE_REGISTER_URGENCY(draw_default_gemm_learn, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/renderer/v1/renderer_interface.h>
+#include <plugin_sdk/allocator/v1/allocator_interface.h>
 #include <plugin_sdk/plugin_utils.h>
 
 #include "draw_default_register.h"
 
 #include "shader_gemm_naive_compute.h"
+#include "shader_gemm_shared_compute.h"
 
 typedef struct SimpleCopyExampleData
 {
@@ -202,8 +205,17 @@ typedef struct GemmComputeData
 
 } GemmComputeData;
 
-#define MATRIX_SIDE_SIZE 4
-#define MATRIX_BUFFER_SIZE MATRIX_SIDE_SIZE *MATRIX_SIDE_SIZE
+#define MATRIX_WIDTH 1024
+#define MATRIX_BUFFER_SIZE MATRIX_WIDTH *MATRIX_WIDTH
+#define MATRIX_BUFFER_BYTE_SIZE MATRIX_BUFFER_SIZE * sizeof(float)
+
+#define SHADER_WORK_GROUP_SIZE 16
+static float buffer_a_data[MATRIX_BUFFER_SIZE] = {0};
+static float buffer_b_data[MATRIX_BUFFER_SIZE] = {0};
+static float buffer_c_data[MATRIX_BUFFER_SIZE] = {0};
+// static float *buffer_a_data = {0};
+// static float *buffer_b_data = {0};
+// static float *buffer_c_data = {0};
 
 // https://matrixcalc.org/#%7B%7B51,451,81,145%7D,%7B71,5,145,1%7D,%7B41,41,1,41%7D,%7B1556,1,111,1%7D%7D*%7B%7B0,10,20,30%7D,%7B40,50,60,70%7D,%7B80,90,100,110%7D,%7B120,130,140,150%7D%7D
 int32_t fill_gemm_buffers_callback(RendererCommandList *command_list, void *user_data)
@@ -217,34 +229,10 @@ int32_t fill_gemm_buffers_callback(RendererCommandList *command_list, void *user
     RendererInterface *renderer = data->renderer;
     int32_t ret;
 
-    float buffer_a_data[MATRIX_BUFFER_SIZE] = {0};
-   buffer_a_data[0] = 51;
-    buffer_a_data[1] = 451;
-    buffer_a_data[2] = 81;
-    buffer_a_data[3] = 145;
-    buffer_a_data[4] = 71;
-    buffer_a_data[5] = 5;
-    buffer_a_data[6] = 145;
-    buffer_a_data[7] = 1;
-    buffer_a_data[8] = 41;
-    buffer_a_data[9] = 41;
-    buffer_a_data[10] = 1;
-    buffer_a_data[11] = 41;
-    buffer_a_data[12] = 1556;
-    buffer_a_data[13] = 1;
-    buffer_a_data[14] = 111;
-    buffer_a_data[15] = 1;
-    float buffer_b_data[MATRIX_BUFFER_SIZE];
-
-    // for (size_t i = 0; i < 16; i++)
-    // {
-    //     // buffer_a_data[i] = i + 10.f;
-    //     buffer_a_data[i] = 1.f;
-    // }
-
     for (size_t i = 0; i < MATRIX_BUFFER_SIZE; i++)
     {
-        buffer_b_data[i] = i * 10.f;
+        buffer_a_data[i] = (float)(rand() % 100) / 10.0f;
+        buffer_b_data[i] = (float)(rand() % 100) / 10.0f;
     }
 
     RendererUploadBufferDataInfo buffer_a_upload_data = {
@@ -348,7 +336,12 @@ int32_t gemm_compute_callback(RendererCommandList *command_list, void *user_data
     RETURN_IF_ERROR(logger, ret, allocate_and_bind_gemm_resource_buffers(logger, renderer, command_list, &data->layout, &data->buffers),
                     "Failed to allocate and bind resource buffers for naive gemm: %d", ret);
 
-    renderer_cmd_dispatch(renderer, command_list, 1, 1, 1);
+    uint32_t matrix_width = MATRIX_WIDTH;
+    renderer_cmd_push_constants(renderer, command_list, data->layout.pipeline_layout_handle, RENDERER_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(uint32_t), &matrix_width);
+
+    uint32_t group_count_x = (MATRIX_WIDTH + SHADER_WORK_GROUP_SIZE - 1) / SHADER_WORK_GROUP_SIZE;
+    uint32_t group_count_y = (MATRIX_WIDTH + SHADER_WORK_GROUP_SIZE - 1) / SHADER_WORK_GROUP_SIZE;
+    renderer_cmd_dispatch(renderer, command_list, group_count_x, group_count_y, 1);
 
     RendererBufferMemoryBarrier compute_memory_barrier = {
         .src_access_mask = RENDERER_ACCESS_SHADER_WRITE_BIT,
@@ -399,7 +392,6 @@ int32_t gemm_compute_callback(RendererCommandList *command_list, void *user_data
     return 0;
 }
 
-
 int32_t create_gemm_layout(DrawContext *context, GemmLayout *out_layout)
 {
     assert(context != NULL);
@@ -438,10 +430,19 @@ int32_t create_gemm_layout(DrawContext *context, GemmLayout *out_layout)
     RETURN_IF_ERROR(logger, ret, renderer_create_resource_set_layout(renderer, &resource_set_layout_create_info, &out_layout->resource_set_layout_handle),
                     "Failed to create naive gemm resource set layout: %d", ret);
 
+    RendererPushConstantsInfo push_constant_info = {
+        .offset = 0,
+        .render_stage_flags = RENDERER_SHADER_STAGE_COMPUTE_BIT,
+        .size = sizeof(uint32_t),
+    };
+
     RendererPipelineLayoutCreateInfo pipeline_layout_create_info = {
         .resource_set_layout_handles_len = 1,
         .resource_set_layout_handles = &out_layout->resource_set_layout_handle,
+        .push_constants_len = 1,
+        .push_constants = &push_constant_info,
     };
+
     RETURN_IF_ERROR(logger, ret, renderer_create_pipeline_layout(renderer, &pipeline_layout_create_info, &out_layout->pipeline_layout_handle),
                     "Failed to create naive gemm compute pipeline layout: %d", ret);
 
@@ -457,15 +458,14 @@ int32_t create_gemm_buffers(DrawContext *context, GemmBuffers *out_buffers)
     RendererInterface *renderer = context->deps.renderer;
     int32_t ret;
 
-    const uint64_t matrix_size = 16 * sizeof(float);
-    out_buffers->a_size = matrix_size;
-    out_buffers->b_size = matrix_size;
-    out_buffers->c_size = matrix_size;
-    out_buffers->read_staging_size = matrix_size;
+    out_buffers->a_size = MATRIX_BUFFER_BYTE_SIZE;
+    out_buffers->b_size = MATRIX_BUFFER_BYTE_SIZE;
+    out_buffers->c_size = MATRIX_BUFFER_BYTE_SIZE;
+    out_buffers->read_staging_size = MATRIX_BUFFER_BYTE_SIZE;
 
     RendererBufferCreateInfo shader_input_buffer_create_info = {
         .memory_usage = RENDERER_MEMORY_USAGE_GPU_ONLY,
-        .size = matrix_size,
+        .size = MATRIX_BUFFER_BYTE_SIZE,
         .usage_flags = RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT | RENDERER_BUFFER_USAGE_STORAGE_BUFFER_BIT,
     };
     RETURN_IF_ERROR(logger, ret, renderer_create_buffer(renderer, &shader_input_buffer_create_info, &out_buffers->a_handle),
@@ -475,7 +475,7 @@ int32_t create_gemm_buffers(DrawContext *context, GemmBuffers *out_buffers)
 
     RendererBufferCreateInfo shader_output_buffer_create_info = {
         .memory_usage = RENDERER_MEMORY_USAGE_GPU_ONLY,
-        .size = matrix_size,
+        .size = MATRIX_BUFFER_BYTE_SIZE,
         .usage_flags = RENDERER_BUFFER_USAGE_TRANSFER_SRC_BIT | RENDERER_BUFFER_USAGE_STORAGE_BUFFER_BIT,
     };
     RETURN_IF_ERROR(logger, ret, renderer_create_buffer(renderer, &shader_output_buffer_create_info, &out_buffers->c_handle),
@@ -483,7 +483,7 @@ int32_t create_gemm_buffers(DrawContext *context, GemmBuffers *out_buffers)
 
     RendererBufferCreateInfo read_staging_buffer_create_info = {
         .memory_usage = RENDERER_MEMORY_USAGE_CPU_ONLY,
-        .size = matrix_size,
+        .size = MATRIX_BUFFER_BYTE_SIZE,
         .usage_flags = RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT,
         .memory_allocation_flags = RENDERER_MEMORY_ALLOCATION_MAPPED_BIT | RENDERER_MEMORY_ALLOCATION_HOST_ACCESS_RANDOM_BIT,
     };
@@ -530,7 +530,36 @@ int32_t create_naive_gemm_pipeline(DrawContext *context, RendererPipelineLayoutH
     return 0;
 }
 
-void naive_gemm_teardown(DrawContext *context, GemmComputeData *data)
+int32_t create_shared_gemm_pipeline(DrawContext *context, RendererPipelineLayoutHandle pipeline_layout_handle, RendererComputePipelineHandle *out_pipeline_handle)
+{
+    assert(context != NULL);
+    assert(out_pipeline_handle != NULL);
+
+    LoggerInterface *logger = context->deps.logger;
+    RendererInterface *renderer = context->deps.renderer;
+
+    int32_t ret;
+
+    RendererShaderHandle compute_shader_handle;
+    RETURN_IF_ERROR(logger, ret, renderer_create_shader(renderer, GEMM_SHARED_COMPUTE_SHADER_U32_CODE, GEMM_SHARED_COMPUTE_SHADER_BYTES_LEN, &compute_shader_handle),
+                    "Failed to create naive gemm shader: %d", ret);
+
+    RendererComputePipelineCreateInfo pipeline_create_info = {
+        .compute_shader = {
+            .entry_point = "main",
+            .shader_handle = compute_shader_handle,
+        },
+        .layout_handle = pipeline_layout_handle,
+    };
+    RETURN_IF_ERROR(logger, ret, renderer_create_compute_pipeline(renderer, &pipeline_create_info, out_pipeline_handle),
+                    "Failed to create naive gemm compute pipeline: %d", ret);
+
+    RETURN_IF_ERROR(logger, ret, renderer_destroy_shader(renderer, compute_shader_handle),
+                    "Failed to destroy shader: %d", ret);
+    return 0;
+}
+
+void gemm_teardown(DrawContext *context, GemmComputeData *data)
 {
     assert(context != NULL);
     assert(data != NULL);
@@ -551,39 +580,125 @@ bool float_compare(float a, float b, float epsilon)
     return fabsf(a - b) < epsilon;
 }
 
-bool test_matrix_result(float *values)
+bool verify_matrix_multiplication_freivalds(DrawContext *context, float *buffer_a, float *buffer_b, float *buffer_c, uint32_t matrix_side, uint32_t iterations)
 {
-    float correct_values[] =
-        {
-            41920,
-            49200,
-            56480,
-            63760,
-            11920,
-            14140,
-            16360,
-            18580,
-            6640,
-            7880,
-            9120,
-            10360,
-            9040,
-            25730,
-            42420,
-            59110,
-        };
+    void *buf;
+    size_t individual_buf_size = matrix_side * sizeof(float);
+    AllocatorAllocationHandle alloc_handle;
+    allocator_alloc(context->deps.allocator, individual_buf_size * 4, &alloc_handle, &buf);
 
-    float compare_epsilon = 0.0001f;
-    for (uint32_t i = 0; i < MATRIX_BUFFER_SIZE; i++)
+    uintptr_t buf_ptr = (uintptr_t)buf;
+
+    float *r = (float *)buf;
+    float *Br = (float *)(buf_ptr + individual_buf_size);
+    float *ABr = (float *)(buf_ptr + individual_buf_size * 2);
+    float *Cr = (float *)(buf_ptr + individual_buf_size * 3);
+
+    bool is_correct = true;
+
+    // Run a few times to eliminate the tiny chance of a false positive
+    for (uint32_t iter = 0; iter < iterations; iter++)
     {
-        if (!float_compare(values[i], correct_values[i], compare_epsilon))
+        // 1. Generate random 0/1 vector
+        for (uint32_t i = 0; i < matrix_side; i++)
         {
-            return false;
+            r[i] = (rand() % 2 == 0) ? 0.0f : 1.0f;
         }
+
+        // 2. Compute Br = B * r
+        for (uint32_t i = 0; i < matrix_side; i++)
+        {
+            Br[i] = 0.0f;
+            for (uint32_t j = 0; j < matrix_side; j++)
+            {
+                Br[i] += buffer_b[i * matrix_side + j] * r[j];
+            }
+        }
+
+        // 3. Compute ABr = A * (Br)
+        for (uint32_t i = 0; i < matrix_side; i++)
+        {
+            ABr[i] = 0.0f;
+            for (uint32_t j = 0; j < matrix_side; j++)
+            {
+                ABr[i] += buffer_a[i * matrix_side + j] * Br[j];
+            }
+        }
+
+        // 4. Compute Cr = C * r
+        for (uint32_t i = 0; i < matrix_side; i++)
+        {
+            Cr[i] = 0.0f;
+            for (uint32_t j = 0; j < matrix_side; j++)
+            {
+                Cr[i] += buffer_c[i * matrix_side + j] * r[j];
+            }
+        }
+
+        // 5. Compare ABr and Cr
+        for (uint32_t i = 0; i < matrix_side; i++)
+        {
+            float relative_epsilon = fmaxf(0.001f, fabsf(Cr[i]) * 0.0001f);
+
+            if (fabs(ABr[i] - Cr[i]) > relative_epsilon)
+            {
+                LOG_ERR(context->deps.logger, "Mismatch at index %d! CPU: %f, GPU: %f", i, ABr[i], Cr[i]);
+                is_correct = false;
+                break;
+            }
+        }
+
+        if (!is_correct)
+            break;
     }
 
-    return true;
+    allocator_free(context->deps.allocator, alloc_handle);
+    return is_correct;
 }
+
+bool test_matrix_result(DrawContext *context)
+{
+    assert(context != NULL);
+
+    return verify_matrix_multiplication_freivalds(context, buffer_a_data, buffer_b_data, buffer_c_data, MATRIX_WIDTH, 5);
+}
+
+// bool test_matrix_result_(DrawContext *context, float *values)
+// {
+//     assert(context != NULL);
+//     assert(values != NULL);
+
+//     float correct_values[] =
+//         {
+//             41920,
+//             49200,
+//             56480,
+//             63760,
+//             11920,
+//             14140,
+//             16360,
+//             18580,
+//             6640,
+//             7880,
+//             9120,
+//             10360,
+//             9040,
+//             25730,
+//             42420,
+//             59110,
+//         };
+
+//     float compare_epsilon = 0.0001f;
+//     for (uint32_t i = 0; i < MATRIX_BUFFER_SIZE; i++)
+//     {
+//         if (!float_compare(values[i], correct_values[i], compare_epsilon))
+//         {
+//             return false;
+//         }
+//     }
+
+//     return true;
+// }
 
 int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)(DrawContext *, RendererPipelineLayoutHandle, RendererComputePipelineHandle *))
 {
@@ -620,7 +735,6 @@ int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)
         LOG_ERR_TRACE(logger, "Failed to setup naive gemm example: %d", ret);
     }
 
-    float values[16] = {0};
     if (ret >= 0)
     {
         RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, gemm_compute_callback, &naive_gemm_data),
@@ -631,24 +745,24 @@ int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)
         RendererReadCPUBufferDataInfo read_cpu_buffer_data_info = {
             .source_buffer_handle = gemm_buffers.read_staging_handle,
             .source_offset = 0,
-            .size = sizeof(values),
-            .destination_buffer = values,
+            .size = MATRIX_BUFFER_SIZE * sizeof(float),
+            .destination_buffer = buffer_c_data,
         };
         RETURN_IF_ERROR(logger, ret, renderer_read_cpu_buffer_data(renderer, &read_cpu_buffer_data_info),
                         "Failed to read cpu buffer data: %d", ret);
     }
     renderer_debug_end_capture(renderer);
 
-    if (test_matrix_result(values))
+    if (test_matrix_result(context))
     {
-        LOG_DBG(logger, "Correct calculation!!!");
+        LOG_INF(logger, "Correct calculation!!!");
     }
     else
     {
         LOG_ERR(logger, "Calculation is wrong and you should feel bad!");
     }
 
-    naive_gemm_teardown(context, &naive_gemm_data);
+    gemm_teardown(context, &naive_gemm_data);
 
     return 0;
 }
@@ -665,6 +779,9 @@ int32_t draw_default_gemm_execute(DrawContext *context)
 
     RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline),
                     "Failed naive gemm example: %d", ret);
+
+    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_shared_gemm_pipeline),
+                    "Failed shared gemm example: %d", ret);
 
     return 0;
 }
