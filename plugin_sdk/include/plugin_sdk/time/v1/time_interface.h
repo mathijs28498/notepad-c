@@ -1,10 +1,13 @@
 #pragma once
 
+#include <stdint.h>
+
 #include "../../plugin_utils.h"
+#include "../../plugin_macros.h"
 
 #pragma pack(push, 8)
 
-struct TimeContext;
+typedef struct TimeContext TimeContext;
 
 #define TIME_STRING_LEN sizeof("[00:00:00.000,000]")
 
@@ -12,18 +15,30 @@ TODO("Add functionality to allow for time formatting (year/day, no microsecond e
 
 typedef struct TimeVtable
 {
-    void (*get_string)(struct TimeContext *context, char time_str[TIME_STRING_LEN]);
+    void (*get_string)(TimeContext *context, char time_str[TIME_STRING_LEN]);
+    uint64_t (*get_nanoseconds)(TimeContext *context);
+    double (*get_elapsed_ms)(TimeContext *context, uint64_t start_ns, uint64_t end_ns);
 } TimeVtable;
 
 typedef struct TimeInterface
 {
-    struct TimeContext *context;
+    TimeContext *context;
     TimeVtable *vtable;
 } TimeInterface;
 
 #pragma pack(pop)
 
-inline void time_get_string(TimeInterface *iface, char time_str[TIME_STRING_LEN])
+static inline void time_get_string(TimeInterface *iface, char time_str[TIME_STRING_LEN])
 {
-    iface->vtable->get_string(iface->context, time_str);
+    VTABLE_METHOD_CALL(iface, get_string, time_str);
+}
+
+static inline uint64_t time_get_nanoseconds(TimeInterface *iface)
+{
+    return VTABLE_METHOD_CALL_NO_ARGS(iface, get_nanoseconds);
+}
+
+static inline double time_get_elapsed_ms(TimeInterface *iface, uint64_t start_ns, uint64_t end_ns)
+{
+    return VTABLE_METHOD_CALL(iface, get_elapsed_ms, start_ns, end_ns);
 }

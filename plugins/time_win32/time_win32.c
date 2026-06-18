@@ -15,7 +15,8 @@ _Static_assert(TIME_WIN32_STRING_LEN == TIME_STRING_LEN, "Time string length of 
 
 void time_win32_get_string(TimeContext *context, char time_str[TIME_WIN32_STRING_LEN])
 {
-    (void) context;
+    assert(context != NULL);
+
     FILETIME ft;
     SYSTEMTIME st_utc, st_local;
 
@@ -39,4 +40,25 @@ void time_win32_get_string(TimeContext *context, char time_str[TIME_WIN32_STRING
         st_local.wSecond,
         milliseconds,
         microseconds);
+}
+
+uint64_t time_win32_get_nanoseconds(TimeContext *context)
+{
+    assert(context != NULL);
+
+    LARGE_INTEGER count, freq;
+
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&count);
+
+    uint64_t seconds = (uint64_t)(count.QuadPart / freq.QuadPart);
+    uint64_t remainder = (uint64_t)(count.QuadPart % freq.QuadPart);
+
+    return seconds * 1000000000ULL + (remainder * 1000000000ULL) / (uint64_t)freq.QuadPart;
+}
+
+double time_win32_get_elapsed_ms(TimeContext *context, uint64_t start_ns, uint64_t end_ns)
+{
+    assert(context != NULL);
+    return (double)(end_ns - start_ns) / 1000000.0;
 }
