@@ -152,6 +152,7 @@ typedef enum RendererResourceType
     RENDERER_RESOURCE_TYPE_COMBINED_IMAGE_SAMPLER = 1,
     RENDERER_RESOURCE_TYPE_SAMPLED_IMAGE = 2,
     RENDERER_RESOURCE_TYPE_STORAGE_IMAGE = 3,
+    RENDERER_RESOURCE_TYPE_STORAGE_BUFFER = 4,
 } RendererResourceType;
 
 typedef struct RendererResourceSetLayoutBinding
@@ -297,7 +298,6 @@ typedef struct RendererGraphicsPipelineCreateInfo
 typedef struct RendererComputePipelineCreateInfo
 {
     RendererShaderCreateInfo compute_shader;
-
     RendererPipelineLayoutHandle layout_handle;
 } RendererComputePipelineCreateInfo;
 
@@ -402,8 +402,6 @@ typedef struct RendererVtable
 
     int32_t (*create_buffer)(RendererContext *context, RendererBufferCreateInfo *renderer_buffer_create_info, RendererBufferHandle *out_buffer_handle);
     int32_t (*destroy_buffer)(RendererContext *context, RendererBufferHandle buffer_handle);
-    int32_t (*upload_buffer_data)(RendererContext *context, RendererCommandList *command_list, RendererUploadBufferDataInfo *upload_buffer_data_info);
-    int32_t (*copy_buffer_data)(RendererContext *context, RendererCommandList *command_list, RendererCopyBufferDataInfo *upload_buffer_data_info);
     int32_t (*read_cpu_buffer_data)(RendererContext *context, RendererReadCPUBufferDataInfo *upload_buffer_data_info);
     int32_t (*get_buffer_device_address)(RendererContext *context, RendererBufferHandle buffer_handle, RendererBufferDeviceAddress *out_device_address);
 
@@ -421,6 +419,9 @@ typedef struct RendererVtable
     int32_t (*create_compute_pipeline)(RendererContext *context, const RendererComputePipelineCreateInfo *pipeline_create_info, RendererComputePipelineHandle *out_pipeline_handle);
     int32_t (*destroy_graphics_pipeline)(RendererContext *context, RendererGraphicsPipelineHandle pipeline_handle);
     int32_t (*destroy_compute_pipeline)(RendererContext *context, RendererComputePipelineHandle pipeline_handle);
+
+    int32_t (*cmd_upload_buffer_data)(RendererContext *context, RendererCommandList *command_list, RendererUploadBufferDataInfo *upload_buffer_data_info);
+    int32_t (*cmd_copy_buffer_data)(RendererContext *context, RendererCommandList *command_list, RendererCopyBufferDataInfo *upload_buffer_data_info);
 
     void (*cmd_begin_rendering)(RendererContext *context, RendererCommandList *command_list, const RendererBeginRenderingInfo *renderer_begin_rendering_info);
     void (*cmd_end_rendering)(RendererContext *context, RendererCommandList *command_list);
@@ -444,7 +445,7 @@ typedef struct RendererVtable
 
     int32_t (*cmd_barrier)(RendererContext *context, RendererCommandList *command_list, const RendererBarrierInfo *renderer_pipeline_barrier_info);
 
-    void (*debug_start_capture)(RendererContext *context);
+    void (*debug_begin_capture)(RendererContext *context);
     void (*debug_end_capture)(RendererContext *context);
     int32_t (*debug_rename_buffer)(RendererContext *context, RendererBufferHandle buffer_handle, const char *name);
 } RendererVtable;
@@ -522,12 +523,12 @@ static inline int32_t renderer_destroy_buffer(RendererInterface *iface, Renderer
 
 static inline int32_t renderer_upload_buffer_data(RendererInterface *iface, RendererCommandList *command_list, RendererUploadBufferDataInfo *upload_buffer_data_info)
 {
-    return VTABLE_METHOD_CALL(iface, upload_buffer_data, command_list, upload_buffer_data_info);
+    return VTABLE_METHOD_CALL(iface, cmd_upload_buffer_data, command_list, upload_buffer_data_info);
 }
 
-static inline int32_t renderer_copy_buffer_data(RendererInterface *iface, RendererCommandList *command_list, RendererCopyBufferDataInfo *copy_buffer_data_info)
+static inline int32_t renderer_cmd_copy_buffer_data(RendererInterface *iface, RendererCommandList *command_list, RendererCopyBufferDataInfo *copy_buffer_data_info)
 {
-    return VTABLE_METHOD_CALL(iface, copy_buffer_data, command_list, copy_buffer_data_info);
+    return VTABLE_METHOD_CALL(iface, cmd_copy_buffer_data, command_list, copy_buffer_data_info);
 }
 
 static inline int32_t renderer_read_cpu_buffer_data(RendererInterface *iface, RendererReadCPUBufferDataInfo *read_cpu_buffer_data_info)
@@ -675,9 +676,9 @@ static inline int32_t renderer_cmd_barrier(RendererInterface *iface, RendererCom
     return VTABLE_METHOD_CALL(iface, cmd_barrier, command_list, renderer_pipeline_barrier_info);
 }
 
-static inline void renderer_debug_start_capture(RendererInterface *iface)
+static inline void renderer_debug_begin_capture(RendererInterface *iface)
 {
-    VTABLE_METHOD_CALL_NO_ARGS(iface, debug_start_capture);
+    VTABLE_METHOD_CALL_NO_ARGS(iface, debug_begin_capture);
 }
 
 static inline void renderer_debug_end_capture(RendererInterface *iface)

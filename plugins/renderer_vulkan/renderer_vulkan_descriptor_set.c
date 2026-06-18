@@ -167,6 +167,40 @@ int32_t rv_create_descriptor_pools(RendererContext *context)
     return 0;
 }
 
+void rv_create_descriptor_buffer_infos_from_resource_buffer_bindings(RendererContext *context, uint32_t resource_bindings_len, const RendererResourceBufferBinding *resource_buffer_bindings, VkDescriptorBufferInfo **out_descriptor_buffer_infos)
+{
+    assert(context != NULL);
+    assert(resource_buffer_bindings != NULL);
+
+    int32_t ret;
+    *out_descriptor_buffer_infos = NULL;
+
+    VkDescriptorBufferInfo *descriptor_buffer_infos;
+    RETURN_IF_ERROR_VOID(context->deps.logger, ret,
+                         BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkDescriptorBufferInfo, resource_bindings_len, &descriptor_buffer_infos),
+                         "Failed to allocate from bump arena: %d", ret);
+
+    for (uint32_t i = 0; i < resource_bindings_len; i++)
+    {
+        const RendererResourceBufferBinding *resource_buffer_binding = &resource_buffer_bindings[i];
+
+        RV_AllocatedBuffer allocated_buffer = {0};
+        RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger,
+                                                  context->allocated_buffer_generations_a,
+                                                  context->allocated_buffers_a,
+                                                  resource_buffer_binding->buffer_handle,
+                                                  allocated_buffer);
+
+        descriptor_buffer_infos[i] = (VkDescriptorBufferInfo){
+            .buffer = allocated_buffer.buffer, // Assuming your RV_AllocatedBuffer struct holds the VkBuffer here
+            .offset = resource_buffer_binding->offset,
+            .range = resource_buffer_binding->size,
+        };
+    }
+
+    *out_descriptor_buffer_infos = descriptor_buffer_infos;
+}
+
 // This function allocates descriptor_image_infos on the bump_arena, make sure the arena is valid until the update descriptor set is called
 void rv_create_descriptor_image_infos_from_resource_image_bindings(RendererContext *context, uint32_t resource_bindings_len, const RendererResourceImageBinding *resource_image_bindings, VkDescriptorImageInfo **out_descriptor_image_infos)
 {
@@ -224,6 +258,9 @@ VkWriteDescriptorSet rv_resource_set_update_write_to_vk_write_descriptor_set(Ren
     case RENDERER_RESOURCE_TYPE_SAMPLER:
         TODO("To implement");
         UNREACHABLE();
+        break;
+    case RENDERER_RESOURCE_TYPE_STORAGE_BUFFER:
+        rv_create_descriptor_buffer_infos_from_resource_buffer_bindings(context, resource_set_update_write->resource_bindings_len, resource_set_update_write->buffer_bindings, &write_descriptor_set.pBufferInfo);
         break;
     case RENDERER_RESOURCE_TYPE_STORAGE_IMAGE:
         rv_create_descriptor_image_infos_from_resource_image_bindings(context, resource_set_update_write->resource_bindings_len, resource_set_update_write->image_bindings, &write_descriptor_set.pImageInfo);

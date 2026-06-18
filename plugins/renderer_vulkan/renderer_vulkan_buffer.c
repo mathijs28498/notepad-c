@@ -68,7 +68,7 @@ int32_t renderer_vulkan_destroy_buffer(RendererContext *context, RendererBufferH
     return 0;
 }
 
-int32_t renderer_vulkan_upload_buffer_data(RendererContext *context, RendererCommandList *command_list, RendererUploadBufferDataInfo *upload_buffer_data_info)
+int32_t renderer_vulkan_cmd_upload_buffer_data(RendererContext *context, RendererCommandList *command_list, RendererUploadBufferDataInfo *upload_buffer_data_info)
 {
     assert(context != NULL);
     assert(command_list != NULL);
@@ -126,7 +126,7 @@ int32_t renderer_vulkan_upload_buffer_data(RendererContext *context, RendererCom
 
 TODO("REMOVE THIS!!");
 #include "renderer_vulkan_cmd.h"
-int32_t renderer_vulkan_copy_buffer_data(RendererContext *context, RendererCommandList *command_list, RendererCopyBufferDataInfo *copy_buffer_data_info)
+int32_t renderer_vulkan_cmd_copy_buffer_data(RendererContext *context, RendererCommandList *command_list, RendererCopyBufferDataInfo *copy_buffer_data_info)
 {
     assert(context != NULL);
     assert(command_list != NULL);

@@ -64,16 +64,14 @@ VkDescriptorType rv_resource_type_to_vk_descriptor_type(RendererResourceType res
     {
     case RENDERER_RESOURCE_TYPE_SAMPLER:
         return VK_DESCRIPTOR_TYPE_SAMPLER;
-        break;
     case RENDERER_RESOURCE_TYPE_COMBINED_IMAGE_SAMPLER:
         return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        break;
     case RENDERER_RESOURCE_TYPE_SAMPLED_IMAGE:
         return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        break;
     case RENDERER_RESOURCE_TYPE_STORAGE_IMAGE:
         return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        break;
+    case RENDERER_RESOURCE_TYPE_STORAGE_BUFFER:
+        return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 
     default:
         UNREACHABLE();

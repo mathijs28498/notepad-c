@@ -44,7 +44,7 @@ int32_t renderer_vulkan_debug_init(RendererContext *context)
     return 0;
 }
 
-void renderer_vulkan_debug_start_capture(RendererContext *context)
+void renderer_vulkan_debug_begin_capture(RendererContext *context)
 {
     assert(context != NULL);
 

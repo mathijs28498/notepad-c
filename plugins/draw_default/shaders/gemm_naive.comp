@@ -1,5 +1,31 @@
 #version 460
 
-void main() {
+layout(local_size_x = 4, local_size_y = 4, local_size_z = 1) in;
 
+layout(std430, set = 0, binding = 0) readonly buffer MatrixA {
+float A[];
+};
+
+layout(std430, set = 0, binding = 1) readonly buffer MatrixB {
+float B[];
+};
+
+layout(std430, set = 0, binding = 2) buffer MatrixC {
+float C[];
+};
+
+#define MATRIX_WIDTH 4
+
+uint calc_index(uvec2 index_xy) {
+return index_xy.y * MATRIX_WIDTH + index_xy.x;
+}
+
+void main() {
+uint index = calc_index(gl_GlobalInvocationID.xy);
+C[index] = 0;
+for(int i = 0;
+i < MATRIX_WIDTH;
+i ++) {
+C[index] += A[calc_index(uvec2(i, gl_GlobalInvocationID.y))] * B[calc_index(uvec2(gl_GlobalInvocationID.x, i))];
+}
 }

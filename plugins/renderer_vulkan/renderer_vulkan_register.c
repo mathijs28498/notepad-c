@@ -39,8 +39,6 @@ static const RendererVtable plugin_vtable = {
 
     .create_buffer = renderer_vulkan_create_buffer,
     .destroy_buffer = renderer_vulkan_destroy_buffer,
-    .upload_buffer_data = renderer_vulkan_upload_buffer_data,
-    .copy_buffer_data = renderer_vulkan_copy_buffer_data,
     .read_cpu_buffer_data = renderer_vulkan_read_cpu_buffer_data,
     .get_buffer_device_address = renderer_vulkan_get_buffer_device_address,
 
@@ -58,6 +56,9 @@ static const RendererVtable plugin_vtable = {
     .create_compute_pipeline = renderer_vulkan_create_compute_pipeline,
     .destroy_graphics_pipeline = renderer_vulkan_destroy_graphics_pipeline,
     .destroy_compute_pipeline = renderer_vulkan_destroy_compute_pipeline,
+
+    .cmd_upload_buffer_data = renderer_vulkan_cmd_upload_buffer_data,
+    .cmd_copy_buffer_data = renderer_vulkan_cmd_copy_buffer_data,
 
     .cmd_begin_rendering = renderer_vulkan_cmd_begin_rendering,
     .cmd_end_rendering = renderer_vulkan_cmd_end_rendering,
@@ -80,7 +81,7 @@ static const RendererVtable plugin_vtable = {
 
     .cmd_barrier = renderer_vulkan_cmd_barrier,
 
-    .debug_start_capture = renderer_vulkan_debug_start_capture,
+    .debug_begin_capture = renderer_vulkan_debug_begin_capture,
     .debug_end_capture = renderer_vulkan_debug_end_capture,
     .debug_rename_buffer = renderer_vulkan_debug_rename_buffer,
 };
