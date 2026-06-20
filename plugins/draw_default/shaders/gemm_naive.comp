@@ -7,27 +7,27 @@ layout(push_constant, std430) uniform pc {
 };
 
 layout(set = 0, binding = 0, std430) readonly buffer MatrixA {
-float A[];
+    float A[];
 };
 
 layout(set = 0, binding = 1, std430) readonly buffer MatrixB {
-float B[];
+    float B[];
 };
 
 layout(set = 0, binding = 2, std430) buffer MatrixC {
-float C[];
+    float C[];
 };
 
 uint calc_index(uvec2 index_xy) {
-return index_xy.y * matrix_width + index_xy.x;
+    return index_xy.y * matrix_width + index_xy.x;
 }
 
 void main() {
-uint index = calc_index(gl_GlobalInvocationID.xy);
-C[index] = 0;
-for(int i = 0;
-i < matrix_width;
-i ++) {
-C[index] += A[calc_index(uvec2(i, gl_GlobalInvocationID.y))] * B[calc_index(uvec2(gl_GlobalInvocationID.x, i))];
-}
+    uint index = calc_index(gl_GlobalInvocationID.xy);
+    C[index] = 0;
+    for (int i = 0;
+        i < matrix_width;
+        i++) {
+        C[index] += A[calc_index(uvec2(i, gl_GlobalInvocationID.y))] * B[calc_index(uvec2(gl_GlobalInvocationID.x, i))];
+    }
 }

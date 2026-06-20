@@ -34,6 +34,8 @@ static const RendererVtable plugin_vtable = {
     .get_render_image_handle = renderer_vulkan_get_render_image_handle,
     .get_image_properties = renderer_vulkan_get_image_properties,
 
+    .destroy_flush = renderer_vulkan_destroy_flush,
+
     .create_shader = renderer_vulkan_create_shader,
     .destroy_shader = renderer_vulkan_destroy_shader,
 
@@ -47,6 +49,7 @@ static const RendererVtable plugin_vtable = {
     .create_resource_set_layout = renderer_vulkan_create_resource_set_layout,
     .destroy_resource_set_layout = renderer_vulkan_destroy_resource_set_layout,
     .allocate_transient_resource_set = renderer_vulkan_allocate_transient_resource_set,
+    .reset_transient_resource_sets = renderer_vulkan_reset_transient_resource_sets,
     .update_resource_set = renderer_vulkan_update_resource_set,
 
     .create_pipeline_layout = renderer_vulkan_create_pipeline_layout,

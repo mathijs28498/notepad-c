@@ -93,6 +93,18 @@ int32_t renderer_vulkan_allocate_transient_resource_set(RendererContext *context
     return 0;
 }
 
+int32_t renderer_vulkan_reset_transient_resource_sets(RendererContext *context)
+{
+    assert(context != NULL);
+    VkResult result;
+
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetDescriptorPool(context->device, context->active_frame_state.frame->transient_descriptor_pool, 0),
+                       -1, "Failed to reset frame command pool: %d", result);
+    GET_ARRAY_LENGTH(context->active_frame_state.frame->transient_descriptor_sets_a) = 0;
+
+    return 0;
+}
+
 static inline int32_t inl_renderer_vulkan_create_resource_set_layout(RendererContext *context, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle)
 {
     VkResult result;

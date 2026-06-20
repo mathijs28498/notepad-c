@@ -19,6 +19,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_render, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_cmd.h"
 #include "renderer_vulkan.h"
+#include "renderer_vulkan_descriptor_set.h"
 #include "renderer_vulkan_conversion.h"
 
 #define SECOND_IN_NS 1000000000
@@ -44,17 +45,17 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
         return 1;
     }
 
-    RendererFrameData *frame = &context->frames[context->frame_number % ARRAY_SIZE(context->frames)];
+    context->active_frame_state.frame = &context->frames[context->frame_number % ARRAY_SIZE(context->frames)];
 
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkWaitForFences(context->device, 1, &frame->render_fence, VK_TRUE, SECOND_IN_NS),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkWaitForFences(context->device, 1, &context->active_frame_state.frame->render_fence, VK_TRUE, SECOND_IN_NS),
                        -1, "Failed to wait for render fence: %d", result);
 
-    rv_call_queue_flush(frame->destroy_queue_a);
+    renderer_vulkan_destroy_flush(context);
 
     uint32_t swapchain_image_index;
     RV_RETURN_IF_ERROR_CONDITION(
         context->deps.logger, result, result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR,
-        vkAcquireNextImageKHR(context->device, context->swapchain, SECOND_IN_NS, frame->swapchain_semaphore, VK_NULL_HANDLE, &swapchain_image_index),
+        vkAcquireNextImageKHR(context->device, context->swapchain, SECOND_IN_NS, context->active_frame_state.frame->swapchain_semaphore, VK_NULL_HANDLE, &swapchain_image_index),
         -1, "Failed to acquire next image: %d", result);
     TODO("Make this work with a length, not capacity")
     assert(swapchain_image_index < ARRAY_SIZE(context->swapchain_image_handles));
@@ -67,29 +68,27 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
         return 2;
     }
 
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetFences(context->device, 1, &frame->render_fence),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetFences(context->device, 1, &context->active_frame_state.frame->render_fence),
                        -1, "Failed to reset render fence: %d", result);
 
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandPool(context->device, frame->command_pool, 0),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandPool(context->device, context->active_frame_state.frame->command_pool, 0),
                        -1, "Failed to reset frame command pool: %d", result);
 
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetDescriptorPool(context->device, frame->transient_descriptor_pool, 0),
-                       -1, "Failed to reset frame command pool: %d", result);
-    GET_ARRAY_LENGTH(frame->transient_descriptor_sets_a) = 0;
+    RV_RETURN_IF_ERROR(context->deps.logger, result, renderer_vulkan_reset_transient_resource_sets(context),
+                       -1, "Failed to reset transient descriptor sets: %d", result);
 
     VkCommandBufferBeginInfo cmd_begin_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     };
 
-    VkCommandBuffer cmd = frame->command_list.command_buffer;
+    VkCommandBuffer cmd = context->active_frame_state.frame->command_list.command_buffer;
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkBeginCommandBuffer(cmd, &cmd_begin_info),
                        -1, "Failed to begin command buffer: %d", result);
 
-    context->active_frame_state.frame = frame;
     context->active_frame_state.swapchain_index = swapchain_image_index;
     context->active_frame_state.is_active = true;
-    *out_command_list = &frame->command_list;
+    *out_command_list = &context->active_frame_state.frame->command_list;
 
     return 0;
 }

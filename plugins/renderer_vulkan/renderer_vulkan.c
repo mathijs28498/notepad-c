@@ -50,7 +50,16 @@ void renderer_vulkan_on_window_resize(RendererContext *context, uint32_t width, 
 
 bool renderer_vulkan_consume_has_resized(RendererContext *context)
 {
+    assert(context != NULL);
+
     bool swapchain_recreated = context->swapchain_recreated;
     context->swapchain_recreated = false;
     return swapchain_recreated;
+}
+
+void renderer_vulkan_destroy_flush(RendererContext *context)
+{
+    assert(context != NULL);
+
+    rv_call_queue_flush(context->active_frame_state.frame->destroy_queue_a);
 }

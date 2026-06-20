@@ -397,6 +397,8 @@ typedef struct RendererVtable
     RendererImageHandle (*get_render_image_handle)(RendererContext *context);
     int32_t (*get_image_properties)(RendererContext *context, RendererImageHandle image_handle, RendererImageProperties *out_image_properties);
 
+    void (*destroy_flush)(RendererContext *context);
+
     int32_t (*create_shader)(RendererContext *context, const uint32_t *shader_code_u32, size_t shader_code_bytes_len, RendererShaderHandle *out_shader_handle);
     int32_t (*destroy_shader)(RendererContext *context, RendererShaderHandle shader_handle);
 
@@ -410,6 +412,7 @@ typedef struct RendererVtable
     int32_t (*create_resource_set_layout)(RendererContext *context, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle);
     int32_t (*destroy_resource_set_layout)(RendererContext *context, RendererResourceSetLayoutHandle resource_set_layout_handle);
     int32_t (*allocate_transient_resource_set)(RendererContext *context, RendererResourceSetLayoutHandle resource_set_layout_handle, RendererResourceSetHandle *out_resource_set_handle);
+    int32_t (*reset_transient_resource_sets)(RendererContext *context);
     void (*update_resource_set)(RendererContext *context, const RendererResourceSetUpdateInfo *resource_set_update_info);
 
     int32_t (*create_pipeline_layout)(RendererContext *context, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle);
@@ -501,6 +504,11 @@ static inline bool renderer_consume_has_resized(RendererInterface *iface)
     return VTABLE_METHOD_CALL_NO_ARGS(iface, consume_has_resized);
 }
 
+static inline void renderer_destroy_flush(RendererInterface *iface)
+{
+    VTABLE_METHOD_CALL_NO_ARGS(iface, destroy_flush);
+}
+
 static inline int32_t renderer_create_shader(RendererInterface *iface, const uint32_t *shader_code_u32, size_t shader_code_bytes_len, RendererShaderHandle *out_shader_handle)
 {
     return VTABLE_METHOD_CALL(iface, create_shader, shader_code_u32, shader_code_bytes_len, out_shader_handle);
@@ -564,6 +572,11 @@ static inline int32_t renderer_destroy_resource_set_layout(RendererInterface *if
 static inline int32_t renderer_allocate_transient_resource_set(RendererInterface *iface, RendererResourceSetLayoutHandle resource_set_layout_handle, RendererResourceSetHandle *out_resource_set_handle)
 {
     return VTABLE_METHOD_CALL(iface, allocate_transient_resource_set, resource_set_layout_handle, out_resource_set_handle);
+}
+
+static inline int32_t renderer_reset_transient_resource_sets(RendererInterface *iface)
+{
+    return VTABLE_METHOD_CALL_NO_ARGS(iface, reset_transient_resource_sets);
 }
 
 static inline void renderer_update_resource_set(RendererInterface *iface, const RendererResourceSetUpdateInfo *resource_set_update_info)

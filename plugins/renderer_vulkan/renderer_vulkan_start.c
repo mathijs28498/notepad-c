@@ -84,7 +84,7 @@ int32_t rv_immediate_start(RendererContext *context)
                        -1, "Failed to create start command pool: %d", result);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->active_frame_state.frame->destroy_queue_a, vkDestroyCommandPool, context->device, context->immediate_command_pool, NULL),
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroyCommandPool, context->device, context->immediate_command_pool, NULL),
                     "Failed to push start command pool to destroy queue: %d", ret);
 
     VkCommandBufferAllocateInfo command_buffer_alloc_info = {

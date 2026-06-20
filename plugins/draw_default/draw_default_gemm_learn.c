@@ -20,6 +20,18 @@ LOGGER_INTERFACE_REGISTER_URGENCY(draw_default_gemm_learn, LOG_LEVEL_DEBUG, LOG_
 #include "shader_gemm_naive_compute.h"
 #include "shader_gemm_tiled_compute.h"
 
+#define GEMM_ITERATIONS 100
+
+#define MATRIX_WIDTH 16
+// #define MATRIX_WIDTH 1024
+#define MATRIX_BUFFER_SIZE MATRIX_WIDTH *MATRIX_WIDTH
+#define MATRIX_BUFFER_BYTE_SIZE MATRIX_BUFFER_SIZE * sizeof(float)
+
+#define SHADER_WORK_GROUP_SIZE 16
+static float buffer_a_data[MATRIX_BUFFER_SIZE] = {0};
+static float buffer_b_data[MATRIX_BUFFER_SIZE] = {0};
+static float buffer_c_data[MATRIX_BUFFER_SIZE] = {0};
+
 typedef struct SimpleCopyExampleData
 {
     LoggerInterface *logger;
@@ -205,17 +217,6 @@ typedef struct GemmComputeData
     RendererComputePipelineHandle pipeline_handle;
 
 } GemmComputeData;
-
-#define GEMM_ITERATIONS 40
-
-#define MATRIX_WIDTH 1024
-#define MATRIX_BUFFER_SIZE MATRIX_WIDTH *MATRIX_WIDTH
-#define MATRIX_BUFFER_BYTE_SIZE MATRIX_BUFFER_SIZE * sizeof(float)
-
-#define SHADER_WORK_GROUP_SIZE 16
-static float buffer_a_data[MATRIX_BUFFER_SIZE] = {0};
-static float buffer_b_data[MATRIX_BUFFER_SIZE] = {0};
-static float buffer_c_data[MATRIX_BUFFER_SIZE] = {0};
 
 static uint64_t *current_timer_begin = NULL;
 static uint64_t *current_timer_end = NULL;
@@ -666,7 +667,7 @@ bool test_matrix_result(DrawContext *context)
     return verify_matrix_multiplication_freivalds(context, buffer_a_data, buffer_b_data, buffer_c_data, MATRIX_WIDTH, 5);
 }
 
-int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)(DrawContext *, RendererPipelineLayoutHandle, RendererComputePipelineHandle *))
+int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)(DrawContext *, RendererPipelineLayoutHandle, RendererComputePipelineHandle *), uint32_t custom_iterations)
 {
     assert(context != NULL);
 
@@ -703,16 +704,17 @@ int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)
 
     if (ret >= 0)
     {
-        // Do it once to avoid cold start penalty
-        RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, gemm_compute_callback, &naive_gemm_data),
-                        "Failed to execute naive gemm immediate execute: %d", ret);
-        RETURN_IF_ERROR(logger, ret, renderer_immediate_flush(renderer),
-                        "Failed to flush immediate execute: %d", ret);
         *current_timer_begin = time_get_nanoseconds(context->deps.time);
-        for (uint32_t i = 0; i < GEMM_ITERATIONS; i++)
+        for (uint32_t i = 0; i < (custom_iterations ? custom_iterations : GEMM_ITERATIONS); i++)
         {
             RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, gemm_compute_callback, &naive_gemm_data),
                             "Failed to execute naive gemm immediate execute: %d", ret);
+            if ((i + 1) % 50 == 0)
+            {
+                RETURN_IF_ERROR(logger, ret, renderer_immediate_flush(renderer),
+                                "Failed to flush immediate execute: %d", ret);
+                renderer_reset_transient_resource_sets(renderer);
+            }
         }
 
         RETURN_IF_ERROR(logger, ret, renderer_immediate_flush(renderer),
@@ -741,6 +743,8 @@ int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)
     renderer_debug_end_capture(renderer);
 
     gemm_teardown(context, &naive_gemm_data);
+    renderer_destroy_flush(renderer);
+    renderer_reset_transient_resource_sets(renderer);
 
     return 0;
 }
@@ -755,7 +759,7 @@ int32_t draw_default_gemm_execute(DrawContext *context)
     int32_t ret;
 
     // RETURN_IF_ERROR(logger, ret, simple_copy_example(context),
-                    // "Failed simple copy example: %d", ret);
+    // "Failed simple copy example: %d", ret);
 
     uint64_t naive_gemm_begin = 0;
     uint64_t naive_gemm_end = 0;
@@ -765,16 +769,21 @@ int32_t draw_default_gemm_execute(DrawContext *context)
     TODO("Fix discrepancy where first compute is always slightly slower than the second even though they do the same stuff");
     TODO("Also figure out why doing the simple copy example makes it go a lot faster for some reason");
 
+    current_timer_begin = &naive_gemm_begin;
+    current_timer_end = &naive_gemm_end;
+    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline, 10),
+                    "Failed naive gemm example: %d", ret);
+
     LOG_DBG(logger, "Doing naive gemm");
     current_timer_begin = &naive_gemm_begin;
     current_timer_end = &naive_gemm_end;
-    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline),
+    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline, 0),
                     "Failed naive gemm example: %d", ret);
 
     LOG_DBG(logger, "Doing tiled gemm");
     current_timer_begin = &tiled_gemm_begin;
     current_timer_end = &tiled_gemm_end;
-    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_tiled_gemm_pipeline),
+    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_tiled_gemm_pipeline, 0),
                     "Failed tiled gemm example: %d", ret);
 
     double naive_elapsed = time_get_elapsed_ms(time, naive_gemm_begin, naive_gemm_end);

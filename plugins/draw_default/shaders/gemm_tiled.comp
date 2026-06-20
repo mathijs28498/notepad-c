@@ -1,33 +1,35 @@
 #version 460
 
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+#define WORK_GROUP_SIZE 16
+
+layout(local_size_x = WORK_GROUP_SIZE, local_size_y = WORK_GROUP_SIZE, local_size_z = 1) in;
 
 layout(push_constant, std430) uniform pc {
-    uint matrix_width;
+    uint matrixWidth;
 };
 
 layout(set = 0, binding = 0, std430) readonly buffer MatrixA {
-float A[];
+    float A[];
 };
 
 layout(set = 0, binding = 1, std430) readonly buffer MatrixB {
-float B[];
+    float B[];
 };
 
 layout(set = 0, binding = 2, std430) buffer MatrixC {
-float C[];
+    float C[];
 };
 
-uint calc_index(uvec2 index_xy) {
-return index_xy.y * matrix_width + index_xy.x;
+uint calcIndex(uvec2 xy) {
+    return xy.y * matrixWidth + xy.x;
 }
 
+shared float workGroupCache[WORK_GROUP_SIZE * WORK_GROUP_SIZE];
+
 void main() {
-uint index = calc_index(gl_GlobalInvocationID.xy);
-C[index] = 0;
-for(int i = 0;
-i < matrix_width;
-i ++) {
-C[index] += A[calc_index(uvec2(i, gl_GlobalInvocationID.y))] * B[calc_index(uvec2(gl_GlobalInvocationID.x, i))];
-}
+    uint index = calcIndex(gl_GlobalInvocationID.xy);
+    C[index] = 0;
+    for (int i = 0; i < matrixWidth; i++) {
+        C[index] += A[calcIndex(uvec2(i, gl_GlobalInvocationID.y))] * B[calcIndex(uvec2(gl_GlobalInvocationID.x, i))];
+    }
 }
