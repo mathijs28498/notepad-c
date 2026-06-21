@@ -42,7 +42,22 @@ void time_win32_get_string(TimeContext *context, char time_str[TIME_WIN32_STRING
         microseconds);
 }
 
-uint64_t time_win32_get_nanoseconds(TimeContext *context)
+uint64_t time_win32_ms(TimeContext *context)
+{
+    assert(context != NULL);
+
+    LARGE_INTEGER count, freq;
+
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&count);
+
+    uint64_t seconds = (uint64_t)(count.QuadPart / freq.QuadPart);
+    uint64_t remainder = (uint64_t)(count.QuadPart % freq.QuadPart);
+
+    return seconds * 1000ULL + (remainder * 1000ULL) / (uint64_t)freq.QuadPart;
+}
+
+uint64_t time_win32_ns(TimeContext *context)
 {
     assert(context != NULL);
 

@@ -16,7 +16,8 @@ TODO("Add functionality to allow for time formatting (year/day, no microsecond e
 typedef struct TimeVtable
 {
     void (*get_string)(TimeContext *context, char time_str[TIME_STRING_LEN]);
-    uint64_t (*get_nanoseconds)(TimeContext *context);
+    uint64_t (*ms)(TimeContext *context);
+    uint64_t (*ns)(TimeContext *context);
     double (*get_elapsed_ms)(TimeContext *context, uint64_t start_ns, uint64_t end_ns);
 } TimeVtable;
 
@@ -33,9 +34,14 @@ static inline void time_get_string(TimeInterface *iface, char time_str[TIME_STRI
     VTABLE_METHOD_CALL(iface, get_string, time_str);
 }
 
-static inline uint64_t time_get_nanoseconds(TimeInterface *iface)
+static inline uint64_t time_ms(TimeInterface *iface)
 {
-    return VTABLE_METHOD_CALL_NO_ARGS(iface, get_nanoseconds);
+    return VTABLE_METHOD_CALL_NO_ARGS(iface, ms);
+}
+
+static inline uint64_t time_ns(TimeInterface *iface)
+{
+    return VTABLE_METHOD_CALL_NO_ARGS(iface, ns);
 }
 
 static inline double time_get_elapsed_ms(TimeInterface *iface, uint64_t start_ns, uint64_t end_ns)

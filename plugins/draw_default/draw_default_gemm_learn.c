@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
+#include <stdio.h>
 
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
@@ -22,8 +23,9 @@ LOGGER_INTERFACE_REGISTER_URGENCY(draw_default_gemm_learn, LOG_LEVEL_DEBUG, LOG_
 
 #define GEMM_ITERATIONS 100
 
-#define MATRIX_WIDTH 16
-// #define MATRIX_WIDTH 1024
+// #define MATRIX_WIDTH 16
+#define MATRIX_WIDTH 1024
+// #define MATRIX_WIDTH 4
 #define MATRIX_BUFFER_SIZE MATRIX_WIDTH *MATRIX_WIDTH
 #define MATRIX_BUFFER_BYTE_SIZE MATRIX_BUFFER_SIZE * sizeof(float)
 
@@ -235,6 +237,8 @@ int32_t fill_gemm_buffers_callback(RendererCommandList *command_list, void *user
 
     for (size_t i = 0; i < MATRIX_BUFFER_SIZE; i++)
     {
+        // buffer_a_data[i] = (float)i;
+        // buffer_b_data[i] = (float)i;
         buffer_a_data[i] = (float)(rand() % 100) / 10.0f;
         buffer_b_data[i] = (float)(rand() % 100) / 10.0f;
     }
@@ -646,9 +650,8 @@ bool verify_matrix_multiplication_freivalds(DrawContext *context, float *buffer_
 
             if (fabs(ABr[i] - Cr[i]) > relative_epsilon)
             {
-                LOG_ERR(context->deps.logger, "Mismatch at index %d! CPU: %f, GPU: %f", i, ABr[i], Cr[i]);
+                LOG_ERR(context->deps.logger, "Mismatch at index %d! was %f, expected %f", i, Cr[i], ABr[i]);
                 is_correct = false;
-                break;
             }
         }
 
@@ -660,11 +663,76 @@ bool verify_matrix_multiplication_freivalds(DrawContext *context, float *buffer_
     return is_correct;
 }
 
+void print_matrix(DrawContext *context, float *matrix, uint32_t matrix_side)
+{
+    assert(context != NULL);
+    assert(matrix != NULL);
+
+    uint32_t block_size = (matrix_side < 4) ? matrix_side : 4;
+
+    char row_buffer[256];
+
+    LOG_INF(context->deps.logger, "Matrix Top Left:");
+    for (uint32_t r = 0; r < block_size; ++r)
+    {
+        int offset = 0;
+        // Start row with '[' or '[[' for the first row
+        offset += snprintf(row_buffer + offset, sizeof(row_buffer) - offset,
+                           (r == 0) ? "[[" : " [");
+
+        for (uint32_t c = 0; c < block_size; ++c)
+        {
+            uint32_t index = r * matrix_side + c;
+            // Pad columns to 8 characters with 3 decimal places
+            offset += snprintf(row_buffer + offset, sizeof(row_buffer) - offset,
+                               "%8.3f ", matrix[index]);
+        }
+
+        // Close row with ']' or ']]' for the last row
+        snprintf(row_buffer + offset, sizeof(row_buffer) - offset,
+                 (r == block_size - 1 && matrix_side <= block_size) ? "]]" : "]");
+
+        LOG_INF(context->deps.logger, "%s", row_buffer);
+    }
+
+    if (matrix_side <= block_size)
+    {
+        return;
+    }
+
+    LOG_INF(context->deps.logger, "...");
+    LOG_INF(context->deps.logger, "Matrix Bottom Right:");
+
+    for (uint32_t r = matrix_side - block_size; r < matrix_side; ++r)
+    {
+        int offset = 0;
+        offset += snprintf(row_buffer + offset, sizeof(row_buffer) - offset, " [");
+
+        for (uint32_t c = matrix_side - block_size; c < matrix_side; ++c)
+        {
+            uint32_t index = r * matrix_side + c;
+            offset += snprintf(row_buffer + offset, sizeof(row_buffer) - offset,
+                               "%8.3f ", matrix[index]);
+        }
+
+        snprintf(row_buffer + offset, sizeof(row_buffer) - offset,
+                 (r == matrix_side - 1) ? "]]" : "]");
+
+        LOG_INF(context->deps.logger, "%s", row_buffer);
+    }
+}
+
 bool test_matrix_result(DrawContext *context)
 {
     assert(context != NULL);
 
-    return verify_matrix_multiplication_freivalds(context, buffer_a_data, buffer_b_data, buffer_c_data, MATRIX_WIDTH, 5);
+    bool is_correct = verify_matrix_multiplication_freivalds(context, buffer_a_data, buffer_b_data, buffer_c_data, MATRIX_WIDTH, 5);
+    if (!is_correct)
+    {
+        LOG_DBG(context->deps.logger, "Matrix c:");
+        print_matrix(context, buffer_c_data, MATRIX_WIDTH);
+    }
+    return is_correct;
 }
 
 int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)(DrawContext *, RendererPipelineLayoutHandle, RendererComputePipelineHandle *), uint32_t custom_iterations)
@@ -704,7 +772,7 @@ int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)
 
     if (ret >= 0)
     {
-        *current_timer_begin = time_get_nanoseconds(context->deps.time);
+        *current_timer_begin = time_ns(context->deps.time);
         for (uint32_t i = 0; i < (custom_iterations ? custom_iterations : GEMM_ITERATIONS); i++)
         {
             RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, gemm_compute_callback, &naive_gemm_data),
@@ -719,7 +787,7 @@ int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)
 
         RETURN_IF_ERROR(logger, ret, renderer_immediate_flush(renderer),
                         "Failed to flush immediate execute: %d", ret);
-        *current_timer_end = time_get_nanoseconds(context->deps.time);
+        *current_timer_end = time_ns(context->deps.time);
 
         RendererReadCPUBufferDataInfo read_cpu_buffer_data_info = {
             .source_buffer_handle = gemm_buffers.read_staging_handle,
@@ -758,6 +826,8 @@ int32_t draw_default_gemm_execute(DrawContext *context)
     TimeInterface *time = context->deps.time;
     int32_t ret;
 
+    srand((uint32_t)time_ms(time));
+
     // RETURN_IF_ERROR(logger, ret, simple_copy_example(context),
     // "Failed simple copy example: %d", ret);
 
@@ -769,28 +839,42 @@ int32_t draw_default_gemm_execute(DrawContext *context)
     TODO("Fix discrepancy where first compute is always slightly slower than the second even though they do the same stuff");
     TODO("Also figure out why doing the simple copy example makes it go a lot faster for some reason");
 
-    current_timer_begin = &naive_gemm_begin;
-    current_timer_end = &naive_gemm_end;
-    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline, 10),
-                    "Failed naive gemm example: %d", ret);
+    // current_timer_begin = &naive_gemm_begin;
+    // current_timer_end = &naive_gemm_end;
+    // RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline, 20),
+    //                 "Failed naive gemm example: %d", ret);
 
-    LOG_DBG(logger, "Doing naive gemm");
-    current_timer_begin = &naive_gemm_begin;
-    current_timer_end = &naive_gemm_end;
-    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline, 0),
-                    "Failed naive gemm example: %d", ret);
+    // RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_tiled_gemm_pipeline, 20),
+    //                 "Failed tiled gemm example: %d", ret);
 
-    LOG_DBG(logger, "Doing tiled gemm");
-    current_timer_begin = &tiled_gemm_begin;
-    current_timer_end = &tiled_gemm_end;
-    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_tiled_gemm_pipeline, 0),
-                    "Failed tiled gemm example: %d", ret);
+    const uint32_t benchmark_iter = 10;
+    double perc_diff_acc = 0;
+    for (uint32_t i = 0; i < benchmark_iter; i++)
+    {
+        LOG_DBG(logger, "Doing naive gemm");
+        current_timer_begin = &naive_gemm_begin;
+        current_timer_end = &naive_gemm_end;
+        RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline, 0),
+                        "Failed naive gemm example: %d", ret);
 
-    double naive_elapsed = time_get_elapsed_ms(time, naive_gemm_begin, naive_gemm_end);
-    double tiled_elapsed = time_get_elapsed_ms(time, tiled_gemm_begin, tiled_gemm_end);
+        LOG_DBG(logger, "Doing tiled gemm");
+        current_timer_begin = &tiled_gemm_begin;
+        current_timer_end = &tiled_gemm_end;
+        RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_tiled_gemm_pipeline, 0),
+                        "Failed tiled gemm example: %d", ret);
 
-    LOG_INF(logger, "Naive solution: %.3lfms, iter: %d, per iteration: %.3lfms", naive_elapsed, GEMM_ITERATIONS, naive_elapsed / GEMM_ITERATIONS);
-    LOG_INF(logger, "Tiled solution: %.3lfms, iter: %d, per iteration: %.3lfms", tiled_elapsed, GEMM_ITERATIONS, tiled_elapsed / GEMM_ITERATIONS);
+        double naive_elapsed = time_get_elapsed_ms(time, naive_gemm_begin, naive_gemm_end);
+        double tiled_elapsed = time_get_elapsed_ms(time, tiled_gemm_begin, tiled_gemm_end);
+
+        LOG_INF(logger, "Naive solution: %.4lfms, iter: %d, per iteration: %.4lfms", naive_elapsed, GEMM_ITERATIONS, naive_elapsed / GEMM_ITERATIONS);
+        LOG_INF(logger, "Tiled solution: %.4lfms, iter: %d, per iteration: %.4lfms", tiled_elapsed, GEMM_ITERATIONS, tiled_elapsed / GEMM_ITERATIONS);
+        double perc_diff = (naive_elapsed - tiled_elapsed) / naive_elapsed * 100.0;
+        LOG_INF(logger, "Tiled is %.2lf%% faster", perc_diff);
+
+        perc_diff_acc += perc_diff;
+    }
+
+    LOG_INF(logger, "Avg perc diff: %.2lf%%", perc_diff_acc / (double)benchmark_iter);
 
     return 0;
 }
