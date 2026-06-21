@@ -45,14 +45,14 @@ void main() {
         BCached[localIndex] = B[bGlobalIndex];
         barrier();
 
-        float value = 0;
+        float sum = 0;
         for (uint j = 0; j < WORK_GROUP_SIZE; j++)
         {
             uint aIndex = calcIndex(uvec2(j, gl_LocalInvocationID.y), WORK_GROUP_SIZE);
             uint bIndex = calcIndex(uvec2(gl_LocalInvocationID.x, j), WORK_GROUP_SIZE);
-            value += ACached[aIndex] * BCached[bIndex];
+            sum += ACached[aIndex] * BCached[bIndex];
         }
-        C[index] += value;
+        C[index] += sum;
         barrier();
     }
 }
