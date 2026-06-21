@@ -1,6 +1,7 @@
 #include "gui_application_default.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <plugin_sdk/window/v1/window_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
@@ -28,7 +29,11 @@ int32_t gui_application_default_setup(GuiApplicationContext *context, WindowInte
 
 int32_t gui_application_default_run(GuiApplicationContext *context)
 {
+    assert(context != NULL);
+
+    LoggerInterface *logger = context->deps.logger;
     int32_t ret;
+
 
     LOG_INF(context->deps.logger, "Starting main loop");
 
@@ -75,7 +80,10 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
             break;
         }
 
-        if (input_key_pressed(context->deps.input, WINDOW_EVENT_KEY_ESCAPE))
+        LOG_ERR(logger, "Now always closes first frame!!");
+        LOG_ERR(logger, "TODO: REMOVE THIS");
+        bool do_quit = true;
+        if (do_quit || input_key_pressed(context->deps.input, WINDOW_EVENT_KEY_ESCAPE))
         {
             LOG_DBG(context->deps.logger, "Closing application");
             RETURN_IF_ERROR(context->deps.logger, ret, window_close_window(context->deps.window),

@@ -19,17 +19,21 @@ LOGGER_INTERFACE_REGISTER_URGENCY(draw_default_gemm_learn, LOG_LEVEL_DEBUG, LOG_
 #include "draw_default_register.h"
 
 #include "shader_gemm_naive_compute.h"
-#include "shader_gemm_tiled_compute.h"
+#include "shader_gemm_tiled_shared_only_compute.h"
+#include "shader_gemm_tiled_subgroup_only_compute.h"
+#include "shader_gemm_tiled_optimized_compute.h"
 
-#define GEMM_ITERATIONS 100
+// #define GEMM_ITERATIONS 100
+#define GEMM_ITERATIONS 10
 
 // #define MATRIX_WIDTH 16
-#define MATRIX_WIDTH 1024
-// #define MATRIX_WIDTH 4
+// #define MATRIX_WIDTH 1024
+#define MATRIX_WIDTH 4
 #define MATRIX_BUFFER_SIZE MATRIX_WIDTH *MATRIX_WIDTH
 #define MATRIX_BUFFER_BYTE_SIZE MATRIX_BUFFER_SIZE * sizeof(float)
 
-#define SHADER_WORK_GROUP_SIZE 16
+// #define SHADER_WORK_GROUP_SIZE 16
+#define SHADER_WORK_GROUP_SIZE 4 
 static float buffer_a_data[MATRIX_BUFFER_SIZE] = {0};
 static float buffer_b_data[MATRIX_BUFFER_SIZE] = {0};
 static float buffer_c_data[MATRIX_BUFFER_SIZE] = {0};
@@ -538,7 +542,7 @@ int32_t create_naive_gemm_pipeline(DrawContext *context, RendererPipelineLayoutH
     return 0;
 }
 
-int32_t create_tiled_gemm_pipeline(DrawContext *context, RendererPipelineLayoutHandle pipeline_layout_handle, RendererComputePipelineHandle *out_pipeline_handle)
+int32_t create_tiled_gemm_shared_only_pipeline(DrawContext *context, RendererPipelineLayoutHandle pipeline_layout_handle, RendererComputePipelineHandle *out_pipeline_handle)
 {
     assert(context != NULL);
     assert(out_pipeline_handle != NULL);
@@ -549,8 +553,8 @@ int32_t create_tiled_gemm_pipeline(DrawContext *context, RendererPipelineLayoutH
     int32_t ret;
 
     RendererShaderHandle compute_shader_handle;
-    RETURN_IF_ERROR(logger, ret, renderer_create_shader(renderer, GEMM_TILED_COMPUTE_SHADER_U32_CODE, GEMM_TILED_COMPUTE_SHADER_BYTES_LEN, &compute_shader_handle),
-                    "Failed to create naive gemm shader: %d", ret);
+    RETURN_IF_ERROR(logger, ret, renderer_create_shader(renderer, GEMM_TILED_SHARED_ONLY_COMPUTE_SHADER_U32_CODE, GEMM_TILED_SHARED_ONLY_COMPUTE_SHADER_BYTES_LEN, &compute_shader_handle),
+                    "Failed to create tiled gemm shared only shader: %d", ret);
 
     RendererComputePipelineCreateInfo pipeline_create_info = {
         .compute_shader = {
@@ -560,7 +564,65 @@ int32_t create_tiled_gemm_pipeline(DrawContext *context, RendererPipelineLayoutH
         .layout_handle = pipeline_layout_handle,
     };
     RETURN_IF_ERROR(logger, ret, renderer_create_compute_pipeline(renderer, &pipeline_create_info, out_pipeline_handle),
-                    "Failed to create naive gemm compute pipeline: %d", ret);
+                    "Failed to create tiled gemm shared only compute pipeline: %d", ret);
+
+    RETURN_IF_ERROR(logger, ret, renderer_destroy_shader(renderer, compute_shader_handle),
+                    "Failed to destroy shader: %d", ret);
+    return 0;
+}
+
+int32_t create_tiled_gemm_subgroup_only_pipeline(DrawContext *context, RendererPipelineLayoutHandle pipeline_layout_handle, RendererComputePipelineHandle *out_pipeline_handle)
+{
+    assert(context != NULL);
+    assert(out_pipeline_handle != NULL);
+
+    LoggerInterface *logger = context->deps.logger;
+    RendererInterface *renderer = context->deps.renderer;
+
+    int32_t ret;
+
+    RendererShaderHandle compute_shader_handle;
+    RETURN_IF_ERROR(logger, ret, renderer_create_shader(renderer, GEMM_TILED_SUBGROUP_ONLY_COMPUTE_SHADER_U32_CODE, GEMM_TILED_SUBGROUP_ONLY_COMPUTE_SHADER_BYTES_LEN, &compute_shader_handle),
+                    "Failed to create tiled gemm subgroup only shader: %d", ret);
+
+    RendererComputePipelineCreateInfo pipeline_create_info = {
+        .compute_shader = {
+            .entry_point = "main",
+            .shader_handle = compute_shader_handle,
+        },
+        .layout_handle = pipeline_layout_handle,
+    };
+    RETURN_IF_ERROR(logger, ret, renderer_create_compute_pipeline(renderer, &pipeline_create_info, out_pipeline_handle),
+                    "Failed to create tiled gemm subgroup only compute pipeline: %d", ret);
+
+    RETURN_IF_ERROR(logger, ret, renderer_destroy_shader(renderer, compute_shader_handle),
+                    "Failed to destroy shader: %d", ret);
+    return 0;
+}
+
+int32_t create_tiled_gemm_optimized_pipeline(DrawContext *context, RendererPipelineLayoutHandle pipeline_layout_handle, RendererComputePipelineHandle *out_pipeline_handle)
+{
+    assert(context != NULL);
+    assert(out_pipeline_handle != NULL);
+
+    LoggerInterface *logger = context->deps.logger;
+    RendererInterface *renderer = context->deps.renderer;
+
+    int32_t ret;
+
+    RendererShaderHandle compute_shader_handle;
+    RETURN_IF_ERROR(logger, ret, renderer_create_shader(renderer, GEMM_TILED_OPTIMIZED_COMPUTE_SHADER_U32_CODE, GEMM_TILED_OPTIMIZED_COMPUTE_SHADER_BYTES_LEN, &compute_shader_handle),
+                    "Failed to create tiled gemm optimized shader: %d", ret);
+
+    RendererComputePipelineCreateInfo pipeline_create_info = {
+        .compute_shader = {
+            .entry_point = "main",
+            .shader_handle = compute_shader_handle,
+        },
+        .layout_handle = pipeline_layout_handle,
+    };
+    RETURN_IF_ERROR(logger, ret, renderer_create_compute_pipeline(renderer, &pipeline_create_info, out_pipeline_handle),
+                    "Failed to create tiled gemm optimized compute pipeline: %d", ret);
 
     RETURN_IF_ERROR(logger, ret, renderer_destroy_shader(renderer, compute_shader_handle),
                     "Failed to destroy shader: %d", ret);
@@ -817,7 +879,132 @@ int32_t gemm_compute_example(DrawContext *context, int32_t (*create_pipeline_fn)
     return 0;
 }
 
-TODO("Make a method to empty queues in renderer")
+static uint64_t naive_gemm_begin = 0;
+static uint64_t naive_gemm_end = 0;
+static uint64_t tiled_gemm_shared_only_begin = 0;
+static uint64_t tiled_gemm_shared_only_end = 0;
+static uint64_t tiled_gemm_subgroup_only_begin = 0;
+static uint64_t tiled_gemm_subgroup_only_end = 0;
+static uint64_t tiled_gemm_optimized_begin = 0;
+static uint64_t tiled_gemm_optimized_end = 0;
+
+static double naive_elapsed = 0.;
+static double tiled_shared_only_elapsed = 0.;
+static double tiled_subgroup_only_elapsed = 0.;
+static double tiled_optimized_elapsed = 0.;
+
+int32_t exec_naive_gemm(DrawContext *context)
+{
+    assert(context != NULL);
+
+    LoggerInterface *logger = context->deps.logger;
+    TimeInterface *time = context->deps.time;
+    int32_t ret;
+
+    LOG_DBG(logger, "Doing naive gemm");
+    current_timer_begin = &naive_gemm_begin;
+    current_timer_end = &naive_gemm_end;
+    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline, 0),
+                    "Failed naive gemm example: %d", ret);
+    naive_elapsed = time_get_elapsed_ms(time, naive_gemm_begin, naive_gemm_end);
+    return 0;
+}
+
+int32_t exec_tiled_gemm_shared_only(DrawContext *context)
+{
+    assert(context != NULL);
+
+    LoggerInterface *logger = context->deps.logger;
+    TimeInterface *time = context->deps.time;
+    int32_t ret;
+
+    LOG_DBG(logger, "Doing tiled gemm shared only");
+    current_timer_begin = &tiled_gemm_shared_only_begin;
+    current_timer_end = &tiled_gemm_shared_only_end;
+    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_tiled_gemm_shared_only_pipeline, 0),
+                    "Failed tiled gemm shared only example: %d", ret);
+    tiled_shared_only_elapsed = time_get_elapsed_ms(time, tiled_gemm_shared_only_begin, tiled_gemm_shared_only_end);
+    return 0;
+}
+
+int32_t exec_tiled_gemm_subgroup_only(DrawContext *context)
+{
+    assert(context != NULL);
+
+    LoggerInterface *logger = context->deps.logger;
+    TimeInterface *time = context->deps.time;
+    int32_t ret;
+
+    LOG_DBG(logger, "Doing tiled gemm subgroup only");
+    current_timer_begin = &tiled_gemm_subgroup_only_begin;
+    current_timer_end = &tiled_gemm_subgroup_only_end;
+    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_tiled_gemm_subgroup_only_pipeline, 0),
+                    "Failed tiled gemm subgroup only example: %d", ret);
+    tiled_subgroup_only_elapsed = time_get_elapsed_ms(time, tiled_gemm_subgroup_only_begin, tiled_gemm_subgroup_only_end);
+    return 0;
+}
+
+int32_t exec_tiled_gemm_optimized(DrawContext *context)
+{
+    assert(context != NULL);
+
+    LoggerInterface *logger = context->deps.logger;
+    TimeInterface *time = context->deps.time;
+    int32_t ret;
+
+    LOG_DBG(logger, "Doing tiled gemm optimized");
+    current_timer_begin = &tiled_gemm_optimized_begin;
+    current_timer_end = &tiled_gemm_optimized_end;
+    RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_tiled_gemm_optimized_pipeline, 0),
+                    "Failed tiled gemm optimized example: %d", ret);
+    tiled_optimized_elapsed = time_get_elapsed_ms(time, tiled_gemm_optimized_begin, tiled_gemm_optimized_end);
+    return 0;
+}
+
+int32_t exec_benchmark(DrawContext *context)
+{
+    assert(context != NULL);
+
+    LoggerInterface *logger = context->deps.logger;
+    int32_t ret;
+
+    const uint32_t benchmark_iter = 3;
+    double tiled_shared_only_perc_diff_acc = 0.;
+    double tiled_subgroup_only_perc_diff_acc = 0.;
+    double tiled_optimized_perc_diff_acc = 0.;
+    for (uint32_t i = 0; i < benchmark_iter; i++)
+    {
+        RETURN_IF_ERROR(logger, ret, exec_naive_gemm(context), "Failed to exec naive gemm: %d", ret);
+        RETURN_IF_ERROR(logger, ret, exec_tiled_gemm_shared_only(context), "Failed to exec tiled gemm shared only: %d", ret);
+        RETURN_IF_ERROR(logger, ret, exec_tiled_gemm_subgroup_only(context), "Failed to exec tiled gemm subgroup only: %d", ret);
+        RETURN_IF_ERROR(logger, ret, exec_tiled_gemm_optimized(context), "Failed to exec tiled gemm optimized: %d", ret);
+
+        LOG_INF(logger, "Naive solution:       %.4lfms, iter: %d, per iteration: %.4lfms", naive_elapsed, GEMM_ITERATIONS, naive_elapsed / GEMM_ITERATIONS);
+        LOG_INF(logger, "Tiled shared only:    %.4lfms, iter: %d, per iteration: %.4lfms", tiled_shared_only_elapsed, GEMM_ITERATIONS, tiled_shared_only_elapsed / GEMM_ITERATIONS);
+        LOG_INF(logger, "Tiled subgroup only:  %.4lfms, iter: %d, per iteration: %.4lfms", tiled_subgroup_only_elapsed, GEMM_ITERATIONS, tiled_subgroup_only_elapsed / GEMM_ITERATIONS);
+        LOG_INF(logger, "Tiled optimized only: %.4lfms, iter: %d, per iteration: %.4lfms", tiled_optimized_elapsed, GEMM_ITERATIONS, tiled_optimized_elapsed / GEMM_ITERATIONS);
+        double tiled_shared_only_perc_diff = (naive_elapsed - tiled_shared_only_elapsed) / naive_elapsed * 100.0;
+        double tiled_subgroup_only_perc_diff = (naive_elapsed - tiled_subgroup_only_elapsed) / naive_elapsed * 100.0;
+        double tiled_optimized_perc_diff = (naive_elapsed - tiled_optimized_elapsed) / naive_elapsed * 100.0;
+        LOG_INF(logger, "Tiled shared only is %.2lf%% faster than naive", tiled_shared_only_perc_diff);
+        LOG_INF(logger, "Tiled subgroup only is %.2lf%% faster than naive", tiled_subgroup_only_elapsed);
+        LOG_INF(logger, "Tiled optimized is %.2lf%% faster than naive", tiled_optimized_elapsed);
+
+        if (i > 0)
+        {
+            tiled_shared_only_perc_diff_acc += tiled_shared_only_perc_diff;
+            tiled_subgroup_only_perc_diff_acc += tiled_subgroup_only_perc_diff;
+            tiled_optimized_perc_diff_acc += tiled_optimized_perc_diff;
+        }
+    }
+
+    LOG_INF(logger, "Avg tiled shared only:   %.2lf%%", tiled_shared_only_perc_diff_acc / (double)(benchmark_iter - 1));
+    LOG_INF(logger, "Avg tiled subgroup only: %.2lf%%", tiled_subgroup_only_perc_diff_acc / (double)(benchmark_iter - 1));
+    LOG_INF(logger, "Avg tiled optimized:     %.2lf%%", tiled_optimized_perc_diff_acc / (double)(benchmark_iter - 1));
+
+    return 0;
+}
+
 int32_t draw_default_gemm_execute(DrawContext *context)
 {
     assert(context != NULL);
@@ -828,53 +1015,12 @@ int32_t draw_default_gemm_execute(DrawContext *context)
 
     srand((uint32_t)time_ms(time));
 
+    RETURN_IF_ERROR(logger, ret, exec_tiled_gemm_subgroup_only(context), "Failed to run tiled gemm subgropu only: %d", ret);
+
+    // RETURN_IF_ERROR(logger, ret, exec_benchmark(context), "Failed to exec benchmark: %d", ret);
+
     // RETURN_IF_ERROR(logger, ret, simple_copy_example(context),
     // "Failed simple copy example: %d", ret);
-
-    uint64_t naive_gemm_begin = 0;
-    uint64_t naive_gemm_end = 0;
-    uint64_t tiled_gemm_begin = 0;
-    uint64_t tiled_gemm_end = 0;
-
-    TODO("Fix discrepancy where first compute is always slightly slower than the second even though they do the same stuff");
-    TODO("Also figure out why doing the simple copy example makes it go a lot faster for some reason");
-
-    // current_timer_begin = &naive_gemm_begin;
-    // current_timer_end = &naive_gemm_end;
-    // RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline, 20),
-    //                 "Failed naive gemm example: %d", ret);
-
-    // RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_tiled_gemm_pipeline, 20),
-    //                 "Failed tiled gemm example: %d", ret);
-
-    const uint32_t benchmark_iter = 10;
-    double perc_diff_acc = 0;
-    for (uint32_t i = 0; i < benchmark_iter; i++)
-    {
-        LOG_DBG(logger, "Doing naive gemm");
-        current_timer_begin = &naive_gemm_begin;
-        current_timer_end = &naive_gemm_end;
-        RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_naive_gemm_pipeline, 0),
-                        "Failed naive gemm example: %d", ret);
-
-        LOG_DBG(logger, "Doing tiled gemm");
-        current_timer_begin = &tiled_gemm_begin;
-        current_timer_end = &tiled_gemm_end;
-        RETURN_IF_ERROR(logger, ret, gemm_compute_example(context, create_tiled_gemm_pipeline, 0),
-                        "Failed tiled gemm example: %d", ret);
-
-        double naive_elapsed = time_get_elapsed_ms(time, naive_gemm_begin, naive_gemm_end);
-        double tiled_elapsed = time_get_elapsed_ms(time, tiled_gemm_begin, tiled_gemm_end);
-
-        LOG_INF(logger, "Naive solution: %.4lfms, iter: %d, per iteration: %.4lfms", naive_elapsed, GEMM_ITERATIONS, naive_elapsed / GEMM_ITERATIONS);
-        LOG_INF(logger, "Tiled solution: %.4lfms, iter: %d, per iteration: %.4lfms", tiled_elapsed, GEMM_ITERATIONS, tiled_elapsed / GEMM_ITERATIONS);
-        double perc_diff = (naive_elapsed - tiled_elapsed) / naive_elapsed * 100.0;
-        LOG_INF(logger, "Tiled is %.2lf%% faster", perc_diff);
-
-        perc_diff_acc += perc_diff;
-    }
-
-    LOG_INF(logger, "Avg perc diff: %.2lf%%", perc_diff_acc / (double)benchmark_iter);
 
     return 0;
 }

@@ -2,6 +2,9 @@
 
 #define WORK_GROUP_SIZE 16
 
+// https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt
+#extension GL_KHR_shader_subgroup_basic : enable
+
 layout(local_size_x = WORK_GROUP_SIZE, local_size_y = WORK_GROUP_SIZE, local_size_z = 1) in;
 
 layout(push_constant, std430) uniform pc {
@@ -30,6 +33,7 @@ void main() {
     for (int i = 0; i < matrixWidth; i++) {
         uint aIndex = calcIndex(uvec2(i, gl_GlobalInvocationID.y), matrixWidth);
         uint bIndex = calcIndex(uvec2(gl_GlobalInvocationID.x, i), matrixWidth);
-        C[index] += A[aIndex] * B[bIndex];
+        // C[index] += A[aIndex] * B[bIndex];
+        C[index] = float(gl_SubgroupSize);
     }
 }

@@ -1,0 +1,58 @@
+#version 460
+
+#define WORK_GROUP_SIZE 16
+
+layout(local_size_x = WORK_GROUP_SIZE, local_size_y = WORK_GROUP_SIZE, local_size_z = 1) in;
+
+layout(push_constant, std430) uniform pc {
+    uint matrixWidth;
+};
+
+layout(set = 0, binding = 0, std430) readonly buffer MatrixA {
+    float A[];
+};
+
+layout(set = 0, binding = 1, std430) readonly buffer MatrixB {
+    float B[];
+};
+
+layout(set = 0, binding = 2, std430) buffer MatrixC {
+    float C[];
+};
+
+uint calcIndex(uvec2 xy, uint width) {
+    return xy.y * width + xy.x;
+}
+
+shared float ACached[WORK_GROUP_SIZE * WORK_GROUP_SIZE];
+shared float BCached[WORK_GROUP_SIZE * WORK_GROUP_SIZE];
+
+void main() {
+    uint index = calcIndex(gl_GlobalInvocationID.xy, matrixWidth);
+    C[index] = 0;
+
+    uint tileCount = matrixWidth / WORK_GROUP_SIZE;
+    for (uint i = 0; i < tileCount; i++)
+    {
+        uvec2 aTileOffset = uvec2(i, gl_GlobalInvocationID.y / WORK_GROUP_SIZE) * WORK_GROUP_SIZE;
+        uvec2 bTileOffset = uvec2(gl_GlobalInvocationID.x / WORK_GROUP_SIZE, i) * WORK_GROUP_SIZE;
+
+        uint localIndex = calcIndex(gl_LocalInvocationID.xy, WORK_GROUP_SIZE);
+        uint aGlobalIndex = calcIndex(gl_LocalInvocationID.xy + aTileOffset, matrixWidth);
+        uint bGlobalIndex = calcIndex(gl_LocalInvocationID.xy + bTileOffset, matrixWidth);
+
+        ACached[localIndex] = A[aGlobalIndex];
+        BCached[localIndex] = B[bGlobalIndex];
+        barrier();
+
+        float sum = 0;
+        for (uint j = 0; j < WORK_GROUP_SIZE; j++)
+        {
+            uint aIndex = calcIndex(uvec2(j, gl_LocalInvocationID.y), WORK_GROUP_SIZE);
+            uint bIndex = calcIndex(uvec2(gl_LocalInvocationID.x, j), WORK_GROUP_SIZE);
+            sum += ACached[aIndex] * BCached[bIndex];
+        }
+        C[index] += sum;
+        barrier();
+    }
+}
